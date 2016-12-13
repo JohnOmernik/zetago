@@ -1,0 +1,42 @@
+#! /bin/bash
+#
+# Describes the current Zeta Environment based on the ./conf/cluster.conf
+#
+
+. "$_GO_USE_MODULES" 'clusterconf'
+
+_describe() {
+    local arg
+    local word_index
+    local args
+
+    while [[ "$#" -ne 0 ]]; do
+        arg="$1"
+        shift
+        case "$arg" in
+        --complete)
+        # Tab completions
+        if [[ "$1" -eq '0' ]]; then
+            echo '-v' '--verbose'
+        fi
+        return
+        ;;
+        -v|--verbose)
+        _GO_VERBOSE='true'
+        ;;
+        *)
+        echo "Unknown argument: $1"
+        return 1
+        ;;
+        esac
+    done
+
+#    @go.log ERROR  Describe Zeta
+    echo "Describing Zeta"
+    echo "Clustername: $CLUSTERNAME"
+    echo "cluster.conf location: $CLUSTER_CONF"
+    echo "Verbose: $_GO_VERBOSE"
+    env
+}
+
+_describe "$@"

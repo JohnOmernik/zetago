@@ -1,0 +1,39 @@
+#!/bin/bash
+# File for automatically sourcing the cluster.conf file for this cluster. 
+#
+# Since this script could be called at multiple times, we need to identify an order of sourcing cluster.conf
+#
+# Follow these paths, if no on any of the question go to the next path (1.1 is path 1, step 1, 1.2 is path 1, step 2 etc)
+# 1.1 Check /mapr, do we have a cluster name?
+# 1.2 If we have a cluster name look at /mapr/$CLUSTERNAME/zeta/kstore/cluster.conf, check if it exists
+# 1.3 Source /mapr/$CLUSTERNAME/zeta/kstore/cluster.conf - Exit
+#
+# 2.1 Check /home/zetaadm/cluster.conf exists
+# 2.2 Source /home/zetaadm/cluster.conf - Exit
+#
+# 3.1 Display error that cluster.conf does not exist and needs to exist before ./zeta will work - Exit (w/ Error)
+
+CLUSTERNAME=$(ls /mapr)
+
+if [ "$CLUSTERNAME" != "" ]; then
+    CLUSTER_CONF="/mapr/$CLUSTERNAME/zeta/kstore/cluster.conf"
+    if [ -f "${CLUSTER_CONF}" ]; then
+        . $CLUSTER_CONF
+    else
+        CLUSTER_CONF="/home/zetaadm/cluster.conf"
+        if [ -f "${CLUSTER_CONF}" ]; then
+            . $CLUSTER_CONF
+        else
+            @go.log ERROR Clustername $CLUSTERNAME detected, but $CLUSTER_CONF not found. Run zeta create to address
+            exit 1
+        fi
+    fi
+else
+    CLUSTER_CONF="/home/zetaadm/cluster.conf"
+    if [ -f "${CLUSTER_CONF}" ]; then
+        . $CLUSTER_CONF
+    else
+        @go.log ERROR No Clustername identified, run zeta create to address
+        exit 1
+    fi
+fi
