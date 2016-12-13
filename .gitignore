@@ -1,6 +1,8 @@
 # No need for people cluster conf
 cluster.conf
 cluster.conf*
+**/cluster.conf
+**/cluster.conf*
 
 # Any Key files should be ignored
 id_rsa

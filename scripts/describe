@@ -3,7 +3,7 @@
 # Describes the current Zeta Environment based on the ./conf/cluster.conf
 #
 
-. "$_GO_USE_MODULES" 'clusterconf'
+. "$_GO_USE_MODULES" 'sourceclusterconf'
 
 _describe() {
     local arg
@@ -36,7 +36,7 @@ _describe() {
     echo "Clustername: $CLUSTERNAME"
     echo "cluster.conf location: $CLUSTER_CONF"
     echo "Verbose: $_GO_VERBOSE"
-    env
+#    env
 }
 
 _describe "$@"

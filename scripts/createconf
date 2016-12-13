@@ -1,0 +1,317 @@
+#!/bin/bash
+#
+# Create a Zeta cluster.conf script for use in zeta installations.
+# This script is the initial instantiation point for zeta clusters.
+# By running this script, it will walk the user through questions and help the user provide answers to get a Zeta Cluster off the ground
+#
+# This script will not run if it finds an already existing cluster.conf
+#
+
+
+. "$_GO_USE_MODULES" 'findclusterconf'
+
+if [ "$CLUSTER_CONF" != "" ]; then
+    @go.log ERROR "Found cluster.conf at $CLUSTER_CONF - Will not create new cluster.conf"
+    exit 1
+fi
+CLUSTER_CONF="./conf/cluster.conf"
+
+@go.log INFO "Setting cluster.conf location to be $CLUSTER_CONF"
+
+echo "Let's Create a cluster.conf!"
+echo ""
+IUSER="zetaadm"
+MAPR_USER="mapr"
+
+echo "---------------------------------------"
+echo "The initial user for zeta will be zetaadm and it's UID will be 2500"
+echo ""
+echo "This user should be able to log on to every node, and have passwordless sudo on all nodes"
+echo ""
+echo "The initial user needs a key that will be used to connect to every node (it should also be passwordless)e"
+echo "Please pass the path to the private key for the initial user ($IUSER). (This may be located at /home/$IUSER/.ssh/id_rsa, or whereever you may have put it)"
+echo ""
+read -p "Path to keyfile: " -e -i "/home/$IUSER/.ssh/id_rsa" IKEY
+
+CURUSER=$(whoami)
+if [ "$CURUSER" != "$IUSER" ]; then
+    echo "I am sorry, this script must be run as the initial user"
+    echo "Initial User: $IUSER"
+    echo "Current User: $CURUSER"
+    exit 0
+fi
+
+
+echo ""
+echo "---------------------------------------"
+echo "We are going to create an ip_detect.sh script in ./conf"
+echo "We hope this script will work for your network, but it should really be checked to account for all the nodes on your network"
+
+cat > ./conf/ip_detect.sh << EOFIP
+#!/bin/bash
+. /etc/profile
+INTS="eth0 em1 ens3 eno1 enp2s0 enp3s0 ens192"
+
+for INT in \$INTS; do
+#    echo "Interface: \$INT"
+    T=\$(ip addr|grep "\$INT")
+    if [ "\$T" != "" ]; then
+        MEIP=\$(ip addr show \$INT | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
+        echo \$MEIP
+        break
+    fi
+done
+EOFIP
+chmod +x ./ip_detect.sh
+
+echo "We will now run the ip_detect.sh script"
+echo "This should return the IP address of the servers main interface, and it should work this way on all nodes..."
+echo ""
+./conf/ip_detect.sh
+echo ""
+echo ""
+echo "If the IP address above is not correct, please alter the ./conf/ip_detect.sh script until it does"
+echo ""
+echo "---------------------------------------"
+
+echo "As we build the docker containers, we need a temporary Docker registry to host the containers"
+echo "This is ONLY for mapr based containers"
+echo "It will be named maprdocker-mapr-shared.marathon.slave.mesos:5000 by default, only change this name and port if you understand what that means"
+echo "Which host do you wish to run it on?"
+echo ""
+read -p "Docker Registry Host: " -e -i "maprdocker-mapr-shared.marathon.slave.mesos" DOCKER_REG_HOST
+read -p "Which port should the docker register run on (we recommend 5000): " -e -i "5000" DOCKER_REG_PORT
+echo ""
+echo ""
+
+echo ""
+echo "---------------------------------------"
+echo "Where would you like the MapR Installation directory to be location on the physical host?"
+echo "It should not be in /opt/mapr to avoid conflicts with clients or other things on the physical node"
+echo "We recommend: /opt/maprdocker"
+echo ""
+read -p "Mapr Installation Directory: " -e -i "/opt/maprdocker" MAPR_INST
+
+echo ""
+echo "---------------------------------------"
+echo "Next step is to identify which nodes will be zookeeper nodes"
+echo "The format for this is ZKID:HOSTNAME,ZKID:HOSTNAME"
+echo "ZKID: This is the ID the ZK will have. It's an integer, starting at 0"
+echo "HOSTNAME: This is obvious. The hostname of the physical node it will be running on"
+echo ""
+echo "Example: 0:node1,1:node2,2:node3"
+echo ""
+read -p "Zookeeper String: " ZK_STRING
+
+echo ""
+echo "Please enter the client port. I recommend using 5181 the port used by MapR installs"
+echo ""
+read -p "ZK Client Port: " -e -i "5181" ZK_CLIENT_PORT
+echo ""
+echo "Please enter the master election port. Recommend using 2880 as it's different from the normal default for ZK"
+echo ""
+read -p "ZK Master Election Port: " -e -i "2880" ZK_MASTER_ELECTION_PORT
+echo ""
+echo "Please enter the quorum port. Recommend useing 3880 as it's different from the normal default for ZK"
+echo ""
+read -p "ZK Quorum Port: " -e -i "3880" ZK_QUORUM_PORT
+
+echo ""
+echo "---------------------------------------"
+echo "Next we need to understand which nodes will be running the CLDB Service"
+echo "It's recommended to have 3-5 CLDBs running the cluster"
+echo "Using the format node:port,node:port,node:port"
+echo ""
+echo "Example: node1:7222,node2:7222,node3:7222"
+echo ""
+echo "Use the MapR Default Port of 7222 unless you know what you are doing"
+echo ""
+read -p "CLDB String: " CLDB_STRING
+
+echo ""
+echo "---------------------------------------"
+echo "Initial Nodes - These are the initial nodes that are in the cluster"
+echo "Nodes can always be added, however, nodes that are running initially must the same or more than the CLDB nodes"
+echo "I.e. You need to have at least the CLDB Nodes in this list"
+echo ""
+echo "The format here is NODENAME1:DISK1,DISK2,DISK3;NODENAME2:DISK1,DISK2,DISK3"
+echo ""
+echo "Example: node1:/dev/sda,/dev/sdb,/dev/sdc;node2:/dev/sda/dev/sdb"
+echo ""
+read -p "Enter the initial nodes and their disks: " INITIAL_NODES
+
+echo ""
+echo "---------------------------------------"
+echo "Please enter the list of nodes that you want to include the NFS Service on."
+echo "It should be a CSV list of nodes: node1,node2,node3"
+echo ""
+read -p "Enter nfs nodes: " NFS_NODES
+echo ""
+
+echo ""
+echo "---------------------------------------"
+echo "If you need to specify a HTTP_PROXY for docker building, please enter it here"
+echo "If this variable is filled, it will add the proxy lines to the docker files for building the images"
+echo ""
+read -p "Enter the proxy information (blank for none): " DOCKER_PROXY
+
+echo ""
+echo "---------------------------------------"
+echo "If you use a proxy, it's highly recommended you use a NO_PROXY as well. Use your subnets and internal domain names"
+echo "Example: \"192.168.0.0/16,mycompany.com\""
+echo ""
+read -p "Enter the noproxy information (blank for none): " DOCKER_NOPROXY
+
+
+echo ""
+echo "---------------------------------------"
+
+#########################
+# SUBNETS is the value that is replaced in the /opt/mapr/conf/env.sh for MAPR_SUBNETS.  This is important because MapR will try to use the docker interfaces unless you limit this down.  
+# You can do commma separated subnets if you have more than one NIC you want to use
+#SUBNETS="10.0.2.0/24,10.0.3.0/24"
+echo "MapR Allows you to tie your MapR comms to specific subnets.  So if you have two interfaces,and want mapr to use both, specify the IP rangages as subnets to user"
+echo "Examples: 10.0.2.0/24,10.0.3.0/24"
+echo ""
+read -p "Please specify MapR Subnets: " SUBNETS
+
+
+CLUSTERGUESS=$(curl -s http://leader.mesos:5050/state-summary|grep -P -o "\"cluster\"\:\"[^\"]+\""|uniq|cut -d ":" -f2|sed "s/\"//g")
+
+echo ""
+echo "---------------------------------------"
+echo "Please enter the MapR Cluster Name: We recommend it be the same as your DCOS Cluster Name"
+echo ""
+read -e -p "Please enter MapR Cluster Name: " -i "$CLUSTERGUESS" CLUSTERNAME
+echo ""
+echo "---------------------------------------"
+echo "The marathon host will be marathon.mesos:8080"
+MARATHON="marathon.mesos:8080"
+echo ""
+echo "---------------------------------------"
+echo "LDAP Information is installed by default"
+INSTALL_LDAP="Y"
+LDAP_URL="ldap://openldap-shared.marathon.slave.mesos"
+LDAP_BASE="dc=marathon,dc=mesos"
+LDAP_RO_USER="cn=readonly,dc=marathon,dc=mesos"
+LDAP_RO_PASS="readonly"
+
+echo ""
+echo "---------------------------------------"
+echo "Please select an initial install MapR Version file from:"
+echo ""
+ls ./vers/mapr
+echo ""
+read -e -p "Please enter the default version file to use for this cluster: " -i "mapr_v5.2.0-39745.vers" MAPR_VERS
+echo ""
+
+
+cat > $CLUSTER_CONF << EOF
+#!/bin/bash
+
+#########################
+# These are the editable settings for installing a MapR running on Docker cluster.  Edit these settings prior to executing the scripts
+
+#########################
+# Need a list of nodes we'll be working on. In the future, we will get this auto matically, but for now you have to put a space separated list of the IP address of all nodes in your cluster.
+export INODES="$INITIAL_NODES"
+
+#########################
+# IUSER is the initial user to work with. in EC2, this is the AMI user. With the PRVKEY settings, this user should be able to SSH to all hosts in the cluster.
+# This could be centos, ubuntu, ec2-user etc.
+export IUSER="$IUSER"
+
+#########################
+# PRVKEY is the the key for ssh to all nodes.
+# This is copied to the install host as /home/$IUSER/.ssh/id_rsa
+# This is the private key that matches the public key you specified in the AWS install.
+export PRVKEY="$IKEY"
+
+#########################
+# Comma separated list of the hostnames for CLDBs.
+# You can include ports (if no port is provided, 7222, the default is used)
+# You need at least one. Obviously more is good. If you are not going to run a licensed version of MapR, then 1 is fine.  If you are using M5/M7 put more in a for HA goodness
+# Ex:
+# CLDBS="host1:7222,host2:7222:host3:7222"
+# CLDBS="host1,host2,host3""
+# CLDBS="ip-10-22-87-235:7222"
+export CLDBS="$CLDB_STRING"
+
+#########################
+# This is the location on the physical node that MapR is installed to
+# It should be different than the mapr default of /opt/mapr
+# It will be mapped to /opt/mapr inside the docker container.
+# It should not be /opt/mapr to keep it out of conflict with anything like mapr client you may install on a node.
+#
+export MAPR_INST="$MAPR_INST"
+
+#########################
+# This is the docker registry that will be used to house the images so you don't have to build them on every node
+# After your cluster is started in AWS, pick a node and use the default port
+
+export DOCKER_REG_HOST="$DOCKER_REG_HOST"
+export DOCKER_REG_PORT="$DOCKER_REG_PORT"
+export DOCKER_REG_URL="\${DOCKER_REG_HOST}:\${DOCKER_REG_PORT}"
+export DOCKER_PROXY="$DOCKER_PROXY"
+export DOCKER_NOPROXY="$DOCKER_NOPROXY"
+
+
+export ZK_STRING="$ZK_STRING"
+export ZK_CLIENT_PORT="$ZK_CLIENT_PORT"
+export ZK_MASTER_ELECTION_PORT="$ZK_MASTER_ELECTION_PORT"
+export ZK_QUORUM_PORT="$ZK_QUORUM_PORT"
+
+export NFS_NODES="$NFS_NODES"
+export MAPR_CONF_OPTS=""
+export CLUSTERNAME="$CLUSTERNAME"
+export SUBNETS="$SUBNETS"
+export MUSER="$MAPR_USER"
+
+export MARATHON_HOST="$MARATHON"
+export MARATHON_SUBMIT="http://\$MARATHON_HOST/v2/apps"
+
+export INSTALL_LDAP="$INSTALL_LDAP"
+export LDAP_BASE="$LDAP_BASE"
+export LDAP_URL="$LDAP_URL"
+export LDAP_RO_USER="$LDAP_RO_USER"
+export LDAP_RO_PASS="$LDAP_RO_PASS"
+export MAPR_VERS="$MAPR_VERS"
+
+########################################################################################################################################################################################################
+
+# Do not change the rest of this script, this creates two more variables from your ZKs, one to put into the zoo.cfg on each ZK (ZOOCFG) and the other to pass to the mapr configure script ($ZKS)
+
+
+#Example: 0:node1,1:node2,2:node3"
+
+TZKS=""
+TZOOCFG=""
+OLDIFS=\$IFS
+IFS=","
+
+for ZK in \$ZK_STRING; do
+    ZID=\$(echo \$ZK|cut -d":" -f1)
+    HNAME=\$(echo \$ZK|cut -d":" -f2)
+
+    CPORT=\$ZK_CLIENT_PORT
+    QPORT=\$ZK_QUORUM_PORT
+    MPORT=\$ZK_MASTER_ELECTION_PORT
+
+    if [ "\$TZKS" != "" ]; then
+        TZKS="\${TZKS},"
+    fi
+    if [ "\$TZOOCFG" != "" ];then
+        TZOOCFG="\${TZOOCFG} "
+    fi
+    TZKS="\${TZKS}\${HNAME}:\${CPORT}"
+    TZOOCFG="\${TZOOCFG}server.\${ZID}=\${HNAME}:\${QPORT}:\${MPORT}"
+done
+IFS=\$OLDIFS
+export ZKS=\$TZKS
+export ZOOCFG=\$TZOOCFG
+
+
+EOF
+echo ""
+echo "cluster.conf has been created!"
+
