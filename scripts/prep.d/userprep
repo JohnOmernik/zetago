@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# Create users on Zeta nodes for initial install
+#
+
+PREP_CONF="./conf/prep_conf.conf"
+if [ ! -f "$PREP_CONF" ]; then
+    @go.log FATAL "Cannot create users without a prep_conf.conf file located at $PREP_CONF - Exiting"
+fi
+. $PREP_CONF
+
+SCRIPTSRC="./conf/userupdate.sh"
+
+if [ ! -f "$OUT_KEY" ]; then
+    @go.log INFO "Prep conf exists, however, keys have not been generated, doing so now"
+    ./zeta prep genkey
+fi
+PUB_KEY=$(cat $OUT_KEY_PUB)
+
+function userprep() {
+    HOST=$1
+    REM_SCRIPT="/tmp/userupdate.sh"
+
+    if [ ! -f "$SCRIPTSRC" ]; then
+        ./zeta prep createuserprep
+    fi
+    @go.log INFO "Connecing to and updating host $HOST"
+    echo ""
+    echo "Copying User Update Script"
+    ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${INIT_USER}@${HOST} "touch $REM_SCRIPT && chmod 700 $REM_SCRIPT"
+    scp -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${SCRIPTSRC} ${INIT_USER}@${HOST}:$REM_SCRIPT
+    echo "Running Script"
+    ssh -o StrictHostKeyChecking=no -t -i ${INIT_KEY_LOC} ${INIT_USER}@$HOST "chmod 700 $REM_SCRIPT && sudo $REM_SCRIPT"
+    echo "Removing Script"
+    ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${INIT_USER}@$HOST "sudo rm $REM_SCRIPT"
+    echo "Updating Public Key for Zetaadm user"
+    ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${INIT_USER}@$HOST "sudo mkdir -p /home/zetaadm/.ssh && echo \"$PUB_KEY\"|sudo tee -a /home/zetaadm/.ssh/authorized_keys && sudo chown -R zetaadm:zetaadm /home/zetaadm/.ssh && sudo chmod 700 /home/zetaadm/.ssh && sudo chmod 600 /home/zetaadm/.ssh/authorized_keys"
+
+
+    if [ "$HOST" == "$INIT_NODE" ]; then
+        @go.log INFO "$HOST is the INIT_NODE for the cluster updating this node to have the private keys, as well as this repo under zetaadm"
+        echo "Trying to install git on initial host via apt-get install git - This may fail that's ok"
+        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "sudo apt-get update && sudo apt-get install -y git"
+        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "sudo yum update && sudo yum install -y git"
+        echo ""
+        echo "Pulling this repo to the init node under /home/zetaadm/zetago"
+        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "git clone https://github.com/JohnOmernik/zetago.git && mkdir -p ./zetago/conf && chmod 700 ./zetago/conf"
+        scp -o StrictHostKeyChecking=no -i ${OUT_KEY} ${OUT_KEY} zetaadm@${HOST}:/home/zetaadm/.ssh/id_rsa
+        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "chmod 600 /home/zetaadm/.ssh/id_rsa"
+        scp -o StrictHostKeyChecking=no -i ${OUT_KEY} $PREP_CONF zetaadm@${HOST}:/home/zetaadm/zetago/conf/prep_conf.conf
+    fi
+
+    #echo "Getting internal IP Address"
+    #INTER_IP=$(ssh -o StrictHostKeyChecking=no -i ${INIT_KEY} ${INIT_USER}@$HOST "source /etc/profile && ip addr show eth0 | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1")
+    #echo $INTER_IP >> ./internal_hosts.txt
+
+}
+
+userprep "$@"

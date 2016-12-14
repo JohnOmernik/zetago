@@ -312,6 +312,9 @@ export ZOOCFG=\$TZOOCFG
 
 
 EOF
-echo ""
-echo "cluster.conf has been created!"
+
+@go.log INFO "Created cluster.conf @ $CLUSTER_CONF"
+@go.log INFO "Securing conf directory"
+chown $IUSER:$ISER ./conf
+chmod 770 ./conf
 

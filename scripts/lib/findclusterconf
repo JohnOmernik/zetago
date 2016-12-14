@@ -8,11 +8,12 @@
 #
 CLUSTERNAME=$(ls /mapr)
 CLUSTER_CONF=""
-
+FULL_ZETA="0"
 
 if [ "$CLUSTERNAME" != "" ]; then
     if [ -f "/mapr/$CLUSTERNAME/zeta/kstore/cluster.conf" ]; then
         CLUSTER_CONF="/mapr/$CLUSTERNAME/zeta/kstore/cluster.conf"
+        FULL_ZETA="1"
     else
         if [ -f "./conf/cluster.conf" ]; then
             CLUSTER_CONF="./conf/cluster.conf"

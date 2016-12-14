@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+# Generates a Key to use for Zeta
+#
+#
+PREP_CONF="./conf/prep_conf.conf"
+
+. $PREP_CONF
+if [ "$GEN_KEY" == "Y" ]; then
+    if [ ! -f "$OUT_KEY" ]; then
+        ssh-keygen -f $OUT_KEY -N "" -t RSA -C "DCOS"
+        @go.log INFO "Keys created at $OUT_KEY"
+    else
+        @go.log FATAL "Will not create key due to existing key at $OUT_KEY"
+    fi
+fi

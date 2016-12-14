@@ -1,0 +1,102 @@
+#!/bin/bash
+#
+# This script walks the user through a series of questions in order to create a prep_conf.conf
+#
+. "$_GO_USE_MODULES" 'getpass'
+
+PREP_CONF="./conf/prep_conf.conf"
+
+echo ""
+echo "-----------------------------------"
+echo "This process will ask a series of questions in order to create a prep_conf.conf script for gettings nodes ready for Zeta"
+echo "The configuration will be located: $PREP_CONF"
+echo "-----------------------------------"
+echo ""
+echo "Initial User for Connection to Zeta Cluster"
+echo "We need access to the initial nodes on the Zeta cluster. We do this through a username that has passwordless sudo and a key without a password"
+echo "Once the zeta cluster is created, this user can be deprivileged."
+echo ""
+echo "For example, if this was AWS, and we were using ubuntu based nodes, I'd answer 'ubuntu' for the Initial user"
+echo ""
+read -e -p "Initial user to connect to zeta nodes: " -i "ubuntu" INIT_USER
+echo ""
+echo "We now need the key for the initial connection, this is typically location in /home/$INIT_USER/.ssh/id_rsa, but doesn't have to be. Please specify that here"
+echo ""
+read -e -p "Private key for initial user on zeta nodes: " -i "/home/$INIT_USER/.ssh/id_rsa" INIT_KEY_LOC
+echo ""
+GEN_KEY="Y"
+OUT_KEY="./conf/zetaadm.key"
+OUT_KEY_PUB="./conf/zetaadm.key.pub"
+echo ""
+echo "As part of this process, we will generate a key for the zetaadm user"
+echo "It will be stored at $OUT_KEY and its public key will be stored at $OUT_KEY_PUB"
+echo "These values will be saved in the conf for use as well"
+echo ""
+ZETAADM_UID="2500"
+MAPR_UID="2000"
+echo "-----------------------------------"
+echo "The UID for the zetaadm user will be $ZETAADM_UID and the UID for the mapr user will be $MAPR_UID"
+echo "These values are stored in the conf"
+echo ""
+echo "-----------------------------------"
+echo ""
+getpass "zetaadm" ZETAADM_PASS
+echo ""
+getpass "mapr" MAPR_PASS
+echo ""
+echo "-----------------------------------"
+echo "Please enter the list of nodes we will be preparing for Zeta, the nodes should be space separated"
+echo ""
+read -e -p "Enter list of space separated nodes for use in Zeta: " NODES
+echo ""
+echo "In setting up Zeta, we like to select an 'Initial' node that can be used as the node that all the scripts run from. It should be an agent node"
+echo ""
+read -e -p "Enter initial node for Zeta install: " INIT_NODE
+echo ""
+echo ""
+echo "-----------------------------------"
+echo "As we are prepping the nodes, it's helpful to have a list of interfaces to check for the internal IP Address of the nodes. "
+echo "Basically provide a space separated list, and the first interface in that list that returns an IP will be the lucky winner"
+echo ""
+read -e -p "Interface to check list: " -i "eth0 em0" INTERFACE_LIST
+
+
+touch $PREP_CONF
+chmod 640 $PREP_CONF
+
+cat > $PREP_CONF << EOF
+#!/bin/bash
+#
+# Configuration script for prepping nodes for Zeta Architecture
+
+# INIT_USER is the user to connect to the cluster in order to establish the initial users, and installs for Zeta
+INIT_USER="$INIT_USER"
+# INIT_KEY_LOC is the location of the SSH private key to connect to the cluster with
+INIT_KEY_LOC="$INIT_KEY_LOC"
+
+# The following Variables determine whether to generate a key for zetaadm, what that key will be called, and what the public key will be called
+GEN_KEY="$GEN_KEY"
+OUT_KEY="$OUT_KEY"
+OUT_KEY_PUB="$OUT_KEY_PUB"
+
+# The UIDs for zetaadm and mapr
+ZETAADM_UID="$ZETAADM_UID"
+MAPR_UID="$MAPR_UID"
+
+# Passwords for mapr and zetaadm
+MAPR_PASS="$MAPR_PASS"
+ZETAADM_PASS="$ZETAADM_PASS"
+
+# Node list to prep
+NODES="$NODES"
+
+# Initial Node to use for staging
+INIT_NODE="$INIT_NODE"
+
+# Interfaces to check for internal IPs (in order)
+INTERFACE_LIST="$INTERFACE_LIST"
+
+EOF
+
+@go.log INFO "Prep Conf file written to $PREP_CONF"
+

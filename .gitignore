@@ -3,6 +3,14 @@ cluster.conf
 cluster.conf*
 **/cluster.conf
 **/cluster.conf*
+**/prep_conf.conf
+**/prep_conf.conf*
+
+# No Conf Data
+conf/
+conf/*
+# No Temp data
+tmp/
 
 # Any Key files should be ignored
 id_rsa
@@ -23,3 +31,8 @@ zkdocker/
 # Files specific to an installation
 maprdocker.marathon
 ip_detect.sh
+
+hostlist.txt
+internal_hosts.txt
+out.prv
+out.prv.pub

@@ -6,11 +6,10 @@
 . "$_GO_USE_MODULES" 'findclusterconf'
 
 if [ "${CLUSTER_CONF}" != "" ]; then
-    echo "Sourcing $CLUSTER_CONF"
+    @go.log INFO "Sourcinf $CLUSTER_CONF"
     . $CLUSTER_CONF
 else
-    echo "No cluster.conf found: exiting"
-    exit 1
+    @go.log FATAL "No cluster.conf found: exiting"
 fi
 
 

@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+# This script has a function to return a password.
+# It works with the user to get the password at the STDIN (hiding the input)
+# It then checks again to see if the passwords match. If they match,  it returns
+# If it doesn't match it tries again
+#
+#
+# getpass USER PASSVAR
+#
+# Asks a user to enter the password for a specific user
+#
+# - USER is the username the function is asking the password for. This is only a string representation, and is displayed in prompts
+# - PASSVA is the variable that function should store the password in so it's returned to the caller
+function getpass(){
+    local MYUSER=$1
+    local RESULT=$2
+
+    local MYPASS1="1234"
+    local MYPASS2="2345"
+
+    # If the passwords don't match, keep asking for passwords until they do
+    while [ "$MYPASS1" != "$MYPASS2" ]; 
+    do
+        stty -echo
+        printf "Please enter password for $MYUSER: "
+        read MYPASS1
+        echo ""
+        printf "Please re-enter password for $MYUSER: "
+        read MYPASS2
+        echo ""
+        stty echo
+        if [ "$MYPASS1" != "$MYPASS2" ]; then
+            echo ""
+            echo "Passwords entered for $MYUSER do not match! Please try again"
+            echo ""
+        fi
+    done
+    eval $RESULT="'$MYPASS1'"
+
+
+
+}
