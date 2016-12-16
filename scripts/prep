@@ -9,53 +9,87 @@
 # prep centos - Install Docker, patches, etc, for use with CentOS install
 #
 
-PREP_CONF="./conf/prep_conf.conf"
 #
 # Check for the the conf and offer to create one
-# Arguments: if --all is passed then this script will not only create the prep_conf.conf, but all run it all of the nodes in the node list
+# Arguments:
+#     -a|--all         Process all nodes in the NODES list. By default, this works one node at a time with all output to the screen
+#     -p|--parallel    Kick off all nodes at one, don't display results
+#     -u|--unlock      Unlock the config so it prompts each time if you want to use the config
+#     -l|--lock        Lock the config so it no longer prompts if you want to use the existing config
 #
+
+. "$_GO_USE_MODULES" 'initconf'
+
 function _prep() {
-    ALL=$1
-    ATONCE=$2
 
-    if [ -f "$PREP_CONF" ]; then
-        echo "There is a current prep_conf.conf file already in the conf folder"
-        echo "Do you wish to replace this prep_conf.conf?"
-        read -e -p "(R)eplace, (U)se, or (E)xamine prep.conf? " -i "E" EXIST_PREP
-        if [ "$EXIST_PREP" == "E" ]; then
-            ./zeta prep display
-            echo ""
-            read -e -p "(R)eplace or (U)se existing prep_conf.conf? " -i "U" EXIST_PREP
+    ALL="0"
+    PARALLEL="0"
+    LOCK="0"
+    UNLOCK="0"
+
+    ME="0"
+    WEE="0"
+    DS="0"
+
+
+    for i in "$@"
+    do
+    case $i in
+        -a|--all)
+        ALL="1"
+        ;;
+        -p|--parallel)
+        PARALLEL="1"
+        ;;
+        -u|--unlockconf)
+        UNLOCK="1"
+        ;;
+        -l|--lockconf)
+        LOCK="1"
+        ;;
+        *)
+            # unknown option
+        ;;
+    esac
+    done
+
+    if [ "$UNLOCK" == "1" ] && [ "$LOCK" == "1" ]; then
+        @go.log FATAL "Both Lock (-l) and Unlock (-u) cannot be specified at the same time"
+    fi
+    if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then
+        if [ "$ALL" == "1" ] || [ "$PARALLEL" == "1" ]; then
+            @go.log FATAL "A lock or unlock paramater cannot be specified with all or parallel parameter"
         fi
-    else
-        EXIST_PREP="R"
     fi
 
-    if [ "$EXIST_PREP" == "R" ]; then
-        ./zeta prep createprepconf
-    fi
-    . $PREP_CONF
-    echo ""
+    initconf "$PREP_CONF"
+
     echo "Commands to use with prep:"
     echo ""
     echo "./zeta prep userprep %NODE - Prep user on a specific node"
     echo "./zeta prep systemprep %NODE - Prep system on a specific node"
     echo "./zeta prep --all - Prep User and system on all nodes"
     echo ""
-    if [ "$ALL" == "--all" ]; then
+    echo "To log into the initial node, please use:"
+    echo ""
+    echo "ssh -i $OUT_KEY zetaadm@$INIT_NODE"
+    echo ""
+
+    if [ "$ALL" == "1" ]; then
         for NODE in $NODES; do
             ./zeta prep userprep $NODE
-            if [ "$ATONCE" == "-p" ]; then
+            if [ "$PARALLEL" == "1" ]; then
                 ./zeta prep systemprep $NODE -p
             else
                 ./zeta prep systemprep $NODE
             fi
         done
-        echo "To log into the initial node, please use:"
-        echo ""
-        echo "ssh -i $OUT_KEY zetaadm@$INIT_NODE"
-        echo ""
     fi
+
+    if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then
+       lockconf "$PREP_CONF"
+    fi
+
 }
 
 _prep "$@"

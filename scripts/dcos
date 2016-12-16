@@ -4,8 +4,13 @@
 #
 #
 
+. "$_GO_USE_MODULES" 'initconf'
 
 function dcos() {
+
+    initconf "$DCOS_CONF"
+
+
     @go.log INFO "DCOS"
 
 

@@ -6,7 +6,6 @@
 # Create the script that will be executed on each machine to add the users
 
 SCRIPTSRC="./conf/userupdate.sh"
-PREP_CONF="./conf/prep_conf.conf"
 . $PREP_CONF
 if [ -f "$SCRIPTSRC" ]; then
     echo "User update script already exists at $SCRIPTSRC"

@@ -3,7 +3,6 @@
 #
 # Pretty prints the prep_conf.conf file for examination
 #
-PREP_CONF="./conf/prep_conf.conf"
 function _examine_prep(){
     if [ ! -f "$PREP_CONF" ]; then
         @go.log FATAL "Prep Conf not found at $PREP_CONF - Exiting"
@@ -28,5 +27,7 @@ function _examine_prep(){
     echo ""
     echo "Interface List: $INTERFACE_LIST"
     echo ""
+    echo "prep.conf Lock status: $PREP_LOCKED"
+    echo "" 
 }
 _examine_prep "$@"

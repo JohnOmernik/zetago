@@ -4,7 +4,6 @@
 #
 . "$_GO_USE_MODULES" 'getpass'
 
-PREP_CONF="./conf/prep_conf.conf"
 
 echo ""
 echo "-----------------------------------"
@@ -98,6 +97,9 @@ INIT_NODE="$INIT_NODE"
 
 # Interfaces to check for internal IPs (in order)
 INTERFACE_LIST="$INTERFACE_LIST"
+
+# If this is set to 1, scripts will assume "Use" when the conf exists. 
+PREP_LOCKED="0"
 
 EOF
 

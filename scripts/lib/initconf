@@ -1,0 +1,80 @@
+#!/bin/bash
+#
+# This function is a simple tool that will:
+# -Check if a Conf Exists
+#   - If No Call the Conf Creation script
+#   - If Yes then offer the user three option: Replace the conf, Use the existing conf, or examine the conf
+#     - E (Examine) the conf displays the conf to the user and then provides only two options Use the conf or Replace the Conf
+#     - U (Use) the conf will source the conf and move forward
+#     - R Replace the conf will call the creation script and replace the conf in question with the results of the conf creation script
+#
+# There is one argument, the path to the conf.
+#
+
+function initconf(){
+
+    CUR_CONF="$1"
+    CONF_FILE=$(echo "$CUR_CONF"|sed "s@\./conf\/@@g")
+    CONF_CMD=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
+    CONF_VAR=$(echo "$CONF_CMD"|tr '[:lower:]' '[:upper:]')
+    CONF_VARNAME="${CONF_VAR}_LOCKED"
+
+    if [ -f "$CUR_CONF" ]; then
+        . $CUR_CONF
+        eval "CUR_LOCKED=\$${CONF_VARNAME}"
+        if [ "$CUR_LOCKED" != "1" ]; then
+            echo "There is a current $CONF_FILE file already in the conf folder"
+            echo "Do you wish to replace this $CONF_FILE?"
+            read -e -p "(R)eplace, (U)se, or (E)xamine $CONF_FILE? " -i "E" EXIST_PREP
+            if [ "$EXIST_PREP" == "E" ]; then
+                ./zeta $CONF_CMD display
+                echo ""
+                read -e -p "(R)eplace or (U)se existing $CONF_FILE? " -i "U" EXIST_PREP
+            fi
+       else
+            EXIST_PREP="U"
+       fi
+    else
+        EXIST_PREP="R"
+    fi
+
+    if [ "$EXIST_PREP" == "R" ]; then
+        ./zeta ${CONF_CMD} create${CONF_CMD}conf
+    fi
+    . $CUR_CONF
+}
+
+function lockconf(){
+    CUR_CONF="$1"
+    CONF_FILE=$(echo "$CUR_CONF"|sed "s@\./conf\/@@g")
+    CONF_CMD=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
+
+    CURVAR=$(grep "_LOCKED" $CUR_CONF|cut -d"=" -f1)
+    CURVAL=$(grep "_LOCKED" $CUR_CONF|cut -d"=" -f2|sed "s/\"//g")
+
+    echo ""
+    echo "Locking of conf files makes it so when you are running commands, zetago assumes that is the conf you want to use, instead of asking you to use it or replace it"
+    echo "Confs can be locked or unlocked at anytime via the %CONF%_LOCKED variable in each individual conf"
+    echo "For example, if the prep.conf conf was locked, there would be a PREP_LOCKED=\"1\" if it were unlocked it would be PREP_LOCKED=\"0\" (the default)"
+    echo ""
+
+    if [ "$CURVAL" == "1" ]; then
+        echo "Currently, $CUR_CONF is locked, do you wish to unlock it?"
+        read -e -p "Unlock $CUR_CONF? " -i "N" UNLOCK
+    elif [ "$CURVAL" == "0" ]; then
+        echo "Currently, $CUR_CONF is not locked, do you wish to lock it?"
+        read -e -p "Lock $CUR_CONF? " -i "N" LOCK
+    else
+        @go.log WARN "Unknown lock value for $CUR_CONF - $CURVAL"
+    fi
+
+    if [ "$UNLOCK" == "Y" ]; then
+        sed -i "s/$CURVAR=\"$CURVAL\"/$CURVAR=\"0\"/g" $CUR_CONF
+        @go.log INFO "Conf $CUR_CONF is now unlocked"
+    fi
+    if [ "$LOCK" == "Y" ]; then
+        sed -i "s/$CURVAR=\"$CURVAL\"/$CURVAR=\"1\"/g" $CUR_CONF
+        @go.log INFO "Conf $CUR_CONF is now locked"
+    fi
+
+}

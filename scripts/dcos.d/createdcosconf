@@ -2,15 +2,14 @@
 #
 # Create conf file for initial DCOS installation
 #
-PREP_CONF="./conf/prep_conf.conf"
 if [ ! -f "$PREP_CONF" ]; then
     @go.log FATAL "Cannot create DCOS conf without a prep_conf.conf file located at $PREP_CONF - Exiting"
 fi
 . $PREP_CONF
 
 function createdcosconf() {
-    ./zeta 
-
+    echo "Create a Conf for DCOS"
+    touch $DCOS_CONF
 }
 
 
