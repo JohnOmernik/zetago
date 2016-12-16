@@ -1,0 +1,53 @@
+#!/bin/bash
+#
+# Determines prep status of a given node
+#
+
+PREP_CONF="./conf/prep_conf.conf"
+if [ ! -f "$PREP_CONF" ]; then
+    @go.log FATAL "Cannot create users without a prep_conf.conf file located at $PREP_CONF - Exiting"
+fi
+. $PREP_CONF
+
+function prepstatus() {
+    INVAL=$1
+    if [ "$INVAL" == "" ]; then
+        @go.log FATAL "Must provide a host to connect and update"
+    fi
+
+    if [ "$INVAL" == "--all" ]; then
+        MYHOSTS="$NODES"
+    else
+        MYHOSTS="$INVAL"
+    fi
+    for HOST in $MYHOSTS; do
+        TESTVAL=""
+        TESTVAL=$(ssh -i ${OUT_KEY} zetaadm@${HOST} "hostname")
+        if [ "$TESTVAL" != "" ]; then
+            HOSTUP="true"
+            SYS_TYPE=$(ssh -i ${OUT_KEY} zetaadm@${HOST} "/home/zetaadm/system_type.sh")
+            TESTVAL=""
+            TESTVAL=$(ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo whoami")
+            if [ "$TESTVAL" == "root" ]; then
+                SUDOPRIV="true"
+                TESTVAL=""
+                TESTVAL=$(ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo docker info 2> /dev/null")
+                if [ "$TESTVAL" != "" ]; then
+                    DOCKER="true"
+                else
+                    DOCKER="false"
+                fi
+            else
+                SUDOPRIV="false"
+                DOCKER="false"
+            fi
+        else
+            HOSTUP="false"
+            SUDOPRIV="false"
+            DOCKER="false"
+        fi
+        @go.log INFO "Prep Status for $HOST - SYS_TYPE: $SYS_TYPE -  UP: $HOSTUP - SUDO: $SUDOPRIV - DOCKER: $DOCKER"
+    done
+}
+
+prepstatus "$@"

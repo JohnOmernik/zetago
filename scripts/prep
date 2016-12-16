@@ -21,7 +21,8 @@ function _examine_prep(){
         @go.log FATAL "Prep Conf not found at $PREP_CONF - Exiting"
     fi
     . $PREP_CONF
-    echo "Initial User: $INIT_USER"
+    echo ""
+    echo "Initial User LIST: $INIT_USERS"
     echo ""
     echo "Initial Key Location: $INIT_KEY_LOC"
     echo ""
@@ -47,6 +48,7 @@ function _examine_prep(){
 #
 function _prep() {
     ALL=$1
+    ATONCE=$2
 
     if [ -f "$PREP_CONF" ]; then
         echo "There is a current prep_conf.conf file already in the conf folder"
@@ -65,9 +67,21 @@ function _prep() {
         ./zeta prep createprepconf
     fi
     . $PREP_CONF
+    echo ""
+    echo "Commands to use with prep:"
+    echo ""
+    echo "./zeta prep userprep %NODE - Prep user on a specific node"
+    echo "./zeta prep systemprep %NODE - Prep system on a specific node"
+    echo "./zeta prep --all - Prep User and system on all nodes"
+    echo ""
     if [ "$ALL" == "--all" ]; then
         for NODE in $NODES; do
             ./zeta prep userprep $NODE
+            if [ "$ATONCE" == "-p" ]; then
+                ./zeta prep systemprep $NODE -p
+            else
+                ./zeta prep systemprep $NODE
+            fi
         done
         echo "To log into the initial node, please use:"
         echo ""

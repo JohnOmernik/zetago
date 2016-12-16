@@ -6,11 +6,16 @@ cluster.conf*
 **/prep_conf.conf
 **/prep_conf.conf*
 
+bin/*.sh
+
 # No Conf Data
 conf/
 conf/*
 # No Temp data
 tmp/
+
+clearcluster.sh
+
 
 # Any Key files should be ignored
 id_rsa

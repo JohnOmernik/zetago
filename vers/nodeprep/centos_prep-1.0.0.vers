@@ -1,0 +1,93 @@
+#!/bin/bash
+
+DOCKER_VER="1.11.2"
+DOCKER_REPO="https://yum.dockerproject.org/repo/main/centos/7/"
+DOCKER_GPG="https://yum.dockerproject.org/gpg"
+REPO_TOOLS="ipset unzip bc nfs-common syslinux nano git jq"
+
+cat > ./bin/centos_prep1.sh << EOF2
+#!/bin/bash
+
+# Source profile
+. /etc/profile
+
+# Update the Kernel
+sudo rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+
+sudo yum install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm --assumeyes --tolerant
+
+sudo yum --enablerepo=elrepo-kernel install kernel-ml --assumeyes --tolerant
+
+sudo yum upgrade --assumeyes --tolerant
+
+sudo yum update --assumeyes
+
+# Disable selinux
+sudo sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/sysconfig/selinux
+sudo sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config
+# Add Nogroup
+sudo groupadd -g 350 nogroup
+
+MENU_ITM=\$(sudo cat /boot/grub2/grub.cfg|grep "menuentry "|grep -n "Linux .4\."|cut -d":" -f1)
+
+NEWMENU=\$((\$MENU_ITM - 1))
+
+sudo grub2-set-default \$NEWMENU
+
+O_CHECK=\$(lsmod | grep overlay)
+
+if [ "\$O_CHECK" == "" ]; then
+    echo "Overlay not loaded, adding and rebooting"
+sudo tee /etc/modules-load.d/overlay.conf <<-'EOF3'
+overlay
+EOF3
+else
+    echo "Overlay already installed, not rebooting"
+fi
+
+sudo sed -i "s/exit 0//g" /etc/rc.d/rc.local
+echo "/root/scripts/centos_prep2.sh" >> /etc/rc.d/rc.local
+chmod +x /etc/rc.d/rc.local
+sudo shutdown -r now
+EOF2
+
+
+cat > ./bin/centos_prep2.sh << EOF4
+#!/bin/bash
+
+. /etc/profile
+# Add Docker Repo
+sudo tee /etc/yum.repos.d/docker.repo <<-'EOF5'
+[dockerrepo]
+name=Docker Repository
+baseurl=$DOCKER_REPO
+enabled=1
+gpgcheck=1
+gpgkey=$DOCKER_GPG
+EOF5
+
+sudo mkdir -p /etc/systemd/system/docker.service.d && sudo tee /etc/systemd/system/docker.service.d/override.conf <<- EOF6
+[Service]
+ExecStart=
+ExecStart=/usr/bin/docker daemon --storage-driver=overlay --insecure-registry=maprdocker-mapr-shared.marathon.slave.mesos:5000 --insecure-registry=dockerregv2-shared.marathon.slave.mesos:5005 -H fd://
+EOF6
+
+sudo yum install -y docker-engine-$DOCKER_VER
+sudo systemctl start docker
+sudo systemctl enable docker
+
+sudo yum  install -y $REPO_TOOLS
+
+echo ""
+# Check for /mnt in fstab
+CHK=\$(sudo grep "\/mnt" /etc/fstab|cut -f1)
+if [ "\$CHK" != "" ]; then
+    echo "Updating weird mount of /mnt"
+    sudo sed -i "s@\$CHK@#\$CHK@" /etc/fstab
+fi
+echo ""
+sudo sed -i "s@/root/scripts/centos_prep2.sh@exit 0@g" /etc/rc.d/rc.local
+chmod -x /etc/rc.d/rc.local
+echo "Rebooting"
+sudo shutdown -r now
+EOF4

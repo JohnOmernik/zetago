@@ -25,6 +25,17 @@ function userprep() {
         ./zeta prep createuserprep
     fi
     @go.log INFO "Connecing to and updating host $HOST"
+    for IUSER in $INIT_USERS; do
+        OUTTEST=$(ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${IUSER}@${HOST} hostname)
+            if [ "$OUTTEST" != "" ]; then
+                @go.log INFO "Using $IUSER for INIT_USER"
+                INIT_USER="$IUSER"
+                break
+            fi
+    done
+    if [ "$INIT_USER" == "" ]; then
+        @go.log FATAL "Could not determine initial user from this user list: $INIT_USERS - exiting"
+    fi
     echo ""
     echo "Copying User Update Script"
     ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${INIT_USER}@${HOST} "touch $REM_SCRIPT && chmod 700 $REM_SCRIPT"
@@ -41,7 +52,7 @@ function userprep() {
         @go.log INFO "$HOST is the INIT_NODE for the cluster updating this node to have the private keys, as well as this repo under zetaadm"
         echo "Trying to install git on initial host via apt-get install git - This may fail that's ok"
         ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "sudo apt-get update && sudo apt-get install -y git"
-        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "sudo yum update && sudo yum install -y git"
+        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "sudo yum install -y --assumeyes git"
         echo ""
         echo "Pulling this repo to the init node under /home/zetaadm/zetago"
         ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "git clone https://github.com/JohnOmernik/zetago.git && mkdir -p ./zetago/conf && chmod 700 ./zetago/conf"

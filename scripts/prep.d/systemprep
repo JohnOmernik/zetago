@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# Create users on Zeta nodes for initial install
+#
+
+PREP_CONF="./conf/prep_conf.conf"
+if [ ! -f "$PREP_CONF" ]; then
+    @go.log FATAL "Cannot create users without a prep_conf.conf file located at $PREP_CONF - Exiting"
+fi
+. $PREP_CONF
+
+SCRIPTS="./bin/ubuntu_prep.sh ./bin/centos_prep1.sh ./bin/centos_prep2.sh"
+
+FOUND="1"
+for SCRIPT in $SCRIPTS; do
+    if [ ! -f "$SCRIPT" ]; then
+        FOUND="0"
+    fi
+done
+if [ "$FOUND" == "0" ]; then
+    ./zeta prep createprepscripts
+fi
+
+if [ ! -f "$OUT_KEY" ]; then
+    @go.log INFO "Prep conf exists, however, keys have not been generated, doing so now"
+    ./zeta prep genkey
+fi
+
+function systemprep() {
+    HOST=$1
+    ATONCE=$2
+
+    if [ "$HOST" == "" ]; then
+        @go.log FATAL "Must provide a host to connect and update"
+    fi
+
+    @go.log INFO "Connecing to and updating host $HOST"
+
+    scp -o StrictHostKeyChecking=no -i ${OUT_KEY} ./bin/system_type.sh zetaadm@${HOST}:/home/zetaadm/system_type.sh
+    SYS_TYPE=$(ssh -i ${OUT_KEY} zetaadm@${HOST} "/home/zetaadm/system_type.sh")
+    ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo mkdir -p /root/scripts && sudo chown root:root /root/scripts && sudo chmod 700 /root/scripts"
+    @go.log INFO "System Type: $SYS_TYPE - Running Appropriate Scripts"
+    if [ "$SYS_TYPE" == "ubuntu" ]; then
+        scp -i ${OUT_KEY} ./bin/ubuntu_prep.sh zetaadm@${HOST}:/home/zetaadm/ubuntu_prep.sh
+        if [ "$ATONCE" == "-p" ]; then
+            ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo sh -c 'mv /home/zetaadm/ubuntu_prep.sh /root/scripts/; nohup /root/scripts/ubuntu_prep.sh > /dev/null 2>&1 &'"
+        else
+            ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo mv /home/zetaadm/ubuntu_prep.sh /root/scripts/ && sudo /root/scripts/ubuntu_prep.sh"
+        fi
+    elif [ "$SYS_TYPE" == "rh_centos" ]; then
+        scp -i ${OUT_KEY} ./bin/centos_prep1.sh zetaadm@${HOST}:/home/zetaadm/centos_prep1.sh
+        scp -i ${OUT_KEY} ./bin/centos_prep2.sh zetaadm@${HOST}:/home/zetaadm/centos_prep2.sh
+        if [ "$ATONCE" == "-p" ]; then
+            ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo sh -c 'mv /home/zetaadm/centos_prep1.sh /root/scripts/; mv /home/zetaadm/centos_prep2.sh /root/scripts/; nohup /root/scripts/centos_prep1.sh > /dev/null 2>&1 &'"
+        else
+            ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo mv /home/zetaadm/centos_prep1.sh /root/scripts/ && sudo mv /home/zetaadm/centos_prep2.sh /root/scripts/ && sudo /root/scripts/centos_prep1.sh"
+        fi
+    else
+        @go.log ERROR "Unknown System Type: $SYS_TYPE"
+    fi
+}
+
+systemprep "$@"
