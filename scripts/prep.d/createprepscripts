@@ -1,0 +1,65 @@
+#!/bin/bash
+#
+# Creates the scripts needed to update and upgrade the nodes to get ready for a DCOS/Zeta install
+#
+# Arguments: Optional Version of the vers file to use in created update scripts. i.e. if you create scripts from ubuntu_prep-1.0.0.vers pass 1.0.0 to this script 
+#            IF no version is passed, it will prompt the user for a version
+#
+#
+
+
+function createscripts() {
+
+    VERS_VER=$1
+    if [ "$VERS_VER" == "" ]; then
+        echo "We need version files for the update scripts - Please pick a version number to use:"
+        echo ""
+        ls ./vers/nodeprep
+        echo ""
+        echo "Do not enter a filename, just the version to use e.g. 1.0.0"
+        echo ""
+        read -e -p "Enter version for nodeprep: " -i "1.0.0" VERS_VER
+    fi
+
+    if [ ! -f "./vers/nodeprep/ubuntu_prep-${VERS_VER}.vers" ] || [ ! -f "./vers/nodeprep/centos_prep-${VERS_VER}.vers" ]; then
+        @go.log FATAL "Either the ubuntu_prep-${VERS_VER}.vers or center_prep-${VERS_VER}.vers file was not found in ./vers/nodeprep/ cannont continue"
+    fi
+    if [ -f "./bin/ubuntu_prep.sh" ] || [ -f "./bin/centos_prep1.sh" ] || [ -f "./bin/centos_prep2.sh" ]; then
+        echo "Update scripts already exist in ./bin"
+        echo ""
+        read -e -p "Do you wish to replace with rewritten scripts using Version: $VERS_VERS? " -i "N" REPLACE
+        if [ "$REPLACE" != "Y" ]; then
+            @go.log FATAL "Not replacing existing scripts in ./bin - exiting"
+        fi
+    fi
+    @go.log INFO "Creating Ubuntu update script in ./bin/ubuntu_prep.sh"
+    . ./vers/nodeprep/ubuntu_prep-${VERS_VER}.vers
+    chmod +x ./bin/ubuntu_prep.sh
+    @go.log INFO "Create Centos update scripts in ./bin/centos_prep1.sh and ./bin/centos_prep2.sh"
+    . ./vers/nodeprep/centos_prep-${VERS_VER}.vers
+    chmod +x ./bin/centos_prep1.sh
+    chmod +x ./bin/centos_prep2.sh
+
+    @go.log INFO "Creating System Check Scripts in ./bin/system_type.sh"
+cat > ./bin/system_type.sh << EOU
+#!/bin/bash
+
+DIST_CHK=\$(egrep -i -ho 'ubuntu|redhat|centos' /etc/*-release | awk '{print toupper(\$0)}' | sort -u)
+UB_CHK=\$(echo \$DIST_CHK|grep UBUNTU)
+RH_CHK=\$(echo \$DIST_CHK|grep REDHAT)
+CO_CHK=\$(echo \$DIST_CHK|grep CENTOS)
+
+if [ "\$UB_CHK" != "" ]; then
+    INST_TYPE="ubuntu"
+elif [ "\$RH_CHK" != "" ] || [ "\$CO_CHK" != "" ]; then
+    INST_TYPE="rh_centos"
+else
+    INST_TYPE="unknown"
+fi
+echo "\$INST_TYPE"
+EOU
+    chmod +x ./bin/system_type.sh
+
+}
+
+createscripts "$@"

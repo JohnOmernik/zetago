@@ -1,0 +1,68 @@
+#!/bin/bash
+
+DOCKER_VER="1.11.2-0~xenial"
+DOCKER_GPG="58118E89F3A912897C070ADBF76221572C52609D"
+DOCKER_REPO="deb https://apt.dockerproject.org/repo ubuntu-xenial main"
+REPO_TOOLS="ipset unzip bc nfs-common syslinux nano git jq"
+
+cat > ./bin/ubuntu_prep.sh << EOF
+#!/bin/bash
+
+echo "Cleaning rc.local"
+sudo sed -i "s/exit 0//g" /etc/rc.local
+
+echo "Disabling Plymouth"
+echo "/bin/rm -f /etc/init.d/plymouth* > /dev/null 2>&1"  | sudo tee -a /etc/rc.local
+
+# Add Docker Key and Repo
+sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys $DOCKER_GPG
+echo "$DOCKER_REPO"|sudo tee /etc/apt/sources.list.d/docker.list
+
+sudo apt-get update
+
+sudo apt-get upgrade -y -o Dpkg::Options::="--force-confold"
+
+sudo apt-get dist-upgrade -y
+
+sudo apt-get purge lxc-docker
+# Remove command-not-found to speed up shell
+sudo apt-get remove -y command-not-found
+
+#Create Docker conf file to use overlay network
+sudo mkdir -p /etc/systemd/system/docker.service.d && sudo tee /etc/systemd/system/docker.service.d/override.conf <<- EOS
+[Service]
+ExecStart=
+ExecStart=/usr/bin/docker daemon --storage-driver=overlay -H fd://
+EOS
+
+#Install Docker
+sudo apt-get install -y -q docker-engine=$DOCKER_VER
+sudo systemctl enable docker
+
+# Install some common tools
+sudo apt-get install -y $REPO_TOOLS
+
+# Link certain system commands in /bin to /usr/bin for DCOS
+sudo ln -s /bin/mkdir /usr/bin/mkdir
+sudo ln -s /bin/ln /usr/bin/ln
+sudo ln -s /bin/tar /usr/bin/tar
+sudo ln -s /bin/rm /usr/bin/rm
+sudo ln -s /usr/sbin/useradd /usr/bin/useradd
+
+# Update DefaultTasksMax to infinifty for DCOS
+echo "DefaultTasksMax=infinity"|sudo tee -a /etc/systemd/system.conf
+
+
+# Check for /mnt in fstab - This is because sometime Amazon will mount a volumt to /mnt when we don't want it mounted there. 
+CHK=\$(sudo grep "\/mnt" /etc/fstab|cut -f1)
+if [ "\$CHK" != "" ]; then
+    echo "Updating weird mount of /mnt"
+    sudo sed -i "s@\$CHK@#\$CHK@" /etc/fstab
+fi
+
+
+# Now that we have Docker, we are patched, etc, reboot"
+sudo shutdown -r now
+
+EOF
+

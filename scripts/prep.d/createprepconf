@@ -16,9 +16,12 @@ echo "Initial User for Connection to Zeta Cluster"
 echo "We need access to the initial nodes on the Zeta cluster. We do this through a username that has passwordless sudo and a key without a password"
 echo "Once the zeta cluster is created, this user can be deprivileged."
 echo ""
-echo "For example, if this was AWS, and we were using ubuntu based nodes, I'd answer 'ubuntu' for the Initial user"
+echo "We do try to detect this, through a list of users, you can provide a space separated list of users, or take ours as default"
 echo ""
-read -e -p "Initial user to connect to zeta nodes: " -i "ubuntu" INIT_USER
+echo "For example, if this was AWS, and we were using ubuntu based nodes, I'd answer 'ubuntu' for the Initial users"
+echo "If I were using ubuntu and centos I'd provide 'ubuntu centos' for the Intial users"
+echo ""
+read -e -p "Initial user list to connect to zeta nodes: " -i "ubuntu centos ec2-user" INIT_USERS
 echo ""
 echo "We now need the key for the initial connection, this is typically location in /home/$INIT_USER/.ssh/id_rsa, but doesn't have to be. Please specify that here"
 echo ""
@@ -70,7 +73,7 @@ cat > $PREP_CONF << EOF
 # Configuration script for prepping nodes for Zeta Architecture
 
 # INIT_USER is the user to connect to the cluster in order to establish the initial users, and installs for Zeta
-INIT_USER="$INIT_USER"
+INIT_USERS="$INIT_USERS"
 # INIT_KEY_LOC is the location of the SSH private key to connect to the cluster with
 INIT_KEY_LOC="$INIT_KEY_LOC"
 
