@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#
+# Pretty prints the prep_conf.conf file for examination
+#
+PREP_CONF="./conf/prep_conf.conf"
+function _examine_prep(){
+    if [ ! -f "$PREP_CONF" ]; then
+        @go.log FATAL "Prep Conf not found at $PREP_CONF - Exiting"
+    fi
+    . $PREP_CONF
+    echo ""
+    echo "Initial User LIST: $INIT_USERS"
+    echo ""
+    echo "Initial Key Location: $INIT_KEY_LOC"
+    echo ""
+    echo "Key information for zetaadm"
+    echo "Private Key Location: $OUT_KEY"
+    echo "Public Key Location: $OUT_KEY_PUB"
+    echo ""
+    echo "UID for mapr: $MAPR_UID"
+    echo "UID For zetaadm: $ZETAADM_UID"
+    echo ""
+    echo "Passwords not displayed"
+    echo ""
+    echo "Initial Prep Node List: $NODES"
+    echo "Initial main node: $INIT_NODE"
+    echo ""
+    echo "Interface List: $INTERFACE_LIST"
+    echo ""
+}
+_examine_prep "$@"
