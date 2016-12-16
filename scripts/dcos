@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+# dcos - Scripts to stage and use DCOS on a Zeta Cluster
+#
+#
+
+
+function dcos() {
+    @go.log INFO "DCOS"
+
+
+}
+
+dcos "$@"
