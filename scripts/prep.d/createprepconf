@@ -60,8 +60,7 @@ echo "-----------------------------------"
 echo "As we are prepping the nodes, it's helpful to have a list of interfaces to check for the internal IP Address of the nodes. "
 echo "Basically provide a space separated list, and the first interface in that list that returns an IP will be the lucky winner"
 echo ""
-read -e -p "Interface to check list: " -i "eth0 em0" INTERFACE_LIST
-
+read -e -p "Interface to check list: " -i "eth0 em1 eno1 enp2s0 enp3s0 ens192" INTERFACE_LIST
 
 touch $PREP_CONF
 chmod 640 $PREP_CONF
