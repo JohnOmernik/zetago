@@ -62,9 +62,19 @@ echo "First the bootstrap node"
 echo "There needs to be one node where the install files will be located. It will end up being an agent node, but first it needs to be the bootstrap node"
 echo ""
 echo "This is the current node list:"
-echo "$NODES"
 echo ""
-read -e -p "Please enter an IP for the bootstrap node: " BOOTSTRAP_NODE
+for $NODE in $NODES; do
+    scp $IP_DETECT $NODE:/tmp/ip-detect
+    INTERNAL=$(ssh $NODE "/tmp/ip-detect")
+    INIT_N="N"
+    if [ "$NODE" == "$INIT_NODE" ]; then
+        INIT_N="Y"
+    fi
+    echo "Init: $INIT_N - External IP: $NODE - Internal_IP=$INTERNAL"
+done
+echo ""
+echo ""
+read -e -p "Please enter an IP (Internal)for the bootstrap node: " BOOTSTRAP_NODE
 echo ""
 echo -e -p "Please enter the port to run the bootstrap server on, using defaults here is normally ok: " -i "50091 BOOTSTRAP_PORT
 echo ""
@@ -76,7 +86,7 @@ echo "The list of remaining nodes is below, please enter the list of master node
 echo ""
 echo "$REMAINING_NODES"
 echo
-read -e -p "Please enter list of master node(s) using space to separate: " MASTER_NODES
+read -e -p "Please enter list of master node(s) using space to separate (Internal IPS): " MASTER_NODES
 echo ""
 
 echo "Please enter a cluster name - This will match the clustername in MapR as well"
