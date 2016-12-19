@@ -63,7 +63,7 @@ echo "There needs to be one node where the install files will be located. It wil
 echo ""
 echo "This is the current node list:"
 echo ""
-for $NODE in $NODES; do
+for NODE in $NODES; do
     scp $IP_DETECT $NODE:/tmp/ip-detect
     INTERNAL=$(ssh $NODE "/tmp/ip-detect")
     INIT_N="N"
