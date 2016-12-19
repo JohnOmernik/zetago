@@ -38,7 +38,8 @@ function _install() {
             @go.log INFO "Initiating Master install on $NODE"
             EXT_IP=$(ssh -o StrictHostKeyChecking=no $NODE "curl icanhazip.com")
             EXT_MASTERS="${EXT_MASTERS} $EXT_IP"
-            ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && nohup bash dcos_install.sh master > /dev/null 2>&1 &'"
+            ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh"
+            ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'cd /tmp/dcos && nohup bash dcos_install.sh master > /dev/null 2>&1 &'"
         fi
     done
     @go.log INFO "Master Server Install(s) initiated"
@@ -60,7 +61,8 @@ function _install() {
             if [ "$NODE" != "$INIT_INTERNAL_IP" ]; then
                 # Non-bootstrap agent
                 @go.log INFO "Install non-boostrap agent on $NODE"
-                ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && nohup bash dcos_install.sh slave > /dev/null 2>&1 &'"
+                ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh"
+                ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'cd /tmp/dcos && nohup bash dcos_install.sh slave > /dev/null 2>&1 &'"
             else
                 # Bootstrap agent
                 @go.log INFO "Install bootstrap agent on $NODE"

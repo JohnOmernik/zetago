@@ -27,7 +27,7 @@ echo "$INTERFACE_LIST"
 
 cat > $IP_DETECT << EOF
 #!/bin/bash
-
+. /etc/profile
 INTS="$INTERFACE_LIST"
 
 for INT in \$INTS; do
