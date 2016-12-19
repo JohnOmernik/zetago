@@ -1,0 +1,77 @@
+#!/bin/bash
+#
+# Install DCOS DCOS
+# Usage:
+# ./zeta dcos install node1,node2,node3 # Install DCOS on the specified node given the config files. Multiple nodes can be specified with comman. 
+# ./zeta dcos install --all # Install DCOS on all nodes in config files starting with the master nodes and then waiting until the cluster up, moving on to the rest. 
+#
+
+
+if [ ! -f "$PREP_CONF" ]; then
+    @go.log FATAL "Cannot find $PREP_CONF - Exiting"
+fi
+. $PREP_CONF
+
+if [ ! -f "$DCOS_CONF" ]; then
+    @go.log FATAL "Cannot bootstrap DCOS without $DCOS_CONF. Please run ./zeta dcos to create"
+fi
+. $DCOS_CONF
+
+# Install function either takes --all or a Comma delimitted list of nodes to install on 
+fucntion _install() {
+
+    IP_DETECT="./conf/ip-detect"
+
+    ARGVAL="$1"
+    if [ "$ARGVAL" == "--all" ]; then
+        RUN_NODES="$INTERNAL_NODES"
+    else
+        RUN_NODES=$(echo $ARGVAL|tr "," " ")
+    fi
+    # First things first, we need to check if any the nodes that are coming through are master nodes. If it's all, there will obviously be master nodes there. 
+    for NODE in $MASTER_NODES; do
+        if [ "$NODE" =~ "$RUN_NODES" ]; then
+            @go.log INFO "Initiating Master install on $NODE"
+            ssh $NODE "sudo sh -c 'mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && nohup bash dcos_install.sh master > /dev/null 2>&1 &'"
+        fi
+    done
+    @go.log INFO "Master Server Install(s) initiated"
+    echo "Master server installs running, when complete, you will be able to go to any master ip on port 8080 and see DCOS running. Once this is done, press enter to continue (If this is not an initial install, then just press ok)"
+    echo ""
+    echo "Master Addresses:"
+    echo ""
+    for M in $MASTER_NODES; do
+        echo "http://$M:8080"
+    done
+    echo ""
+    read -e -p "DCOS Running and happy: " GOON
+    for NODE in $RUN_NODES; do
+        if [ ! "$NODE" =~ "$MASTER_NODES" ]; then
+            # This is an agent node so install now
+            if [ "$NODE" != "$INIT_INTERNAL_IP" ]; then
+                # Non-bootstrap agent
+                @go.log INFO "Install non-boostrap agent on $NODE"
+                ssh $NODE "sudo sh -c 'mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && nohup bash dcos_install.sh slave > /dev/null 2>&1 &'"
+            else
+                # Bootstrap agent
+                @go.log INFO "Install bootstrap agent on $NODE"
+                ssh $NODE "sudo sh -c 'mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && sed -i \"s/systemctl restart docker/# systemctl restart docker/\" && nohup bash dcos_install.sh slave > /dev/null 2>&1 &'"
+            fi
+        fi
+    done
+    @go.log INFO "DCOS Agents Installed"
+
+
+}
+
+_install "$@"
+
+
+
+
+scp /tmp/config.yaml $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
+rm /tmp/config.yaml
+
+ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && sudo docker pull nginx && curl -O https://downloads.dcos.io/dcos/stable/dcos_generate_config.sh && sudo bash dcos_generate_config.sh && sudo docker run -d -p ${BOOTSTRAP_PORT}:80 -v ${BOOTSTRAP_LOC}/genconf/serve:/usr/share/nginx/html:ro nginx"
+
+@go.log INFO "Bootstrap is running and available at http://$BOOTSTRAP_NODE:$BOOTSTRAP_PORT"

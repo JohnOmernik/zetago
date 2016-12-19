@@ -77,13 +77,13 @@ for NODE in $NODES; do
 
     if [ "$NODE" == "$INIT_NODE" ]; then
         INIT_N="Y"
-        INIT_IP="$INTERNAL"
+        INIT_INTERNAL_IP="$INTERNAL"
     fi
     echo "Init: $INIT_N - External IP: $NODE - Internal_IP: $INTERNAL"
 done
 echo ""
 echo ""
-read -e -p "Please enter an IP (Internal) for the bootstrap node (default is init_node): " -i "$INIT_IP" BOOTSTRAP_NODE
+read -e -p "Please enter an IP (Internal) for the bootstrap node (default is init_node): " -i "$INIT_INTERNAL_IP" BOOTSTRAP_NODE
 echo ""
 read -e -p "Please enter the port to run the bootstrap server on, using defaults here is normally ok: " -i "50091" BOOTSTRAP_PORT
 echo ""
@@ -120,6 +120,9 @@ BOOTSTRAP_PORT="$BOOTSTRAP_PORT"
 BOOTSTRAP_LOC="/home/zetaadm/dcos_bootstrap"
 DNS_RESOLVERS="$DNS_RESOLVERS"
 DNS_SEARCH="$DNS_SEARCH"
+INTERNAL_NODES="$INTERNAL_NODES"
+INIT_INTERNAL_IP="$INIT_INTERNAL_IP"
+
 
 
 EOP
