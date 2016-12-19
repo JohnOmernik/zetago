@@ -30,21 +30,26 @@ function _install() {
         RUN_NODES=$(echo $ARGVAL|tr "," " ")
     fi
     # First things first, we need to check if any the nodes that are coming through are master nodes. If it's all, there will obviously be master nodes there. 
+    EXT_MASTERS=""
     for NODE in $MASTER_NODES; do
         @go.log WARN "Run Nodes: $RUN_NODES"
         @go.log WARN "Node: $NODE"
         if [[ "$RUN_NODES" == *"$NODE"* ]]; then
             @go.log INFO "Initiating Master install on $NODE"
+            EXT_IP=$(ssh -o StrictHostKeyChecking=no $NODE "curl icanhazip.com")
+            EXT_MASTERS="${EXT_MASTERS} $EXT_IP"
             ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && nohup bash dcos_install.sh master > /dev/null 2>&1 &'"
         fi
     done
     @go.log INFO "Master Server Install(s) initiated"
-    echo "Master server installs running, when complete, you will be able to go to any master ip on port 8080 and see DCOS running. Once this is done, press enter to continue (If this is not an initial install, then just press ok)"
+    echo "Master server installs running, when complete, you will be able to go to any master ip on port 80 and see DCOS running. Once this is done, press enter to continue (If this is not an initial install, then just press ok)"
     echo ""
     echo "Master Addresses:"
     echo ""
-    for M in $MASTER_NODES; do
-        echo "http://$M:8080"
+    for M in $EXT_MASTERS; do
+        if [ "$M" != "" ]; then
+            echo "http://$M:"
+        fi
     done
     echo ""
     read -e -p "DCOS Running and happy: " GOON
@@ -58,7 +63,8 @@ function _install() {
             else
                 # Bootstrap agent
                 @go.log INFO "Install bootstrap agent on $NODE"
-                ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && sed -i \"s/systemctl restart docker/# systemctl restart docker/\" && nohup bash dcos_install.sh slave > /dev/null 2>&1 &'"
+                ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && sed -i \"s/systemctl restart docker/# systemctl restart docker/\" dcos_install.sh"
+                ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'cd /tmp/dcos && nohup bash dcos_install.sh slave > /dev/null 2>&1 &'"
             fi
         fi
     done
@@ -69,12 +75,3 @@ function _install() {
 
 _install "$@"
 
-
-
-
-scp /tmp/config.yaml $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
-rm /tmp/config.yaml
-
-ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && sudo docker pull nginx && curl -O https://downloads.dcos.io/dcos/stable/dcos_generate_config.sh && sudo bash dcos_generate_config.sh && sudo docker run -d -p ${BOOTSTRAP_PORT}:80 -v ${BOOTSTRAP_LOC}/genconf/serve:/usr/share/nginx/html:ro nginx"
-
-@go.log INFO "Bootstrap is running and available at http://$BOOTSTRAP_NODE:$BOOTSTRAP_PORT"
