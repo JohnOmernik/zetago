@@ -63,10 +63,10 @@ echo "There needs to be one node where the install files will be located. It wil
 echo ""
 echo "This is the current node list:"
 echo ""
+INTERNAL_NODES=""
 for NODE in $NODES; do
     scp -o StrictHostKeyChecking=no $IP_DETECT $NODE:/tmp/ip-detect 2&> /dev/null
     INTERNAL=$(ssh -o StrictHostKeyChecking=no $NODE "/tmp/ip-detect")
-    INTERNAL_NODES=""
     INIT_N="N"
     if [ "$INTERNAL_NODES" == "" ]; then
        INTERNAL_NODES=""
