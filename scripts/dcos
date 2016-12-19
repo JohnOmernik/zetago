@@ -40,7 +40,7 @@ function _dcos() {
     echo ""
     echo "Commands to use with dcos:"
     echo ""
-    echo "./zeta dcos boostrap - Create DCOS config and bootstrap on bootstrap node"
+    echo "./zeta dcos bootstrap - Create DCOS config and bootstrap on bootstrap node"
     echo "./zeta dcos install %NODE - Install DCOS on %NODE given dcos.conf"
     echo "./zeta dcos install --all - Install DCOS on all nodes listed in dcos.conf"
     echo "./zeta dcos -l|--lockconf Lock dcos.conf file"
