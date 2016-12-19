@@ -64,7 +64,7 @@ echo ""
 echo "This is the current node list:"
 echo ""
 for NODE in $NODES; do
-    scp -o StrictHostKeyChecking=no $IP_DETECT $NODE:/tmp/ip-detect 2> /dev/null
+    scp -o StrictHostKeyChecking=no $IP_DETECT $NODE:/tmp/ip-detect 2&> /dev/null
     INTERNAL=$(ssh -o StrictHostKeyChecking=no $NODE "/tmp/ip-detect")
     INIT_N="N"
     if [ "$NODE" == "$INIT_NODE" ]; then
