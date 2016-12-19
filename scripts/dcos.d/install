@@ -17,8 +17,9 @@ if [ ! -f "$DCOS_CONF" ]; then
 fi
 . $DCOS_CONF
 
-# Install function either takes --all or a Comma delimitted list of nodes to install on 
-fucntion _install() {
+# Install function either takes --all or a Comma delimitted list of nodes to install on
+
+function _install() {
 
     IP_DETECT="./conf/ip-detect"
 
