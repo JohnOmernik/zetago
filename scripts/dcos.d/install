@@ -31,6 +31,8 @@ function _install() {
     fi
     # First things first, we need to check if any the nodes that are coming through are master nodes. If it's all, there will obviously be master nodes there. 
     for NODE in $MASTER_NODES; do
+        @go.log DEBUG "Run Nodes: $RUN_NODES"
+        @go.log DEBUG "Node: $NODE"
         if [[ "$NODE" =~ "$RUN_NODES" ]]; then
             @go.log INFO "Initiating Master install on $NODE"
             ssh $NODE "sudo sh -c 'mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && nohup bash dcos_install.sh master > /dev/null 2>&1 &'"
