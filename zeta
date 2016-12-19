@@ -2,6 +2,20 @@
 
 declare -r __GO_CORE="${0%/*}/scripts/go-script-bash/go-core.bash"
 
+BASE_CONF="./conf/base.conf"
+
+if [ ! -f "$BASE_CONF" ]; then
+    echo "Createing Initial Confing in $BASE_CONF"
+cat > $BASE_CONF << EOF
+#!/bin/bash
+
+PREP_CONF="./conf/prep.conf"
+DCOS_CONF="./conf/dcos.conf"
+CLUSTER_CONF="./conf/cluster.conf"
+EOF
+fi
+. $BASE_CONF
+
 if [[ ! -f "$__GO_CORE" ]]; then
   git submodule update --init
 fi

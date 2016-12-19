@@ -4,7 +4,6 @@
 #
 . "$_GO_USE_MODULES" 'getpass'
 
-PREP_CONF="./conf/prep_conf.conf"
 
 echo ""
 echo "-----------------------------------"
@@ -61,8 +60,7 @@ echo "-----------------------------------"
 echo "As we are prepping the nodes, it's helpful to have a list of interfaces to check for the internal IP Address of the nodes. "
 echo "Basically provide a space separated list, and the first interface in that list that returns an IP will be the lucky winner"
 echo ""
-read -e -p "Interface to check list: " -i "eth0 em0" INTERFACE_LIST
-
+read -e -p "Interface to check list: " -i "eth0 em1 eno1 enp2s0 enp3s0 ens192" INTERFACE_LIST
 
 touch $PREP_CONF
 chmod 640 $PREP_CONF
@@ -98,6 +96,9 @@ INIT_NODE="$INIT_NODE"
 
 # Interfaces to check for internal IPs (in order)
 INTERFACE_LIST="$INTERFACE_LIST"
+
+# If this is set to 1, scripts will assume "Use" when the conf exists. 
+PREP_LOCKED="0"
 
 EOF
 

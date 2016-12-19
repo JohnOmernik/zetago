@@ -3,9 +3,8 @@
 # Determines prep status of a given node
 #
 
-PREP_CONF="./conf/prep_conf.conf"
 if [ ! -f "$PREP_CONF" ]; then
-    @go.log FATAL "Cannot create users without a prep_conf.conf file located at $PREP_CONF - Exiting"
+    @go.log FATAL "Cannot create users without a prep.conf file located at $PREP_CONF - Exiting"
 fi
 . $PREP_CONF
 

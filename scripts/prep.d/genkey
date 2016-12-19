@@ -3,7 +3,6 @@
 # Generates a Key to use for Zeta
 #
 #
-PREP_CONF="./conf/prep_conf.conf"
 
 . $PREP_CONF
 if [ "$GEN_KEY" == "Y" ]; then

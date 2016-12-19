@@ -1,0 +1,124 @@
+#!/bin/bash
+#
+# Create conf file for initial DCOS installation
+#
+if [ ! -f "$PREP_CONF" ]; then
+    @go.log FATAL "Cannot create DCOS conf without a prep.conf file located at $PREP_CONF - Exiting"
+fi
+. $PREP_CONF
+
+. "$_GO_USE_MODULES" 'getpass'
+
+IP_DETECT="./conf/ip-detect"
+
+echo ""
+echo "-----------------------------------"
+echo "This process will ask a series of questions in order to create a dcos.conf script for gettings nodes ready for Zeta"
+echo "The configuration will be located: $DCOS_CONF"
+echo "-----------------------------------"
+echo ""
+echo "ip-detect"
+echo "---------"
+echo "DCOS and zeta itself requires that each node provide an IP address using a predictable interface"
+echo "To that end, this creates a ip-detect script that should work to pull that IP address"
+echo "This script is located at $IP_DETECT and uses the following list to walk through interfaces, the first one not being blank it returns:"
+echo ""
+echo "$INTERFACE_LIST"
+
+cat > $IP_DETECT << EOF
+#!/bin/bash
+. /etc/profile
+INTS="$INTERFACE_LIST"
+
+for INT in \$INTS; do
+#    echo "Interface: \$INT"
+    T=\$(ip addr|grep "\$INT")
+    if [ "\$T" != "" ]; then
+        MEIP=\$(ip addr show \$INT | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
+        echo \$MEIP
+        break
+    fi
+done
+EOF
+chmod +x $IP_DETECT
+echo "Running it on this node, ip-detect prodices this as a result:"
+echo ""
+$IP_DETECT
+echo ""
+echo "If nothing is returned, or the returned result is incorrect, please edit $IP_DETECT manually, if this is not working, Zeta install will fail"
+echo ""
+echo ""
+echo "---------------------------------------------"
+echo "config.yaml"
+echo "This next section will create a config.yaml for the DCOS install"
+echo ""
+echo "First the bootstrap node"
+echo "There needs to be one node where the install files will be located. It will end up being an agent node, but first it needs to be the bootstrap node"
+echo ""
+echo "This is the current node list:"
+echo ""
+INTERNAL_NODES=""
+for NODE in $NODES; do
+    scp -o StrictHostKeyChecking=no $IP_DETECT $NODE:/tmp/ip-detect > /dev/null 2>&1
+    INTERNAL=$(ssh -o StrictHostKeyChecking=no $NODE "/tmp/ip-detect")
+    INIT_N="N"
+    if [ "$INTERNAL_NODES" == "" ]; then
+       INTERNAL_NODES=""
+    else
+       INTERNAL_NODES="${INTERNAL_NODES} "
+    fi
+    INTERNAL_NODES="${INTERNAL_NODES}${INTERNAL}"
+
+    if [ "$NODE" == "$INIT_NODE" ]; then
+        INIT_N="Y"
+        INIT_INTERNAL_IP="$INTERNAL"
+    fi
+    echo "Init: $INIT_N - External IP: $NODE - Internal_IP: $INTERNAL"
+done
+echo ""
+echo ""
+read -e -p "Please enter an IP (Internal) for the bootstrap node (default is init_node): " -i "$INIT_INTERNAL_IP" BOOTSTRAP_NODE
+echo ""
+read -e -p "Please enter the port to run the bootstrap server on, using defaults here is normally ok: " -i "50091" BOOTSTRAP_PORT
+echo ""
+echo ""
+echo "Next is the list of master nodes:"
+REMAINING_NODES=$(echo "$INTERNAL_NODES"|sed "s/$BOOTSTRAP_NODE//g")
+echo "Picking an odd number of nodes is best. 1 for a test cluster. 3 For decent size clusters, 5 for large installations. This is difficult to change at a later time, 3 should be suffcient for most things"
+echo "The list of remaining nodes is below, please enter the list of master nodes, separated by spaces"
+echo ""
+echo "$REMAINING_NODES"
+echo
+read -e -p "Please enter list of master node(s) using space to separate (Internal IPS): " MASTER_NODES
+echo ""
+
+echo "Please enter a cluster name - This will match the clustername in MapR as well"
+echo ""
+read -e -p "Cluster name: " -i "mydcos" CLUSTERNAME
+echo ""
+echo "DNS Resolution"
+echo "This is needed for external DNS resolution, defaults are examples from an AWS region, please enure the resolve it correct for your installation"
+echo ""
+read -e -p "Space separated list of DNS resolver IPs: " -i "172.31.0.2" DNS_RESOLVERS
+echo ""
+read -e -p "DNS Search base: " -i "us-west-2.compute.internal" DNS_SEARCH
+echo ""
+
+cat > $DCOS_CONF << EOP
+#!/bin/bash
+
+CLUSTERNAME="$CLUSTERNAME"
+MASTER_NODES="$MASTER_NODES"
+BOOTSTRAP_NODE="$BOOTSTRAP_NODE"
+BOOTSTRAP_PORT="$BOOTSTRAP_PORT"
+BOOTSTRAP_LOC="/home/zetaadm/dcos_bootstrap"
+DNS_RESOLVERS="$DNS_RESOLVERS"
+DNS_SEARCH="$DNS_SEARCH"
+INTERNAL_NODES="$INTERNAL_NODES"
+INIT_INTERNAL_IP="$INIT_INTERNAL_IP"
+DCOS_LOCKED="1"
+
+
+EOP
+
+

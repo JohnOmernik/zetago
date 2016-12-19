@@ -3,9 +3,8 @@
 # Create users on Zeta nodes for initial install
 #
 
-PREP_CONF="./conf/prep_conf.conf"
 if [ ! -f "$PREP_CONF" ]; then
-    @go.log FATAL "Cannot create users without a prep_conf.conf file located at $PREP_CONF - Exiting"
+    @go.log FATAL "Cannot create users without a prep.conf file located at $PREP_CONF - Exiting"
 fi
 . $PREP_CONF
 
@@ -58,7 +57,7 @@ function userprep() {
         ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "git clone https://github.com/JohnOmernik/zetago.git && mkdir -p ./zetago/conf && chmod 700 ./zetago/conf"
         scp -o StrictHostKeyChecking=no -i ${OUT_KEY} ${OUT_KEY} zetaadm@${HOST}:/home/zetaadm/.ssh/id_rsa
         ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "chmod 600 /home/zetaadm/.ssh/id_rsa"
-        scp -o StrictHostKeyChecking=no -i ${OUT_KEY} $PREP_CONF zetaadm@${HOST}:/home/zetaadm/zetago/conf/prep_conf.conf
+        scp -o StrictHostKeyChecking=no -i ${OUT_KEY} $PREP_CONF zetaadm@${HOST}:/home/zetaadm/zetago/conf/prep.conf
     fi
 
     #echo "Getting internal IP Address"
