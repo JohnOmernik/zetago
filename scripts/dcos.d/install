@@ -31,9 +31,9 @@ function _install() {
     fi
     # First things first, we need to check if any the nodes that are coming through are master nodes. If it's all, there will obviously be master nodes there. 
     for NODE in $MASTER_NODES; do
-        @go.log DEBUG "Run Nodes: $RUN_NODES"
-        @go.log DEBUG "Node: $NODE"
-        if [[ "$NODE" =~ "$RUN_NODES" ]]; then
+        @go.log WARN "Run Nodes: $RUN_NODES"
+        @go.log WARN "Node: $NODE"
+        if [ "$RUN_NODES" == *"$NODE"* ]; then
             @go.log INFO "Initiating Master install on $NODE"
             ssh $NODE "sudo sh -c 'mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && nohup bash dcos_install.sh master > /dev/null 2>&1 &'"
         fi
@@ -49,7 +49,7 @@ function _install() {
     echo ""
     read -e -p "DCOS Running and happy: " GOON
     for NODE in $RUN_NODES; do
-        if [[ ! "$NODE" =~ "$MASTER_NODES" ]]; then
+        if [ ! "$MASTER_NODES" == *"$NODE"* ]; then
             # This is an agent node so install now
             if [ "$NODE" != "$INIT_INTERNAL_IP" ]; then
                 # Non-bootstrap agent
