@@ -48,7 +48,8 @@ function _install() {
     echo ""
     for M in $EXT_MASTERS; do
         if [ "$M" != "" ]; then
-            echo "http://$M:"
+            echo "DCOS: http://$M"
+            echo "DCOS Exibitor: http://$M:8181"
         fi
     done
     echo ""

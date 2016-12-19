@@ -25,7 +25,7 @@ echo "This script is located at $IP_DETECT and uses the following list to walk t
 echo ""
 echo "$INTERFACE_LIST"
 
-cat > ./conf/ip-detect << EOF
+cat > $IP_DETECT << EOF
 #!/bin/bash
 
 INTS="$INTERFACE_LIST"
@@ -59,7 +59,7 @@ echo "This is the current node list:"
 echo ""
 INTERNAL_NODES=""
 for NODE in $NODES; do
-    scp -o StrictHostKeyChecking=no $IP_DETECT $NODE:/tmp/ip-detect 2&> /dev/null
+    scp -o StrictHostKeyChecking=no $IP_DETECT $NODE:/tmp/ip-detect > /dev/null 2>&1
     INTERNAL=$(ssh -o StrictHostKeyChecking=no $NODE "/tmp/ip-detect")
     INIT_N="N"
     if [ "$INTERNAL_NODES" == "" ]; then
@@ -116,7 +116,7 @@ DNS_RESOLVERS="$DNS_RESOLVERS"
 DNS_SEARCH="$DNS_SEARCH"
 INTERNAL_NODES="$INTERNAL_NODES"
 INIT_INTERNAL_IP="$INIT_INTERNAL_IP"
-
+DCOS_LOCKED="1"
 
 
 EOP
