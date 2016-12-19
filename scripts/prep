@@ -27,11 +27,6 @@ function _prep() {
     LOCK="0"
     UNLOCK="0"
 
-    ME="0"
-    WEE="0"
-    DS="0"
-
-
     for i in "$@"
     do
     case $i in
