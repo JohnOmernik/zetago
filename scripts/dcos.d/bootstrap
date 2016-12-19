@@ -7,7 +7,7 @@ if [ ! -f "$PREP_CONF" ]; then
 fi
 . $PREP_CONF
 
-if [ ! -f "$DCOS_CONF"" ]; then 
+if [ ! -f "$DCOS_CONF" ]; then
     @go.log FATAL "Cannot bootstrap DCOS without $DCOS_CONF. Please run ./zeta dcos to create"
 fi
 . $DCOS_CONF
