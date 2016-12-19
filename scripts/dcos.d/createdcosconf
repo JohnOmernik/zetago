@@ -85,7 +85,7 @@ echo ""
 echo ""
 read -e -p "Please enter an IP (Internal) for the bootstrap node (default is init_node): " -i "$INIT_IP" BOOTSTRAP_NODE
 echo ""
-echo -e -p "Please enter the port to run the bootstrap server on, using defaults here is normally ok: " -i "50091" BOOTSTRAP_PORT
+read -e -p "Please enter the port to run the bootstrap server on, using defaults here is normally ok: " -i "50091" BOOTSTRAP_PORT
 echo ""
 echo ""
 echo "Next is the list of master nodes:"
