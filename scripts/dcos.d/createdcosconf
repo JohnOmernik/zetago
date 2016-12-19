@@ -3,7 +3,7 @@
 # Create conf file for initial DCOS installation
 #
 if [ ! -f "$PREP_CONF" ]; then
-    @go.log FATAL "Cannot create DCOS conf without a prep_conf.conf file located at $PREP_CONF - Exiting"
+    @go.log FATAL "Cannot create DCOS conf without a prep.conf file located at $PREP_CONF - Exiting"
 fi
 . $PREP_CONF
 
@@ -36,7 +36,7 @@ cat > ./conf/ip-detect << EOF
 
 INTS="$INTERFACE_LIST"
 
-for INT in $INTS; do
+for INT in \$INTS; do
 #    echo "Interface: \$INT"
     T=\$(ip addr|grep "\$INT")
     if [ "\$T" != "" ]; then
@@ -62,7 +62,7 @@ echo "First the bootstrap node"
 echo "There needs to be one node where the install files will be located. It will end up being an agent node, but first it needs to be the bootstrap node"
 echo ""
 echo "This is the current node list:"
-echo "NODES"
+echo "$NODES"
 echo ""
 read -e -p "Please enter an IP for the bootstrap node: " BOOTSTRAP_NODE
 echo ""

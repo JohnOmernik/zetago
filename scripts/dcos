@@ -49,7 +49,7 @@ function _dcos() {
 
 
     if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then
-       lockconf "$PREP_CONF"
+       lockconf "$DCOS_CONF"
     fi
 
 }
