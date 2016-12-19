@@ -24,17 +24,17 @@ for MASTER in $MASTER_NODES; do
     else
         MASTERS="${MASTERS}"$'\n'
     fi
-    MASTERS="${MASTERS}- $S"
+    MASTERS="${MASTERS}- $MASTER"
 done
 
 RESOLVERS=""
 for RESOLVER in $DNS_RESOLVERS; do
-    if [ "$RESOLVERSS" = "" ]; then
+    if [ "$RESOLVERS" = "" ]; then
         RESOLVERS=""
     else
         RESOLVERS="${RESOLVERS}"$'\n'
     fi
-    RESOLVERS="${RESOLVERS}- $S"
+    RESOLVERS="${RESOLVERS}- $RESOLVER"
 done
 
 
