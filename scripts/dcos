@@ -5,7 +5,7 @@
 #
 
 . "$_GO_USE_MODULES" 'initconf'
-
+. $PREP_CONF
 function _dcos() {
 
     LOCK="0"
