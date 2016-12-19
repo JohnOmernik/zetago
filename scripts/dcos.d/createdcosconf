@@ -66,21 +66,29 @@ echo ""
 for NODE in $NODES; do
     scp -o StrictHostKeyChecking=no $IP_DETECT $NODE:/tmp/ip-detect 2&> /dev/null
     INTERNAL=$(ssh -o StrictHostKeyChecking=no $NODE "/tmp/ip-detect")
+    INTERNAL_NODES=""
     INIT_N="N"
     if [ "$NODE" == "$INIT_NODE" ]; then
+        if [ "$INTERNAL_NODES" == "" ]; then
+            INTERNAL_NODES=""
+        else
+            INTERNAL_NODES="${INTERNAL_NODES} "
+        fi
+        INTERNAL_NODES="${INTERNAL_NODES}${INTERNAL}"
         INIT_N="Y"
+        INIT_IP="$INTERNAL"
     fi
     echo "Init: $INIT_N - External IP: $NODE - Internal_IP: $INTERNAL"
 done
 echo ""
 echo ""
-read -e -p "Please enter an IP (Internal)for the bootstrap node: " BOOTSTRAP_NODE
+read -e -p "Please enter an IP (Internal) for the bootstrap node (default is init_node): " -i "$INIT_IP" BOOTSTRAP_NODE
 echo ""
 echo -e -p "Please enter the port to run the bootstrap server on, using defaults here is normally ok: " -i "50091 BOOTSTRAP_PORT
 echo ""
 echo ""
 echo "Next is the list of master node(s):"
-REMAINING_NODES=$(echo "$NODES"|sed "s/$BOOTSTRAP_NODE//g")
+REMAINING_NODES=$(echo "$INTERNAL_NODES"|sed "s/$BOOTSTRAP_NODE//g")
 echo "Picking an odd number of nodes is best. 1 for a test cluster. 3 For decent size clusters, 5 for large installations. This is difficult to change at a later time, 3 should be suffcient for most things"
 echo "The list of remaining nodes is below, please enter the list of master nodes, separated by spaces"
 echo ""
