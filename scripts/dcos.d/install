@@ -21,6 +21,15 @@ function _install() {
     else
         RUN_NODES=$(echo $ARGVAL|tr "," " ")
     fi
+
+    BSTEST=$(curl -s http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT})
+
+    if [ "$BSTEST" == "" ]; then
+        @go.log FATAL "Bootstrap node does not appear up or is inaccessible at http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}
+    fi
+
+
+
     # First things first, we need to check if any the nodes that are coming through are master nodes. If it's all, there will obviously be master nodes there. 
     EXT_MASTERS=""
     for NODE in $MASTER_NODES; do
@@ -46,7 +55,15 @@ function _install() {
         fi
     done
     echo ""
-    read -e -p "DCOS Running and happy: " GOON
+
+    DCOSTEST=""
+    while [ "$DCOSTEST" == "" ]; do
+        sleep 10
+        MASTERIP=$(echo "$MASTER_NODES"|cut -d" " -f1)
+        DCOSTEST=$(curl -s http://$MASTERIP)
+        @go.log INFO "Waiting 10 seconds to check for presense of master DCOS running at http://$MASTERIP"
+    done
+
     for NODE in $RUN_NODES; do
         if [[ "$MASTER_NODES" != *"$NODE"* ]]; then
             # This is an agent node so install now
