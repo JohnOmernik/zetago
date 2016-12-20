@@ -11,7 +11,7 @@ sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
 function _zetaca_build () {
-    if [ ! -f "./vers/zetava/$ZETACA_VERS" ]; then
+    if [ ! -f "./vers/zetaca/$ZETACA_VERS" ]; then
         @go.log FATAL "Cannot find conf specified vers file: $ZETACA_VERS - Exiting"
     fi
     . ./vers/zetaca/$ZETACA_VERS
