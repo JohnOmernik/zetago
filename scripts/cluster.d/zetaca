@@ -40,9 +40,11 @@ function _zetaca() {
     echo "That should be: $INIT_NODE"
     echo "********************************"
     echo ""
-    echo "Commands to use with cluster:"
-    echo "./zeta cluster zetaca -l|--lockconf Lock cluster.conf file"
-    echo "./zeta cluster zetaca -u|--unlockconf Unlock cluster.conf file"
+    echo "Commands to use with cluster zetaca:"
+    echo ""
+    echo "./zeta cluster zetaca build - Build the Zetaca Docker container based on conf file"
+    echo "./zeta cluster zetaca -l|--lockconf - Lock cluster.conf file"
+    echo "./zeta cluster zetaca -u|--unlockconf - Unlock cluster.conf file"
     echo ""
 
 
