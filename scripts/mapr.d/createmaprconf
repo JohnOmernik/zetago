@@ -8,7 +8,7 @@ sourceconf "$DCOS_CONF"
 
 IP_DETECT="./conf/ip-detect"
 
-if [ ! -f "$IP_DETECT" ];
+if [ ! -f "$IP_DETECT" ]; then
     @go.log FATAL "The ip-detect script should be located at $IP_DETECT but was not found. exiting"
 fi
 

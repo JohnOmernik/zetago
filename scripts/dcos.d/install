@@ -61,7 +61,7 @@ function _install() {
         sleep 10
         MASTERIP=$(echo "$MASTER_NODES"|cut -d" " -f1)
         DCOSTEST=$(curl -s http://$MASTERIP)
-        @go.log INFO "Waiting 10 seconds to check for presense of master DCOS running at http://$MASTERIP"
+        @go.log INFO "Waiting 10 seconds to check for presense of master DCOS running at http://$MASTERIP (Internal address)"
     done
 
     for NODE in $RUN_NODES; do
