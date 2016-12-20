@@ -2,12 +2,8 @@
 #
 # Create conf file for initial DCOS installation
 #
-if [ ! -f "$PREP_CONF" ]; then
-    @go.log FATAL "Cannot create DCOS conf without a prep.conf file located at $PREP_CONF - Exiting"
-fi
-. $PREP_CONF
 
-. "$_GO_USE_MODULES" 'getpass'
+sourceconf "$PREP_CONF"
 
 IP_DETECT="./conf/ip-detect"
 
@@ -104,6 +100,21 @@ echo ""
 read -e -p "DNS Search base: " -i "us-west-2.compute.internal" DNS_SEARCH
 echo ""
 
+AGENT_NODES=""
+for N in $INTERNAL_NODES; do
+    if [[ "$N" == *"$MASTER_NODES"* ]]; then
+        T=$N
+    else
+        if [ "$AGENT_NODES" == "" ]; then
+            AGENT_NODES="$N"
+        else
+            AGENT_NODES="${AGENT_NODES} $N"
+        fi
+    fi
+done
+
+
+
 cat > $DCOS_CONF << EOP
 #!/bin/bash
 
@@ -115,6 +126,7 @@ BOOTSTRAP_LOC="/home/zetaadm/dcos_bootstrap"
 DNS_RESOLVERS="$DNS_RESOLVERS"
 DNS_SEARCH="$DNS_SEARCH"
 INTERNAL_NODES="$INTERNAL_NODES"
+AGENT_NODES="$AGENT_NODES"
 INIT_INTERNAL_IP="$INIT_INTERNAL_IP"
 DCOS_LOCKED="1"
 

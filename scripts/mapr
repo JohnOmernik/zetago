@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+# mapr - Scripts to stage and run MapR on a DCOS cluster for Zeta
+#
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+
+function _mapr() {
+
+    LOCK="0"
+    UNLOCK="0"
+
+    for i in "$@"
+    do
+    case $i in
+        -u|--unlockconf)
+        UNLOCK="1"
+        ;;
+        -l|--lockconf)
+        LOCK="1"
+        ;;
+        *)
+            # unknown option
+        ;;
+    esac
+    done
+
+    if [ "$UNLOCK" == "1" ] && [ "$LOCK" == "1" ]; then
+        @go.log FATAL "Both Lock (-l) and Unlock (-u) cannot be specified at the same time"
+    fi
+
+    initconf "$MAPR_CONF"
+
+    initconf "$CLUSTER_CONF"
+
+    echo ""
+    echo "********************************"
+    echo "Scripts should now be run on cluster"
+    echo "That should be: $INIT_NODE"
+    echo "********************************"
+    echo ""
+    echo "Commands to use with mapr:"
+    echo ""
+    echo "./zeta mapr install --all - Install all MapR components based on mapr.conf"
+    echo "./zeta mapr installca - Install the Zeta CA for use with MapR services"
+    echo "./zeta mapr installregistry - Install the mapr docker registry"
+    echo "./zeta mapr buildzkimage - Build the MapR ZK image"
+    echo "./zeta mapr buildmaprimage - Build the MapR MapR image"
+    echo "./zeta mapr runzkimage - Deploy and run the ZK image on all nodes per the mapr.conf file"
+    echo "./zeta mapr runmaprimage - Deploy and run the MapR image on all nodes per the mapr.conf file"
+    echo "./zeta mapr installmapr - Deplay MapR to a new node (after initial install)"
+    echo "./zeta mapr -l|--lockconf Lock mapr.conf file"
+    echo "./zeta mapr -u|--unlockconf Unlock mapr.conf file"
+    echo ""
+
+
+    if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then
+       lockconf "$MAPR_CONF"
+    fi
+
+}
+
+_mapr "$@"
+

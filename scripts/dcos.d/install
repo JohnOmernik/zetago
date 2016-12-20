@@ -6,16 +6,8 @@
 # ./zeta dcos install --all # Install DCOS on all nodes in config files starting with the master nodes and then waiting until the cluster up, moving on to the rest. 
 #
 
-
-if [ ! -f "$PREP_CONF" ]; then
-    @go.log FATAL "Cannot find $PREP_CONF - Exiting"
-fi
-. $PREP_CONF
-
-if [ ! -f "$DCOS_CONF" ]; then
-    @go.log FATAL "Cannot bootstrap DCOS without $DCOS_CONF. Please run ./zeta dcos to create"
-fi
-. $DCOS_CONF
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
 
 # Install function either takes --all or a Comma delimitted list of nodes to install on
 

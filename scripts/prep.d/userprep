@@ -3,10 +3,7 @@
 # Create users on Zeta nodes for initial install
 #
 
-if [ ! -f "$PREP_CONF" ]; then
-    @go.log FATAL "Cannot create users without a prep.conf file located at $PREP_CONF - Exiting"
-fi
-. $PREP_CONF
+sourceconf "$PREP_CONF"
 
 SCRIPTSRC="./conf/userupdate.sh"
 

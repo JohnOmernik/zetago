@@ -3,11 +3,10 @@
 #
 # Pretty prints the prep_conf.conf file for examination
 #
+
+sourceconf "$PREP_CONF"
+
 function _examine_prep(){
-    if [ ! -f "$PREP_CONF" ]; then
-        @go.log FATAL "Prep Conf not found at $PREP_CONF - Exiting"
-    fi
-    . $PREP_CONF
     echo ""
     echo "Initial User LIST: $INIT_USERS"
     echo ""

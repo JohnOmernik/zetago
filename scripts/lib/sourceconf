@@ -1,0 +1,35 @@
+#!/bin/bash
+#
+# This function is a simple tool that will:
+# -Check if a Conf Exists
+#   - If No Call the Conf Creation script
+#   - If Yes then offer the user three option: Replace the conf, Use the existing conf, or examine the conf
+#     - E (Examine) the conf displays the conf to the user and then provides only two options Use the conf or Replace the Conf
+#     - U (Use) the conf will source the conf and move forward
+#     - R Replace the conf will call the creation script and replace the conf in question with the results of the conf creation script
+#
+# There is one argument, the path to the conf.
+#
+
+#
+# function sourceconf
+# Check to see if a conf exists and then source it. If it doesn't exist, exit with a message. 
+#
+# Argument(s):
+# The path the conf file
+#
+function sourceconf(){
+
+    CUR_CONF="$1"
+    CONF_FILE=$(echo "$CUR_CONF"|sed "s@\./conf\/@@g")
+    CONF_CMD=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
+    CONF_VAR=$(echo "$CONF_CMD"|tr '[:lower:]' '[:upper:]')
+    CONF_VARNAME="${CONF_VAR}_LOCKED"
+
+    if [ -f "$CUR_CONF" ]; then
+        . $CUR_CONF
+    else
+        @go.log FATAL "The Conf file $CONF_FILE could not be found at $CUR CONF. That file must be present before you can run this command"
+    fi
+}
+

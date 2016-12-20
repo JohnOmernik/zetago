@@ -4,7 +4,7 @@
 #
 #
 
-. $PREP_CONF
+sourceconf "$PREP_CONF"
 if [ "$GEN_KEY" == "Y" ]; then
     if [ ! -f "$OUT_KEY" ]; then
         ssh-keygen -f $OUT_KEY -N "" -t RSA -C "DCOS"

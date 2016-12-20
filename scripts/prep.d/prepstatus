@@ -3,10 +3,7 @@
 # Determines prep status of a given node
 #
 
-if [ ! -f "$PREP_CONF" ]; then
-    @go.log FATAL "Cannot create users without a prep.conf file located at $PREP_CONF - Exiting"
-fi
-. $PREP_CONF
+sourceconf "$PREP_CONF"
 
 function prepstatus() {
     INVAL=$1
