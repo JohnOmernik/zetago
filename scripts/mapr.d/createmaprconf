@@ -27,7 +27,9 @@ echo "As we build the docker containers for MapR, we need a temporary Docker reg
 echo "This is ONLY for mapr based containers"
 echo "It will be named maprdocker-mapr-shared.marathon.slave.mesos by default, only change this name if you understand what that means"
 echo "Which name do you wish to give this docker registry instance?"
+echo ""
 read -p "MapR Docker Registry Host: " -e -i "maprdocker-mapr-shared.marathon.slave.mesos" DOCKER_REG_HOST
+echo ""
 read -p "Which port should the MapR Docker register run on (we recommend 5000): " -e -i "5000" DOCKER_REG_PORT
 echo ""
 echo "---------------------------------------"
@@ -54,7 +56,7 @@ echo "The available agent internal IP - hostnames combos are:"
 AGENT_HOSTS=""
 for N in $AGENT_NODES; do
     H=$(ssh $N "hostname -f")
-    AGENT_HOSTS="${AGENT_HOSTS}$N - $H"'\n'
+    AGENT_HOSTS="${AGENT_HOSTS}$N - $H"$'\n'
 done
 echo ""
 echo "$AGENT_HOSTS"
