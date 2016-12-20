@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# Determines prep status of a given node
+# Determines prep status of a given node or all nodes via --all
 #
 
 sourceconf "$PREP_CONF"
 
-function prepstatus() {
+function _prep_status() {
     INVAL=$1
     if [ "$INVAL" == "" ]; then
         @go.log FATAL "Must provide a host to connect and update"
@@ -46,4 +46,4 @@ function prepstatus() {
     done
 }
 
-prepstatus "$@"
+_prep_status "$@"

@@ -1,0 +1,50 @@
+#!/bin/bash
+#
+# Node prep install - Actually run both the user install and the system prep for Zeta
+# Usage:
+# ./zeta prep install node1,node2,node3 # Run install scripts on specific nodes 
+# ./zeta prep install --all # Run node prep on all nodes in prep.conf, but do so one at a time
+# ./zeta prep instlal --all -p # Run node prep on all nodes, but do so in parallel. 
+#
+
+sourceconf "$PREP_CONF"
+
+
+function _prepinstall() {
+
+    ALL="0"
+    PARALLEL="0"
+
+    for i in "$@"
+    do
+    case $i in
+        -a|--all)
+        ALL="1"
+        ;;
+        -p|--parallel)
+        PARALLEL="1"
+        ;;
+        *)
+        TNODES="$i"
+        ;;
+    esac
+    done
+
+    if [ "$ALL" == "1" ]; then
+        RUN_NODES="$NODES"
+    else
+        RUN_NODES=$(echo $TNODES|tr "," " ")
+    fi
+
+    for NODE in $RUN_NODES; do
+        ./zeta prep userprep $NODE
+        if [ "$PARALLEL" == "1" ]; then
+            ./zeta prep systemprep $NODE -p
+        else
+            ./zeta prep systemprep $NODE
+        fi
+    done
+}
+
+_prepinstall "$@"
+

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+APP_VER="1.0.0"
+APP_IMG="zeta/zetaca:${APP_VER}"
+APP_ROOT="/home/zetaadm/zetaca"
+APP_HOME="/home/zetaadm/zetaca"
+APP_SOURCE_GIT="https://github.com/JohnOmernik/ca_rest"
+
+
+

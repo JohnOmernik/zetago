@@ -11,7 +11,7 @@ sourceconf "$DCOS_CONF"
 
 # Install function either takes --all or a Comma delimitted list of nodes to install on
 
-function _install() {
+function _dcos_install() {
 
     IP_DETECT="./conf/ip-detect"
 
@@ -85,5 +85,5 @@ function _install() {
 
 }
 
-_install "$@"
+_dcos_install "$@"
 

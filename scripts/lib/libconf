@@ -30,8 +30,9 @@ function initconf(){
 
     CUR_CONF="$1"
     CONF_FILE=$(echo "$CUR_CONF"|sed "s@\./conf\/@@g")
-    CONF_CMD=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
-    CONF_VAR=$(echo "$CONF_CMD"|tr '[:lower:]' '[:upper:]')
+    CONF_CMD_BASE=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
+    CONF_CMD=$(echo "$CONF_CMD_BASE"|sed "s/_/ /g")
+    CONF_VAR=$(echo "$CONF_CMD_BASE"|tr '[:lower:]' '[:upper:]')
     CONF_VARNAME="${CONF_VAR}_LOCKED"
 
     if [ -f "$CUR_CONF" ]; then
@@ -54,7 +55,7 @@ function initconf(){
     fi
 
     if [ "$EXIST_PREP" == "R" ]; then
-        ./zeta ${CONF_CMD} create${CONF_CMD}conf
+        ./zeta ${CONF_CMD} createconf
     fi
     . $CUR_CONF
 }
@@ -67,11 +68,11 @@ function initconf(){
 # The path the conf file
 #
 function sourceconf(){
-
     CUR_CONF="$1"
     CONF_FILE=$(echo "$CUR_CONF"|sed "s@\./conf\/@@g")
-    CONF_CMD=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
-    CONF_VAR=$(echo "$CONF_CMD"|tr '[:lower:]' '[:upper:]')
+    CONF_CMD_BASE=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
+    CONF_CMD=$(echo "$CONF_CMD_BASE"|sed "s/_/ /g")
+    CONF_VAR=$(echo "$CONF_CMD_BASE"|tr '[:lower:]' '[:upper:]')
     CONF_VARNAME="${CONF_VAR}_LOCKED"
 
     if [ -f "$CUR_CONF" ]; then
@@ -88,9 +89,13 @@ function sourceconf(){
 # Change the lock value of a given conf file
 #
 function lockconf(){
+
+
     CUR_CONF="$1"
     CONF_FILE=$(echo "$CUR_CONF"|sed "s@\./conf\/@@g")
-    CONF_CMD=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
+    CONF_CMD_BASE=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
+    CONF_CMD=$(echo "$CONF_CMD_BASE"|sed "s/_/ /g")
+    CONF_VAR=$(echo "$CONF_CMD_BASE"|tr '[:lower:]' '[:upper:]')
 
     CURVAR=$(grep "_LOCKED" $CUR_CONF|cut -d"=" -f1)
     CURVAL=$(grep "_LOCKED" $CUR_CONF|cut -d"=" -f2|sed "s/\"//g")

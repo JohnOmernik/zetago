@@ -14,7 +14,7 @@ for SCRIPT in $SCRIPTS; do
     fi
 done
 if [ "$FOUND" == "0" ]; then
-    ./zeta prep createprepscripts
+    ./zeta prep createsystemprep
 fi
 
 if [ ! -f "$OUT_KEY" ]; then
@@ -22,7 +22,7 @@ if [ ! -f "$OUT_KEY" ]; then
     ./zeta prep genkey
 fi
 
-function systemprep() {
+function _systemprep() {
     HOST=$1
     ATONCE=$2
 
@@ -56,4 +56,4 @@ function systemprep() {
     fi
 }
 
-systemprep "$@"
+_systemprep "$@"

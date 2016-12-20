@@ -6,7 +6,7 @@
 
 sourceconf "$PREP_CONF"
 
-function _examine_prep(){
+function _prep_display(){
     echo ""
     echo "Initial User LIST: $INIT_USERS"
     echo ""
@@ -29,4 +29,4 @@ function _examine_prep(){
     echo "prep.conf Lock status: $PREP_LOCKED"
     echo "" 
 }
-_examine_prep "$@"
+_prep_display "$@"
