@@ -25,12 +25,12 @@ function _install() {
     BSTEST=$(curl -s http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT})
 
     if [ "$BSTEST" == "" ]; then
-        @go.log FATAL "Bootstrap node does not appear up or is inaccessible at http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}
+        @go.log FATAL "Bootstrap node does not appear up or is inaccessible at http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}"
     fi
 
 
 
-    # First things first, we need to check if any the nodes that are coming through are master nodes. If it's all, there will obviously be master nodes there. 
+    # First things first, we need to check if any the nodes that are coming through are master nodes. If it's all, there will obviously be master nodes there.
     EXT_MASTERS=""
     for NODE in $MASTER_NODES; do
         @go.log WARN "Run Nodes: $RUN_NODES"
