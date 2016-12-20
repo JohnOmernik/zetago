@@ -96,9 +96,31 @@ echo "I.e. You need to have at least the CLDB Nodes in this list"
 echo ""
 echo "The format here is nodename:disk1/disk2/disk3;nodename:/dev/sda,/dev/sdb for that node"
 echo ""
-echo "Example: node1:/dev/sda,/dev/sdb,/dev/sdc;node2:/dev/sda/dev/sdb"
+echo "Example: node1:/dev/sda,/dev/sdb,/dev/sdc;node2:/dev/sda,/dev/sdb"
 echo ""
-read -p "Enter the initial nodes and their disks: " INITIAL_NODES
+echo "We can make this easier if all the nodes that are agents have the same list of nodes, you can enter it once, and we'll create the string for you."
+read -e -p "Are the disks the same for all agent nodes?" -i "Y" SAME_AGENTS
+TEST_INITIAL=""
+if [ "$SAME_AGENTS" == "Y" ]; then
+    read -e -p "Enter just the disks for each node delimitted by commas" JUST_DISKS
+    for N in $AGENT_NODES; do
+        H=$(ssh $N "hostname -f")
+        if [ "$TEST_INITIAL" == "" ]; then
+            TEST_INITIAL="${H}:${JUST_DISKS}"
+        else
+            TEST_INITIAL="${TEST_INITIAL};${H}:${JUST_DISKS}"
+        fi
+    done
+    read -e -p "Does this initial disk string look correct (press Enter to accept)? " -i "Y" CORRECT_INITIAL
+    if [ "$CORRECT_INITIAL" != "Y" ]; then
+        TEST_INITIAL=""
+    fi
+fi
+if [ "$TEST_INITIAL" == "" ]; then
+    read -p "Enter the initial nodes and their disks: " INITIAL_NODES
+else
+    INITIAL_NODES="$TEST_INITIAL"
+fi
 echo ""
 echo "---------------------------------------"
 echo "Please enter the list of nodes that you want to include the NFS Service on."
