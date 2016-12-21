@@ -114,6 +114,7 @@ export ZETA_CA="http://zetaca-shared.marathon.slave.mesos:$APP_PORT"
 export ZETA_CA_CERT="\${ZETA_CA}/cacert"
 export ZETA_CA_CSR="\${ZETA_CA}/csr"
 
+export CLUSTER_ZETACA_LOCKED="1"
 EOF
 
 . $CLUSTER_ZETACA_CONF
