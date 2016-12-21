@@ -159,7 +159,7 @@ for ZK in $ZK_STRING; do
 
     echo "Creating marathon scripts"
 
-    MFILE="./conf/zk_marathon/mapr_zk_${ZK_HOST}.marathon"
+    MFILE="./conf/marathon_files/zk_marathon/mapr_zk_${ZK_HOST}.marathon"
 
     scp $IP_DETECT ${ZK_HOST}:/home/zetaadm
     ZK_IP=$(ssh ${ZK_HOST} /home/zetaadm/ip-detect)
