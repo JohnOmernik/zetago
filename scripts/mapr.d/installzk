@@ -1,0 +1,203 @@
+#!/bin/bash
+#
+# mapr installzk
+# Install Zookeeper on nodes
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+MYDIR=$(pwd)
+
+MEUSER=$(whoami)
+
+if [ "$MEUSER" != "zetaadm" ]; then
+    @go.log FATAL "This script needs to be un as zetaadm. Current User: $MEUSER"
+fi
+
+
+IPDETECT_TEST=$($IP_DETECT)
+
+if [ "$IPDETECT_TEST" == "" ]; then
+    echo "It appears that the ip-detect script located $IP_DETECT didn't return anything for this node"
+    echo "It should likely be updated if you want the MapR installation to succeed"
+    echo "It should return the IP address of the primary interface on this cluster."
+else
+    echo "The ip-detect script returned:"
+    echo ""
+    echo "$IPDETECT_TEST"
+    echo ""
+    echo "This should be the IP for the primary interface on this node, but it should work on all nodes the same way"
+    echo "If you are unsure if this is the case, exit here, and test on all nodes"
+fi
+
+echo ""
+echo "Based on the results of the ip-detect, do you wish to go on?"
+read -e -p "Do the ip-detect results look accurate? " -i "N" IPTEST
+
+if [ "$IPTEST" != "Y" ]; then
+    @go.log FATAL "Exiting due to ip-detect results"
+fi
+MAPR_DEFAULTS="./conf/mapr_defaults"
+mkdir -p $MAPR_DEFAULTS
+mkdir -p $MAPR_DEFAULTS/conf
+mkdir -p ./conf/marathon_files/zk_marathon
+rm $MAPR_DEFAULTS/conf/*
+
+if [ ! -f "$MAPR_DEFAULTS/zk_default.tgz" ]; then
+    echo "Missing zk defaults. Grabbing from a container now"
+
+    CID=$(sudo docker run -d ${DOCKER_REG_URL}/zkdocker:${MAPR_DOCKER_TAG} sleep 15)
+
+    sudo docker cp ${CID}:/opt/mapr/zookeeper/zookeeper-3.4.5/conf $MAPR_DEFAULTS
+    sudo chown zetaadm:zetaadm $MAPR_DEFAULTS/conf/*
+
+    cd $MAPR_DEFAULTS
+    cd conf
+    tar zcf ../zk_default.tgz ./*
+    cd $MYDIR
+fi
+
+OLDIFS=$IFS
+IFS=","
+
+for ZK in $ZK_STRING; do
+    ZK_ID=$(echo $ZK|cut -d":" -f1)
+    ZK_HOST=$(echo $ZK|cut -d":" -f2)
+    echo "ID: $ZK_ID"
+    echo "Host: $ZK_HOST"
+    echo ""
+    ZKTEST=$(ssh $ZK_HOST "sudo cat ${MAPR_INST}/zkdata/myid 2> /dev/null")
+    if [ "$ZKTEST" == "" ]; then
+        echo "No myid Safe to proceed"
+    else
+        echo "There appears to already be a zookeeper myid for $ZK_HOST"
+        echo "The myid file has $ZKTEST in it"
+        echo "You may overwrite and blow it away, but likely that will be bad (especially if it's running)"
+        echo "Do you wish to overwrite? Answering N will cancel this process"
+        read -p "Overwrite? " -e -i "N" OW
+        if [ "$OW" == "Y" ]; then
+            echo "Blowing things away"
+            ssh $ZK_HOST "sudo rm -rf ${MAPR_INST}/zkdata"
+        else
+            echo "Smart"
+            exit 0
+        fi
+    fi
+    echo ""
+done
+IFS=$OLDIFS
+
+
+
+echo "Creating zoo.cfg"
+ZKOUT=$(echo -n $ZOOCFG|tr " " "\n")
+tee ./conf/zk_marathon/zoo.cfg << EOL1
+# The number of milliseconds of each tick
+tickTime=2000
+# The number of ticks that the initial
+# synchronization phase can take
+initLimit=20
+# The number of ticks that can pass between
+# sending a request and getting an acknowledgement
+syncLimit=10
+# the directory where the snapshot is stored.
+dataDir=/opt/mapr/zkdata
+# the port at which the clients will connect
+clientPort=$ZK_CLIENT_PORT
+# max number of client connections
+maxClientCnxns=100
+#autopurge interval - 24 hours
+autopurge.purgeInterval=24
+#superuser to allow zk nodes delete
+superUser=$MUSER
+#readuser to allow read zk info for authenticated clients
+readUser=anyone
+# cldb key location
+mapr.cldbkeyfile.location=/opt/mapr/conf/cldb.key
+#security provider name
+authMech=SIMPLE-SECURITY
+# security auth provider
+authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
+# use maprserverticket not userticket for auth
+mapr.usemaprserverticket=true
+$ZKOUT
+EOL1
+
+
+
+echo "Ok, setting up the data locations on each node"
+IFS=","
+for ZK in $ZK_STRING; do
+    ZK_ID=$(echo $ZK|cut -d":" -f1)
+    ZK_HOST=$(echo $ZK|cut -d":" -f2)
+    echo "ID: $ZK_ID"
+    echo "Host: $ZK_HOST"
+    echo ""
+    echo "Creating MapR Conf Dir if it doesn't exist"
+    ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/conf && sudo chown mapr:mapr ${MAPR_INST}/conf && sudo chmod 755 ${MAPR_INST}/conf"
+    echo "Creating zkdata location and setting myid"
+    ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/zkdata && echo $ZK_ID|sudo tee ${MAPR_INST}/zkdata/myid && sudo chown -R mapr:mapr ${MAPR_INST}/zkdata && sudo chmod 750 ${MAPR_INST}/zkdata"
+    echo "Creating ZK conf and log location on the host"
+    ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/zookeeper/logs && sudo mkdir -p ${MAPR_INST}/zookeeper/conf"
+
+    echo "Copying zk defaults and cfg to $ZK_HOST"
+    scp $MAPR_DEFAULTS/zk_default.tgz $ZK_HOST:/home/zetaadm/
+    scp ./conf/zk_marathon/zoo.cfg $ZK_HOST:/home/zetaadm/
+
+    echo ""
+    echo "Unpacking and copying conf"
+    ssh $ZK_HOST "sudo mv /home/zetaadm/zk_default.tgz ${MAPR_INST}/zookeeper/conf/ && sudo tar zxf ${MAPR_INST}/zookeeper/conf/zk_default.tgz -C ${MAPR_INST}/zookeeper/conf && sudo rm ${MAPR_INST}/zookeeper/conf/zk_default.tgz"
+    ssh $ZK_HOST "sudo mv /home/zetaadm/zoo.cfg ${MAPR_INST}/zookeeper/conf/"
+    ssh $ZK_HOST "sudo chown -R mapr:mapr ${MAPR_INST}/zookeeper && sudo chmod 777 ${MAPR_INST}/zookeeper/logs"
+
+
+    echo "Creating marathon scripts"
+
+    MFILE="./conf/zk_marathon/mapr_zk_${ZK_HOST}.marathon"
+
+    scp $IP_DETECT ${ZK_HOST}:/home/zetaadm
+    ZK_IP=$(ssh ${ZK_HOST} /home/zetaadm/ip-detect)
+    echo "$ZK_HOST -> $ZK_IP"
+
+    cat > $MFILE << EOFZK
+{
+  "id": "shared/mapr/zks/zk${ZK_HOST}",
+  "cpus": 1,
+  "mem": 1536,
+  "cmd": "/opt/mapr/runzkdocker.sh",
+  "instances": 1,
+  "constraints": [["hostname", "LIKE", "$ZK_IP"],["hostname", "UNIQUE"]],
+  "labels": {
+   "CONTAINERIZER":"Docker"
+  },
+  "env": {
+  "ZOO_LOG4J_PROP": "INFO,ROLLINGFILE",
+  "ZOO_LOG_DIR": "/opt/mapr/zookeeper/zookeeper-3.4.5/logs"
+},
+  "ports": [],
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "${DOCKER_REG_URL}/zkdocker:${MAPR_DOCKER_TAG}",
+      "network": "HOST"
+    },
+    "volumes": [
+      { "containerPath": "/opt/mapr/conf", "hostPath": "${MAPR_INST}/conf", "mode": "RW" },
+      { "containerPath": "/opt/mapr/zookeeper/zookeeper-3.4.5/logs", "hostPath": "${MAPR_INST}/zookeeper/logs", "mode": "RW" },
+      { "containerPath": "/opt/mapr/zookeeper/zookeeper-3.4.5/conf", "hostPath": "${MAPR_INST}/zookeeper/conf", "mode": "RW" },
+      { "containerPath": "/opt/mapr/zkdata", "hostPath": "${MAPR_INST}/zkdata", "mode": "RW" },
+      { "containerPath": "/etc/localtime", "hostPath": "/etc/localtime", "mode": "RO"}
+    ]
+  }
+}
+EOFZK
+    ./zeta cluster marathon submit "$MFILE" "$MARATHON_SUBMIT"
+    echo ""
+done
+echo ""
+@go.log INFO "Zookeeper installed per config"
+IFS=$OLDIFS
