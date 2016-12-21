@@ -186,7 +186,7 @@ cat > ${ZETACA_HOME}/marathon.json << EOL4
       "image": "${ZETACA_IMG}",
       "network": "BRIDGE",
       "portMappings": [
-        { "containerPort": 3000, "hostPort": ${ZETACA_PORT}, "servicePort": 0, "protocol": "tcp"}
+        { "containerPort": 3000, "hostPort": ${ZETA_CA_PORT}, "servicePort": 0, "protocol": "tcp"}
       ]
     },
   "volumes": [
