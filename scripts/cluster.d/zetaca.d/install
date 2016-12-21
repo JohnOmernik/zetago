@@ -4,6 +4,8 @@
 #
 # Run through creation scripts, create new CA and run
 #
+# Arguments:  (Optional) -u to not ask questions and just go
+#
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$MAPR_CONF"
@@ -11,6 +13,12 @@ sourceconf "$CLUSTER_CONF"
 initconf "$CLUSTER_ZETACA_CONF"
 
 function _zetaca_install() {
+    UNATTEND="0"
+    if [ "$1" == "-u" ]; then
+        UNATTEND="1"
+    fi
+
+
     if [ -f "$ZETACA_HOME/CA/cacert.pem" ]; then
         @go.log FATAL "A cacert.pem file already exists in ${ZETACA_HOME}/CA will not install certs"
     fi
@@ -28,7 +36,11 @@ function _zetaca_install() {
     echo ""
     echo "./zeta cluster zetaca updatenode %NODENAME%"
     echo ""
-    read -e -p "Do you wish to update all nodes now? " -i "Y" UPDATENODES
+    if [ "$UNATTEND" == "1" ]; then
+        UPDATENODES="Y"
+    else
+        read -e -p "Do you wish to update all nodes now? " -i "Y" UPDATENODES
+    fi
     echo ""
     if [ "$UPDATENODES" == "Y" ]; then
         @go.log INFO "Updating CA Certs on all nodes"
