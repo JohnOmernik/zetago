@@ -12,7 +12,7 @@ function _marathon_submit() {
     MARATHON_URL=$2
 
     @go.log INFO "Sending $MARFILE $MARATHON_URL"
-    curl -X POST $MARATHON_SUBMIT -d @${APP_HOME}/marathon.json -H "Content-type: application/json"
+    curl -X POST $MARATHON_URL -d @${MARFILE} -H "Content-type: application/json"
 }
 
 _marathon_submit "$@"
