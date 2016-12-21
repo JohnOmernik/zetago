@@ -47,6 +47,8 @@ mkdir -p $MAPR_DEFAULTS/conf
 mkdir -p ./conf/marathon_files/zk_marathon
 rm $MAPR_DEFAULTS/conf/*
 
+. ./vers/mapr/$MAPR_VERS
+
 if [ ! -f "$MAPR_DEFAULTS/zk_default.tgz" ]; then
     echo "Missing zk defaults. Grabbing from a container now"
 
