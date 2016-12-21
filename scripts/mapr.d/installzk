@@ -97,7 +97,7 @@ IFS=$OLDIFS
 
 echo "Creating zoo.cfg"
 ZKOUT=$(echo -n $ZOOCFG|tr " " "\n")
-tee ./conf/zk_marathon/zoo.cfg << EOL1
+tee ./conf/marathon_files/zk_marathon/zoo.cfg << EOL1
 # The number of milliseconds of each tick
 tickTime=2000
 # The number of ticks that the initial
@@ -148,7 +148,7 @@ for ZK in $ZK_STRING; do
 
     echo "Copying zk defaults and cfg to $ZK_HOST"
     scp $MAPR_DEFAULTS/zk_default.tgz $ZK_HOST:/home/zetaadm/
-    scp ./conf/zk_marathon/zoo.cfg $ZK_HOST:/home/zetaadm/
+    scp ./conf/marathon_files/zk_marathon/zoo.cfg $ZK_HOST:/home/zetaadm/
 
     echo ""
     echo "Unpacking and copying conf"
