@@ -152,7 +152,7 @@ CMD ["/bin/bash"]
 
 EOL
 
-    cd zkdocker
+    cd $BUILD_TMP
     sudo docker build -t ${DOCKER_REG_URL}/zkdocker:$MAPR_DOCKER_TAG .
     cd ~/zetago
     sudo docker push ${DOCKER_REG_URL}/zkdocker:$MAPR_DOCKER_TAG
