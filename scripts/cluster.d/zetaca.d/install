@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# cluster zetaca install
+#
+# Run through creation scripts, create new CA and run
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+initconf "$CLUSTER_ZETACA_CONF"
+
+function _zetaca_install() {
+    if [ -f "$ZETACA_HOME/CA/cacert.pem" ]; then
+        @go.log FATAL "A cacert.pem file already exists in ${ZETACA_HOME}/CA will not install certs"
+    fi
+
+    ./zeta cluster zetaca build
+    ./zeta cluster zetaca cascripts
+    ./zeta cluster zetaca certcreation
+    ./zeta cluster marathon submit "$ZETACA_HOME/marathon.json" "$MARATHON_SUBMIT"
+
+    @go.log INFO "Zeta CA App Submitted to Marathon: Waiting 30 seconds for App Start"
+    sleep 30
+    echo ""
+    echo "It's highly recommended you update nodes with the Zeta CA Master certificate"
+    echo "You can do that for each node by running:"
+    echo ""
+    echo "./zeta cluster zetaca updatenode %NODENAME%"
+    echo ""
+    read -e -p "Do you wish to update all nodes now? " -i "Y" UPDATENODES
+    echo ""
+    if [ "$UPDATENODES" == "Y" ]; then
+        @go.log INFO "Updating CA Certs on all nodes"
+        ./zeta cluster zetaca updatenode --all
+    else
+        @go.log INFO "Not updating Certificates on nodes"
+    fi
+
+}
+
+
+
+_zetaca_install "$@"
+

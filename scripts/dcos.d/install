@@ -37,13 +37,13 @@ function _dcos_install() {
         @go.log WARN "Node: $NODE"
         if [[ "$RUN_NODES" == *"$NODE"* ]]; then
             @go.log INFO "Initiating Master install on $NODE"
-            EXT_IP=$(ssh -o StrictHostKeyChecking=no $NODE "curl icanhazip.com")
+            EXT_IP=$(ssh -o StrictHostKeyChecking=no $NODE "curl -s icanhazip.com")
             EXT_MASTERS="${EXT_MASTERS} $EXT_IP"
-            ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh"
+            ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -s -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh"
             ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'cd /tmp/dcos && nohup bash dcos_install.sh master > /dev/null 2>&1 &'" &
         fi
     done
-    @go.log INFO "Master Server Install(s) initiated"
+    @go.log INFO "Master Server Install(s) initiated on all master nodes"
     echo "Master server installs running, when complete, you will be able to go to any master ip on port 80 and see DCOS running. Once this is done, press enter to continue (If this is not an initial install, then just press ok)"
     echo ""
     echo "Master Addresses:"
@@ -63,6 +63,7 @@ function _dcos_install() {
         DCOSTEST=$(curl -s http://$MASTERIP)
         @go.log INFO "Waiting 10 seconds to check for presense of master DCOS running at http://$MASTERIP (Internal address)"
     done
+    @go.log INFO "Masters up and running starting Agent installs"
 
     for NODE in $RUN_NODES; do
         if [[ "$MASTER_NODES" != *"$NODE"* ]]; then
@@ -70,17 +71,17 @@ function _dcos_install() {
             if [ "$NODE" != "$INIT_INTERNAL_IP" ]; then
                 # Non-bootstrap agent
                 @go.log INFO "Install non-boostrap agent on $NODE"
-                ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh"
+                ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O -s http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh"
                 ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'cd /tmp/dcos && nohup bash dcos_install.sh slave > /dev/null 2>&1 &'" &
             else
                 # Bootstrap agent
                 @go.log INFO "Install bootstrap agent on $NODE"
-                ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && sed -i \"s/systemctl restart docker/# systemctl restart docker/\" dcos_install.sh"
+                ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O -s http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && sed -i \"s/systemctl restart docker/# systemctl restart docker/\" dcos_install.sh"
                 ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'cd /tmp/dcos && nohup bash dcos_install.sh slave > /dev/null 2>&1 &'" &
             fi
         fi
     done
-    @go.log INFO "DCOS Agents Installed"
+    @go.log INFO "DCOS Agents Initiated on all Agents"
 
 
 }

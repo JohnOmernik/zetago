@@ -112,7 +112,10 @@ if [ "$SAME_AGENTS" == "Y" ]; then
             TEST_INITIAL="${TEST_INITIAL};${H}:${JUST_DISKS}"
         fi
     done
-    echo "Disk String: $TEST_INITIAL"
+    echo "Disk String:"
+    echo ""
+    echo "$TEST_INITIAL"
+    echo ""
     read -e -p "Does this initial disk string look correct (press Enter to accept)? " -i "Y" CORRECT_INITIAL
     if [ "$CORRECT_INITIAL" != "Y" ]; then
         TEST_INITIAL=""
@@ -138,6 +141,7 @@ echo ""
 echo "---------------------------------------"
 echo "MapR Allows you to tie your MapR comms to specific subnets.  So if you have two interfaces,and want mapr to use both, specify the IP rangages as subnets to user"
 echo "Examples: 10.0.2.0/24,10.0.3.0/24"
+echo ""
 read -p "Please specify MapR Subnets: " SUBNETS
 echo ""
 echo "---------------------------------------"

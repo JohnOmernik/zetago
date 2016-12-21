@@ -8,11 +8,15 @@ sourceconf "$DCOS_CONF"
 sourceconf "$MAPR_CONF"
 sourceconf "$CLUSTER_CONF"
 
-
 ZETACA_HOME="/home/zetaadm/zetaca"
+
 mkdir -p $ZETACA_HOME
-sudo chown zetaadm:zetaadm $ZETACA_HOME
-sudo chmod 770 $ZETACA_HOME
+mkdir -p $ZETACA_HOME/CA
+sudo chown -R zetaadm:zetaadm $ZETACA_HOME
+sudo chmod 775 $ZETACA_HOME
+sudo chmod 700 $ZETACA_HOME/CA
+@go.log INFO "Zeta CA Home set to $ZETACA_HOME and this directory is created and secured"
+
 
 # Now we will run the docker container to create the CA for Zeta
 # Note: Both this script and the git repo script should be changed so we can write the password to a secure file in $APP_HOME/certs/ca_key.txt 
@@ -25,6 +29,11 @@ ls ./vers/zetaca
 echo ""
 read -e -p "Zeta ca version file: " -i "zetaca-1.0.0.vers" ZETACA_VERS
 echo ""
+. /vers/zetaca/$ZETACA_VERS
+echo ""
+echo ""
+ZETACA_IP=$(./conf/ip-detect)
+echo "The IP Address of this host is where we recommend running the zetaca, that IP is $ZETACA_IP"
 echo ""
 read -e -p "Please enter the port for the Zeta CA Rest service to run on: " -i "10443" APP_PORT
 echo ""
@@ -82,7 +91,10 @@ EOA
 
 cat > $CLUSTER_ZETACA_CONF << EOF
 #!/bin/bash
+export ZETACA_IP="$ZETACA_IP"
 export ZETACA_VERS="$ZETACA_VERS"
+export ZETACA_HOME="$ZETACA_HOME"
+export ZETACA_IMG="$APP_IMG"
 export ZETA_CACERT_C="$CACERT_C"
 export ZETA_CACERT_ST="$CACERT_ST"
 export ZETA_CACERT_L="$CACERT_L"
@@ -103,6 +115,9 @@ export ZETA_CA_CERT="\${ZETA_CA}/cacert"
 export ZETA_CA_CSR="\${ZETA_CA}/csr"
 
 EOF
+
+. $CLUSTER_ZETACA_CONF
+
 
 @go.log INFO "Zeta CA Conf created at $CLUSTER_ZETACA_CONF"
 

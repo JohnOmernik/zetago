@@ -15,19 +15,21 @@ echo ""
 echo "---------------------------------------"
 echo "If you need to specify a HTTP_PROXY for docker building, please enter it here"
 echo "If this variable is filled, it will add the proxy lines to the docker files for building the images"
+echo ""
 read -p "Enter the proxy information (blank for none): " DOCKER_PROXY
 
 echo ""
 echo "---------------------------------------"
 echo "If you need to specify a NO_PROXY string it's highly recommended. Use your subnets and internal domain names"
 echo "Example: \"192.168.0.0/16,mycompany.com\""
+echo ""
 read -p "Enter the noproxy information (blank for none): " DOCKER_NOPROXY
 
 echo ""
 echo "---------------------------------------"
 MARATHON="marathon.mesos:8080"
+echo ""
 echo "The URL for Marathon will be set to $MARATHON - Don't change this unless you know what you are doing"
-
 echo ""
 echo "---------------------------------------"
 echo "LDAP Information will be set to:"
@@ -36,8 +38,10 @@ LDAP_URL="ldap://openldap-shared.marathon.slave.mesos"
 LDAP_BASE="dc=marathon,dc=mesos"
 LDAP_RO_USER="cn=readonly,dc=marathon,dc=mesos"
 LDAP_RO_PASS="readonly"
-
-
+echo ""
+echo "LDAP_URL: $LDAP_URL"
+echo "LDAP_BASE: $LDAP_BASE"
+echo "LDAP_RO_USER: $LDAP_RO_USER"
 echo ""
 echo "---------------------------------------"
 echo "In the zeta install, there are four base directories, plus the user home, as listed below."

@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+# marathon submit - Submit a json file to marathon
+# This takes two arguments
+# Path to Marathon file
+# MARATHON Submit URL
+#
+# Example: ./zeta cluster marathon submit /path/to/myfile.json http://marathon.mesos:8080/v2/apps
+function _marathon_submit() {
+
+    MARFILE=$1
+    MARATHON_URL=$2
+
+    @go.log INFO "Sending $MARFILE $MARATHON_URL"
+    curl -X POST $MARATHON_SUBMIT -d @${APP_HOME}/marathon.json -H "Content-type: application/json"
+}
+
+_marathon_submit "$@"
+
