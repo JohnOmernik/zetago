@@ -1,0 +1,100 @@
+#!/bin/bash
+#
+# Create conf file for Zeta Cluster installation
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+
+echo ""
+echo "Cluster proxies. If your cluster needs HTTP_PROXY information to connect to the Internet, now is the time to enter that"
+echo "We will ask for both Proxy information, as well as NOPROXY information"
+
+echo ""
+echo "---------------------------------------"
+echo "If you need to specify a HTTP_PROXY for docker building, please enter it here"
+echo "If this variable is filled, it will add the proxy lines to the docker files for building the images"
+echo ""
+read -p "Enter the proxy information (blank for none): " DOCKER_PROXY
+
+echo ""
+echo "---------------------------------------"
+echo "If you need to specify a NO_PROXY string it's highly recommended. Use your subnets and internal domain names"
+echo "Example: \"192.168.0.0/16,mycompany.com\""
+echo ""
+read -p "Enter the noproxy information (blank for none): " DOCKER_NOPROXY
+
+echo ""
+echo "---------------------------------------"
+MARATHON="marathon.mesos:8080"
+echo ""
+echo "The URL for Marathon will be set to $MARATHON - Don't change this unless you know what you are doing"
+echo ""
+echo "---------------------------------------"
+echo "LDAP Information will be set to:"
+INSTALL_LDAP="Y"
+LDAP_URL="ldap://openldap-shared.marathon.slave.mesos"
+LDAP_BASE="dc=marathon,dc=mesos"
+LDAP_RO_USER="cn=readonly,dc=marathon,dc=mesos"
+LDAP_RO_PASS="readonly"
+echo ""
+echo "LDAP_URL: $LDAP_URL"
+echo "LDAP_BASE: $LDAP_BASE"
+echo "LDAP_RO_USER: $LDAP_RO_USER"
+echo ""
+echo "---------------------------------------"
+echo "In the zeta install, there are four base directories, plus the user home, as listed below."
+echo ""
+echo "apps,etl,data,zeta"
+echo ""
+echo "For each of these directories, every time a role is installed, a mapr volume is created for that role under the directory."
+echo "In addition, a user for data service, and groups are created to help manage the data in the directories"
+echo "For each directory (apps, mesos, data, etl):"
+echo "---- a group zeta%role%%dir% is created that has write permissions by default to /directory/%role% (i.e. for role prod, /apps/prod)"
+echo ""
+echo "Then there is also a user created that can be used as a data service writing user (zetasvc%role%data)"
+echo ""
+echo ""
+echo "The purpose of the initial directories is:"
+echo "***********************************************"
+echo ""
+echo "data: A place to store data that is sharable. This is not application specific (like a database for a web front end) this is any data that may be queried accross multiple tools"
+echo ""
+echo "etl: A place to store jobs that load, process, enrich, and move data in the system. This includes definitions for services in marathon or job definitions in chronos"
+echo ""
+echo "apps: This is where specific applications that are not considered shared services may be stored. Models, front ends, anything that isn't something to be shared like a Spark service or Drill Service"
+echo ""
+echo "zeta: This is where shared services may be run and sourced. Services like Kafka, Drill, Confluent. Etc"
+echo ""
+echo "---- Under zeta there is also a special directory called kstore for keeping secrets, env scripts, users management etc."
+echo ""
+ROOT_DIRS="apps,data,etl,zeta"
+echo "The root directories will be $ROOT_DIRS"
+echo ""
+
+
+
+
+
+
+cat > $CLUSTER_CONF << EOF
+#/bin/bash
+export DOCKER_PROXY="$DOCKER_PROXY"
+export DOCKER_NOPROXY="$DOCKER_NOPROXY"
+
+export MARATHON_HOST="$MARATHON"
+export MARATHON_SUBMIT="http://\$MARATHON_HOST/v2/apps"
+
+export INSTALL_LDAP="$INSTALL_LDAP"
+export LDAP_BASE="$LDAP_BASE"
+export LDAP_URL="$LDAP_URL"
+export LDAP_RO_USER="$LDAP_RO_USER"
+export LDAP_RO_PASS="$LDAP_RO_PASS"
+
+export CLUSTER_LOCKED="1"
+export ROOT_DIRS="$ROOT_DIRS"
+EOF
+
+
+

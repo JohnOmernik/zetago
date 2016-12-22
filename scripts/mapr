@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+# mapr - Scripts to stage and run MapR on a DCOS cluster for Zeta
+#
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+
+function _mapr() {
+
+    LOCK="0"
+    UNLOCK="0"
+
+    for i in "$@"
+    do
+    case $i in
+        -u|--unlockconf)
+        UNLOCK="1"
+        ;;
+        -l|--lockconf)
+        LOCK="1"
+        ;;
+        *)
+            # unknown option
+        ;;
+    esac
+    done
+
+    if [ "$UNLOCK" == "1" ] && [ "$LOCK" == "1" ]; then
+        @go.log FATAL "Both Lock (-l) and Unlock (-u) cannot be specified at the same time"
+    fi
+
+    initconf "$MAPR_CONF"
+
+    initconf "$CLUSTER_CONF"
+
+    echo ""
+    echo "********************************"
+    echo "Scripts should now be run on cluster"
+    echo "That should be: $INIT_NODE"
+    echo "********************************"
+    echo ""
+    echo "Commands to use with mapr:"
+    echo ""
+    echo "./zeta cluster zetaca - Install the Zeta CA for use with MapR services"
+    echo "./zeta mapr maprdocker - Install the mapr docker registry"
+    echo "./zeta mapr buildzk - Build the MapR ZK image"
+    echo "./zeta mapr buildmapr - Build the MapR MapR image"
+    echo "./zeta mapr installzk - Deploy and run the ZK image on all nodes per the mapr.conf file"
+    echo "./zeta mapr installmapr - Deploy and run mapr docker images per the mapr.conf file"
+    echo "./zeta mapr installfuse - Deplay fust client to all nodes in mapr.conf file"
+    echo "./zeta mapr submitmaprnode  - Submit MapR Marathon JSON file for a single node"
+    echo "./zeta mapr fuseinstall - Install MapR FUSE Client on a single node"
+    echo "./zeta mapr fuseremove - Remove MapR FUSE Client from a single node"
+    echo "./zeta mapr installmaprnode - Install mapr to a single node"
+    echo "./zeta mapr -l|--lockconf Lock mapr.conf file"
+    echo "./zeta mapr -u|--unlockconf Unlock mapr.conf file"
+    echo ""
+
+
+    if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then
+       lockconf "$MAPR_CONF"
+    fi
+
+}
+
+_mapr "$@"
+

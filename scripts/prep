@@ -1,41 +1,27 @@
 #!/bin/bash
 #
-# prep works to take list of nodes (looking in ./conf/hostlist.txt" and get them ready fo DCOS and Zeta
-# There are a number of items this command looks to do and it's broken up into two child commands
+# prep works to take list of nodes (looking in ./conf/prep.conf" in a variable called NODES or accepting a CSV list of nodes as an argument toget them ready fo DCOS and Zeta
 #
 # Child Commands
 # prep genkey - Generate a SSH key for use between nodes. This is particularly handy in AWS but could be made to work on prem too
-# prep ubuntu - Install Docker, patches, etc, for use with an Ubuntu 16.04 install
-# prep centos - Install Docker, patches, etc, for use with CentOS install
 #
 
 #
 # Check for the the conf and offer to create one
 # Arguments:
-#     -a|--all         Process all nodes in the NODES list. By default, this works one node at a time with all output to the screen
-#     -p|--parallel    Kick off all nodes at one, don't display results
 #     -u|--unlock      Unlock the config so it prompts each time if you want to use the config
 #     -l|--lock        Lock the config so it no longer prompts if you want to use the existing config
 #
 
-. "$_GO_USE_MODULES" 'initconf'
 
 function _prep() {
 
-    ALL="0"
-    PARALLEL="0"
     LOCK="0"
     UNLOCK="0"
 
     for i in "$@"
     do
     case $i in
-        -a|--all)
-        ALL="1"
-        ;;
-        -p|--parallel)
-        PARALLEL="1"
-        ;;
         -u|--unlockconf)
         UNLOCK="1"
         ;;
@@ -51,11 +37,6 @@ function _prep() {
     if [ "$UNLOCK" == "1" ] && [ "$LOCK" == "1" ]; then
         @go.log FATAL "Both Lock (-l) and Unlock (-u) cannot be specified at the same time"
     fi
-    if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then
-        if [ "$ALL" == "1" ] || [ "$PARALLEL" == "1" ]; then
-            @go.log FATAL "A lock or unlock paramater cannot be specified with all or parallel parameter"
-        fi
-    fi
 
     initconf "$PREP_CONF"
 
@@ -63,23 +44,14 @@ function _prep() {
     echo ""
     echo "./zeta prep userprep %NODE - Prep user on a specific node"
     echo "./zeta prep systemprep %NODE - Prep system on a specific node"
-    echo "./zeta prep --all - Prep User and system on all nodes"
+    echo "./zeta prep install NODE1,NODE2 - Run both the userprep and systemprep on NODE1 and NODE2"
+    echo "./zeta prep install --all - Prep User and system on all nodes but do so one at a time"
+    echo "./zeta prep install --all -p - Prep all nodes in prep.conf in parallel"
     echo ""
     echo "To log into the initial node, please use:"
     echo ""
     echo "ssh -i $OUT_KEY zetaadm@$INIT_NODE"
     echo ""
-
-    if [ "$ALL" == "1" ]; then
-        for NODE in $NODES; do
-            ./zeta prep userprep $NODE
-            if [ "$PARALLEL" == "1" ]; then
-                ./zeta prep systemprep $NODE -p
-            else
-                ./zeta prep systemprep $NODE
-            fi
-        done
-    fi
 
     if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then
        lockconf "$PREP_CONF"

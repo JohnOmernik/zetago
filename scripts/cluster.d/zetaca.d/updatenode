@@ -1,0 +1,84 @@
+#!/bin/bash
+#
+# cluster zetaca update node - Update Nodes to use ZetaCA Certificates
+#
+# Arguments:
+# First Argument: --all - Update all nodes in conf files or CSV list of hosts you wish to update. 
+# Second Argument (Optionall): -u - Assume permissions are correct and run without prompting
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+CURUSER=$(whoami)
+
+if [ "$CURUSER" != "zetaadm" ]; then
+    @go.log FATAL "Must use zetaadm user"
+fi
+
+ARGVAL=$1
+if [ "$ARGVAL" == "--all" ]; then
+    RUN_NODES="$INTERNAL_NODES"
+else
+    RUN_NODES=$(echo $ARGVAL|tr "," " ")
+fi
+
+if [ "$2" == "-u" ]; then
+    UNATTEND="1"
+fi
+
+if [ "$RUN_NODES" == "" ]; then
+    @go.log FATAL "Please provide a CSV list of nodes or --all"
+fi
+
+
+
+# Iterate through each node specified in the hosts argument and check to see if the user is root or not
+echo ""
+echo "-------------------------------------------------------------------"
+echo "Status of requested Nodes. If root is listed, permissions are setup correctly"
+echo "-------------------------------------------------------------------"
+
+CHOSTS=$(echo "$HOSTS"|tr "," " ")
+
+for NODE in $RUN_NODES; do
+    OUT=$(ssh -t -t -n -o StrictHostKeyChecking=no $NODE "sudo whoami" 2> /dev/null)
+    echo "$NODE     $OUT"
+done
+
+echo "-------------------------------------------------------------------"
+echo ""
+echo "If any of the above nodes do not say root next to the name, then the permissions are not set correctly" 
+echo "If permissions are not set correctly, this script will not run well."
+
+# Verify that the user wants to continue
+if [ "$UNATTEND" == "1" ]; then
+    echo "Unattended requested, I hope your permissions are correct!"
+else
+    echo ""
+    read -p "Do you wish to proceed with this script? Y/N: " OURTEST
+    echo ""
+    if [ "$OURTEST" != "Y" ] && [ "$OURTEST" != "y" ]; then
+        @go.log FATAL "User decided to cancel zetaca update - exiting"
+    fi
+fi
+
+
+RUN_INIT="N"
+for NODE in $RUN_NODES; do
+    if [ "$NODE" != "$ZETACA_IP" ]; then
+        @go.log INFO "Updating root certificates on $NODE"
+        echo "Updating and adding cert to $NODE"
+        ssh $NODE "sudo rm -f /usr/local/share/ca-certificates/zetaroot.crt && sudo update-ca-certificates -f && sudo curl -o /usr/local/share/ca-certificates/zetaroot.crt http://zetaca-shared.marathon.slave.mesos:10443/cacert && sudo update-ca-certificates && cat /etc/ssl/certs/zetaroot.pem|sudo tee -a /opt/mesosphere/active/python-requests/lib/python3.5/site-packages/requests/cacert.pem && sudo service docker restart"
+    else
+        @go.log INFO "Skipping Node with Zeta CA - Will run at end"
+        RUN_INIT="Y"
+    fi
+done
+if [ "$RUN_INIT" == "Y" ]; then
+    @go.log INFO "Running on Zeta CA Node: This will cause docker to restart"
+    ssh $ZETACA_IP "sudo rm -f /usr/local/share/ca-certificates/zetaroot.crt && sudo update-ca-certificates -f && sudo curl -o /usr/local/share/ca-certificates/zetaroot.crt http://zetaca-shared.marathon.slave.mesos:10443/cacert && sudo update-ca-certificates && cat /etc/ssl/certs/zetaroot.pem|sudo tee -a /opt/mesosphere/active/python-requests/lib/python3.5/site-packages/requests/cacert.pem && sudo service docker restart"
+fi
+@go.log INFO "Zeta CA Node update complete"

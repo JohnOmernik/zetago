@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# cluster zetaca - Scripts to stage and run Zeta CA Shared service
+##
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+
+function _zetaca() {
+
+    LOCK="0"
+    UNLOCK="0"
+
+    for i in "$@"
+    do
+    case $i in
+        -u|--unlockconf)
+        UNLOCK="1"
+        ;;
+        -l|--lockconf)
+        LOCK="1"
+        ;;
+        *)
+            # unknown option
+        ;;
+    esac
+    done
+
+    if [ "$UNLOCK" == "1" ] && [ "$LOCK" == "1" ]; then
+        @go.log FATAL "Both Lock (-l) and Unlock (-u) cannot be specified at the same time"
+    fi
+
+    initconf "$CLUSTER_ZETACA_CONF"
+
+    echo ""
+    echo "********************************"
+    echo "Scripts should now be run on cluster"
+    echo "That should be: $INIT_NODE"
+    echo "********************************"
+    echo ""
+    echo "Commands to use with cluster zetaca:"
+    echo "./zeta cluster zetaca install - Build and install Zeta CA"
+    echo "./zeta cluster zetaca build - Build the Zetaca Docker container based on conf file"
+    echo "./zeta cluster zetaca updatehost - Update a host to use a new CA"
+    echo "./zeta cluster zetaca -l|--lockconf - Lock cluster.conf file"
+    echo "./zeta cluster zetaca -u|--unlockconf - Unlock cluster.conf file"
+    echo ""
+
+
+    if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then
+       lockconf "$CLUSTER_ZETACA_CONF"
+    fi
+
+}
+
+_zetaca "$@"
+

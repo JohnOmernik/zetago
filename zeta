@@ -11,7 +11,9 @@ cat > $BASE_CONF << EOF
 
 PREP_CONF="./conf/prep.conf"
 DCOS_CONF="./conf/dcos.conf"
+MAPR_CONF="./conf/mapr.conf"
 CLUSTER_CONF="./conf/cluster.conf"
+CLUSTER_ZETACA_CONF="./conf/cluster_zetaca.conf"
 EOF
 fi
 . $BASE_CONF
@@ -21,7 +23,7 @@ if [[ ! -f "$__GO_CORE" ]]; then
 fi
 . "$__GO_CORE" "scripts"
 . "$_GO_USE_MODULES" 'log'
-
+. "$_GO_USE_MODULES" 'libconf'
 
 @go "$@"
 

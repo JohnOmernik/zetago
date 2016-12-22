@@ -1,0 +1,94 @@
+#!/bin/bash
+# 
+# mapr maprdocker - Install MapR Docker Registry for Zeta
+#
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+ME=$(whoami)
+
+if [ "$ME" != "zetaadm" ]; then
+    @go.log FATAL "This script must be run as zetaadm"
+fi
+
+REG_IP=$(./conf/ip-detect)
+
+
+echo "You are running on the Docker registry on $REG_IP is this correct?"
+
+read -e -p "Install on $REG_IP?  " -i "Y" INSTALL_HERE
+
+if [ "$INSTALL_HERE" != "Y" ]; then
+    @go.log FATAL "Not Installing"
+fi
+
+
+DOCKER_IMAGE_LOC="/opt/maprdocker/images"
+if [ -d "$DOCKER_IMAGE_LOC" ]; then
+    @go.log FATAL "Docker image directory already exists at $DOCKER_IMAGE_LOC - Exiting"
+fi
+
+@go.log INFO "Creating Image Location"
+sudo mkdir -p ${DOCKER_IMAGE_LOC}
+APP_IMG="zeta/registry:2"
+
+@go.log INFO "Pulling Docker Registry Image and renaming $APP_IMG"
+sudo docker pull registry:2
+sudo docker tag registry:2 $APP_IMG
+
+@go.log INFO "Creating Certs for maprdocker"
+APP_NAME="maprdocker"
+APP_CERT_LOC="/opt/maprdocker/dockercerts"
+
+sudo mkdir -p ${APP_CERT_LOC}
+sudo chown zetaadm:root ${APP_CERT_LOC}
+sudo chmod 770 ${APP_CERT_LOC}
+CN_GUESS="maprdocker-mapr-shared.marathon.slave.mesos"
+. /home/zetaadm/zetaca/zetaca_env.sh
+. /home/zetaadm/zetaca/gen_server_cert.sh
+
+@go.log INFO "Creating Marathon file"
+mkdir -p ./conf/marathon_files
+MARATHON_FILE="./conf/marathon_files/maprdocker.marathon"
+cat > ${MARATHON_FILE} << EOF
+{
+  "id": "shared/mapr/maprdocker",
+  "cpus": 1,
+  "mem": 1024,
+  "instances": 1,
+  "constraints": [["hostname", "LIKE", "$REG_IP"]],
+  "labels": {
+   "CONTAINERIZER":"Docker"
+  },
+  "env": {
+    "REGISTRY_HTTP_TLS_CERTIFICATE": "/certs/srv_cert.pem",
+    "REGISTRY_HTTP_TLS_KEY": "/certs/key-no-password.pem"
+  },
+  "ports": [],
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "$APP_IMG",
+      "network": "BRIDGE",
+      "portMappings": [
+        { "containerPort": 5000, "hostPort": ${DOCKER_REG_PORT}, "servicePort": 0, "protocol": "tcp"}
+      ]
+    },
+    "volumes": [
+      { "containerPath": "/var/lib/registry", "hostPath": "${DOCKER_IMAGE_LOC}", "mode": "RW" },
+      { "containerPath": "/certs", "hostPath": "${APP_CERT_LOC}", "mode": "RO" }
+    ]
+  }
+}
+EOF
+
+
+./zeta cluster marathon submit "$MARATHON_FILE" "$MARATHON_SUBMIT"
+
+
+@go.log INFO "MapR Docker Registry Running at maprdocker-mapr-shared.marathon.slave.mesos"

@@ -3,11 +3,10 @@
 #
 # Pretty prints the prep_conf.conf file for examination
 #
-function _examine_prep(){
-    if [ ! -f "$PREP_CONF" ]; then
-        @go.log FATAL "Prep Conf not found at $PREP_CONF - Exiting"
-    fi
-    . $PREP_CONF
+
+sourceconf "$PREP_CONF"
+
+function _prep_display(){
     echo ""
     echo "Initial User LIST: $INIT_USERS"
     echo ""
@@ -30,4 +29,4 @@ function _examine_prep(){
     echo "prep.conf Lock status: $PREP_LOCKED"
     echo "" 
 }
-_examine_prep "$@"
+_prep_display "$@"

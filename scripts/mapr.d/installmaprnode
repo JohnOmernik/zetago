@@ -1,0 +1,348 @@
+#!/bin/bash
+#
+# Install a single mapr node based on the mapr.conf. If the node isn't present in mapr.conf, install as standard node.
+#
+# Arguments:
+# -u Unattended install - Assume the Disks passed in are correct (this can be dangerous!)
+# -n=%NODEHOST% the Host to run the install on
+# -d=%NODEDISKS% a CSV list of disks to use for initial bootstrap of disk
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+. ./vers/mapr/$MAPR_VERS
+
+MYDIR=$(pwd)
+
+MEUSER=$(whoami)
+
+if [ "$MEUSER" != "zetaadm" ]; then
+    @go.log FATAL "This script needs to be un as zetaadm. Current User: $MEUSER"
+fi
+
+function _installmaprnode(){
+    UNATTEND="0"
+    NODE_HOST=""
+    NODE_DISKS=""
+
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            "-n="*)
+            NODE_HOST="${i#*=}"
+            ;;
+            "-d="*)
+            NODE_DISKS="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ "$NODE_HOST" == "" ]; then
+        @go.log FATAL "This script must be passed a hostname and then an optional list of disks"
+    fi
+
+
+    NETTEST=$(ssh $NODE_HOST hostname)
+
+    if [ "$NETTEST" == "" ]; then
+        @go.log FATAL "Cannont connect to host"
+    fi
+
+    scp -o StrictHostKeyChecking=no $IP_DETECT $NODE_HOST:/home/zetaadm/
+    ssh -o StrictHostKeyChecking=no $NODE_HOST "chmod +x /home/zetaadm/ip-detect"
+    NODE_IP=$(ssh $NODE_HOST /home/zetaadm/ip-detect)
+
+    @go.log INFO "MapR Install requested on $NODE_HOST ($NODE_IP) with disks: $NODE_DISKS"
+    echo ""
+
+    MAPR_DEFAULTS="./conf/mapr_defaults"
+
+    if [ ! -f "${MAPR_DEFAULTS}/conf_default.tgz" ] || [ ! -f "${MAPR_DEFAULTS}/roles_default.tgz" ]; then
+        @go.log INFO "Missing conf/role defaults - Grabbing from a container now"
+
+        rm -f ${MAPR_DEFAULTS}/conf/*
+        rm -f ${MAPR_DEFAULTS}/roles/*
+
+        CID=$(sudo docker run -d ${DOCKER_REG_URL}/maprdocker:$MAPR_DOCKER_TAG sleep 15)
+
+        sudo docker cp ${CID}:/opt/mapr/conf ${MAPR_DEFAULTS}
+        sudo docker cp ${CID}:/opt/mapr/roles ${MAPR_DEFAULTS}
+        sudo chown zetaadm:zetaadm ${MAPR_DEFAULTS}/conf/*
+        sudo chown zetaadm:zetaadm ${MAPR_DEFAULTS}/roles/*
+
+        cd $MAPR_DEFAULTS
+        cd conf
+        tar zcf ../conf_default.tgz ./*
+        cd ..
+        cd roles
+        tar zcf ../roles_default.tgz ./*
+        cd ..
+        cd $MYDIR
+    fi
+
+
+    NODE_TEST=$(ssh $NODE_HOST "sudo cat ${MAPR_INST}/conf/mapr-clusters.conf 2> /dev/null")
+
+    if [ "$NODE_TEST" == "" ]; then
+        @go.log INFO "Clean install - proceeding"
+    else
+        echo "There appears to already be a mapr-clusters.conf on $NODE_HOST"
+        echo "The mapr-clusters.conf file has $NODE_TEST in it"
+        echo "You may overwrite and blow it away, but likely that will be bad (especially if it's running) This is highly not recommended"
+        echo "Do you wish to overwrite? Answering N will cancel this process"
+        read -p "Overwrite? " -e -i "N" OW
+        if [ "$OW" == "Y" ]; then
+            @go.log WARN "Removing already found mapr-clusters.conf on $NODE_HOST"
+            ssh NODE_HOST "sudo rm -rf ${MAPR_INST}/conf/*"
+        else
+            @go.log FATAL "mapr-clusters.conf found on $NODE_HOST and users decided against deletion"
+        fi
+    fi
+
+    PARTLIST=$(ssh $NODE_HOST "cat /proc/partitions")
+
+    if [ "$NODE_DISKS" == "" ]; then
+        echo "No disks were presented to this script"
+        echo "You will need to view the output of /proc/partitions, and include the disks you wish to run MapR on"
+        echo "This is a destructive process! Any data on these disks will be destroyed"
+        echo "Please enter the disks all on the same line, separated only by commas."
+        echo ""
+        echo "Example: \"/dev/sda,/dev/sdb,/dev/sdc\""
+        echo ""
+        echo "Output of /proc/partitions"
+        echo "$PARTLIST"
+        echo ""
+        read -p "Disk List: " NODE_DISKS
+    fi
+
+    if [ "$UNATTEND" == "1" ]; then
+        DISK_CHECK="Y"
+        @go.log INFO "Unattended installation, trusting the disk list provided"
+    else
+        DISK_CHECK="N"
+    fi
+    while [ "$DISK_CHECK" == "N" ]; do
+
+        echo "The following disk list was provided:"
+        echo ""
+        echo ""
+        echo "$NODE_DISKS"
+        echo ""
+        echo ""
+        echo "The node partition list is: "
+        echo ""
+        echo "$PARTLIST"
+        echo ""
+        echo "Is $NODE_DISKS correct?"
+        read -p "Is the above list correct? (Press E to exit) Y/N/E: " -e -i "N" NTEST
+        if [ "$NTEST" == "Y" ]; then
+            DISK_CHECK="Y"
+        elif [ "$NTEST" == "E" ]; then
+            @go.log FATAL "Disk list not validated by user - existing"
+        else
+            echo "You will need to view the output of /proc/partitions, and include the disks you wish to run MapR on"
+            echo "This is a destructive process! Any data on these disks will be destroyed"
+            echo "Please enter the disks all on the same line, separated only by commas."
+            echo ""
+            echo "Example: \"/dev/sda,/dev/sdb,/dev/sdc\""
+            echo ""
+            echo "Output of /proc/partitions"
+            echo "$PARTLIST"
+            echo ""
+            read -p "Disk List: " NODE_DISKS
+            echo ""
+            echo ""
+        fi
+    done
+
+    echo ""
+    echo "Copying MapR Defaults to $NODE_HOST"
+    scp ${MAPR_DEFAULTS}/conf_default.tgz $NODE_HOST:/home/zetaadm/
+    scp ${MAPR_DEFAULTS}/roles_default.tgz $NODE_HOST:/home/zetaadm/
+
+    echo ""
+    echo "Creating Directories"
+    ssh $NODE_HOST "sudo mkdir -p ${MAPR_INST}/conf && sudo mkdir -p ${MAPR_INST}/logs && sudo mkdir -p ${MAPR_INST}/roles"
+
+    echo ""
+    echo "Unpacking Defaults"
+
+    ssh $NODE_HOST "sudo mv /home/zetaadm/conf_default.tgz ${MAPR_INST}/conf/ && sudo tar zxf ${MAPR_INST}/conf/conf_default.tgz -C ${MAPR_INST}/conf && sudo rm ${MAPR_INST}/conf/conf_default.tgz"
+
+    ssh $NODE_HOST "sudo mv /home/zetaadm/roles_default.tgz ${MAPR_INST}/roles/ && sudo tar zxf ${MAPR_INST}/roles/roles_default.tgz -C ${MAPR_INST}/roles && sudo rm ${MAPR_INST}/roles/roles_default.tgz"
+
+    echo ""
+    echo "Updating MAPR_SUBNETS"
+    NSUB="export MAPR_SUBNETS=$SUBNETS"
+    ssh $NODE_HOST "sudo sed -i -r \"s@#export MAPR_SUBNETS=.*@${NSUB}@g\" ${MAPR_INST}/conf/env.sh"
+
+    echo ""
+    echo "Updating Warden settings to 35% Max Mem"
+    ssh $NODE_HOST "sudo sed -i 's/service.command.mfs.heapsize.percent=.*/service.command.mfs.heapsize.percent=25/' ${MAPR_INST}/conf/warden.conf"
+    ssh $NODE_HOST "sudo sed -i 's/service.command.mfs.heapsize.maxpercent=.*/service.command.mfs.heapsize.maxpercent=35/' ${MAPR_INST}/conf/warden.conf"
+
+
+    echo ""
+    echo "Copying Disks file"
+    OLDIFS=$IFS
+    IFS=","
+    TFILENAME="${NODE_HOST}_disks.txt"
+    TFILE="./$TFILENAME"
+    for DISK in $NODE_DISKS; do
+        echo $DISK >> $TFILE
+    done
+    IFS=$OLDIFS
+
+    scp $TFILE $NODE_HOST:/home/zetaadm/
+    ssh $NODE_HOST "sudo mv /home/zetaadm/$TFILENAME ${MAPR_INST}/conf/initial_disks.txt"
+    rm  $TFILE
+
+    echo ""
+    echo "Removing CLDB and Webserver from non control nodes"
+    CONTROL_CHK=$(echo -n ${CLDBS}|grep ${NODE_HOST})
+    MARDIR="./conf/marathon_files"
+    mkdir -p "$MARDIR/stdnode_marathon"
+    mkdir -p "$MARDIR/cldb_marathon"
+
+    if [ "$CONTROL_CHK" == "" ]; then
+        ssh $NODE_HOST "sudo rm ${MAPR_INST}/roles/cldb"
+        ssh $NODE_HOST "sudo rm ${MAPR_INST}/roles/webserver"
+        MARFILE="${MARDIR}/stdnode_marathon/mapr_std_${NODE_HOST}.marathon"
+        MARID="shared/mapr/stdnodes/std${NODE_HOST}"
+        MARATHON_CPUS=1
+    else
+        MARFILE="${MARDIR}/cldb_marathon/mapr_cldb_${NODE_HOST}.marathon"
+        MARID="shared/mapr/cldbs/cldb${NODE_HOST}"
+        MARATHON_CPUS=2
+    fi
+
+    NFS_CHK=$(echo -n ${NFS_NODES}|grep ${NODE_HOST})
+
+    if [ "$NFS_CHK" == "" ]; then
+        ssh $NODE_HOST "sudo rm ${MAPR_INST}/roles/nfs"
+    fi
+
+    echo ""
+    echo "Updating permissions of directories"
+    ssh $NODE_HOST "sudo chown -R mapr:mapr ${MAPR_INST}/conf && sudo chown -R mapr:mapr ${MAPR_INST}/logs && sudo chmod -R 755 ${MAPR_INST}/conf && sudo chmod -R 777 ${MAPR_INST}/logs"
+    echo ""
+    echo "Getting Memory on Node"
+
+    FREECMD="free -m|grep Mem|sed -r \"s/\s{1,}/~/g\"|cut -d\"~\" -f2"
+    TOTAL_MEM=$(ssh $NODE_HOST $FREECMD)
+    WARDEN="cat ${MAPR_INST}/conf/warden.conf"
+    CONTROL_CHK=$(echo -n ${CLDBS}|grep ${NODE_HOST})
+    ROLES=$(ssh $NODE_HOST "ls -1 ${MAPR_INST}/roles")
+    MARATHON_MEM=0
+    FS=$(echo "$ROLES"|grep fileserver)
+
+    if [ "$FS" != "" ]; then
+
+        echo "Getting File Server Requirements"
+        TMP=$(ssh $NODE_HOST $WARDEN|grep "service\.command\.mfs\.heapsize\.maxpercent="|cut -d'=' -f2)
+        TMP1=$(echo -n "0.$TMP")
+        MAX_MEM_MB_FLT=$(echo "$TOTAL_MEM * $TMP1"|bc)
+        MAX_MEM_MB=$(printf "%1.f\n" $MAX_MEM_MB_FLT)
+        MARATHON_MEM=$(echo $MARATHON_MEM + $MAX_MEM_MB|bc)
+    else
+        MAX_MEM_MB=0
+    fi
+
+    NFS=$(echo "$ROLES"|grep nfs)
+
+    if [ "$NFS" != "" ]; then
+        echo "Getting NFS Server Requirements"
+        MAX_NFS=$(ssh $NODE_HOST $WARDEN|grep "service\.command\.nfs\.heapsize\.max="|cut -d'=' -f2)
+        MARATHON_MEM=$(echo $MARATHON_MEM + $MAX_NFS|bc)
+    else
+        MAX_NFS=0
+    fi
+
+    WEB=$(echo "$ROLES"|grep webserver)
+
+    if [ "$WEB" != "" ]; then
+         echo "Getting Web Server Requirements"
+        MAX_WEB=$(ssh $NODE_HOST $WARDEN|grep "service\.command\.webserver\.heapsize\.max="|cut -d'=' -f2)
+        MARATHON_MEM=$(echo $MAX_WEB + $MARATHON_MEM|bc)
+    else
+        MAX_WEB=0
+    fi
+
+    CLDB=$(echo "$ROLES"|grep cldb)
+
+    if [ "$CLDB" != "" ]; then
+        echo "Getting CLDB Requirements"
+        MAX_CLDB=$(ssh $NODE_HOST $WARDEN|grep "service\.command\.cldb\.heapsize\.max="|cut -d'=' -f2)
+        MARATHON_MEM=$(echo $MARATHON_MEM + $MAX_CLDB|bc)
+    else
+        MAX_CLDB=0
+    fi
+
+    # Add 1000 for the Warden (750 for Warden 250 padding)
+    MARATHON_MEM=$(echo $MARATHON_MEM + 1000|bc)
+
+    echo "Host: $NODE_HOST"
+    if [ "$CONTROL_CHK" != "" ]; then
+        echo "Control Node: True"
+    else
+        echo "Control Node: False"
+    fi
+    echo "Total Available Mem: $TOTAL_MEM"
+    echo "Memory Required for MapR Fileserver: $MAX_MEM_MB"
+    echo "Memory Required for MapR NFS Server: $MAX_NFS"
+    echo "Memory Required for MapR Webserver: $MAX_WEB"
+    echo "Memory Required for MapR CLDB: $MAX_CLDB"
+    echo "Memory Required for Warden: 1000"
+    echo "-----------"
+    echo "Total MapR Mem Required: $MARATHON_MEM"
+    echo ""
+cat > $MARFILE << MAREOF
+{
+  "id": "${MARID}",
+  "cpus": ${MARATHON_CPUS},
+  "mem": ${MARATHON_MEM},
+  "cmd": "/opt/mapr/server/dockerrun.sh",
+  "instances": 1,
+  "constraints": [["hostname", "LIKE", "$NODE_IP"],["hostname", "UNIQUE"]],
+  "labels": {
+   "CONTAINERIZER":"Docker"
+  },
+  "env": {
+  "CLDBS": "$CLDBS",
+  "MUSER": "mapr",
+  "ZKS": "$ZKS",
+  "CLUSTERNAME": "$CLUSTERNAME",
+  "MAPR_CONF_OPTS": "$MAPR_CONF_OPTS"
+},
+  "ports": [],
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "${DOCKER_REG_URL}/maprdocker:${MAPR_DOCKER_TAG}",
+      "privileged": true,
+      "parameters": [
+                { "key": "ipc", "value": "host" }
+            ],
+      "network": "HOST"
+    },
+    "volumes": [
+      { "containerPath": "/opt/mapr/conf", "hostPath": "${MAPR_INST}/conf", "mode": "RW" },
+      { "containerPath": "/opt/mapr/logs", "hostPath": "${MAPR_INST}/logs", "mode": "RW" },
+      { "containerPath": "/opt/mapr/roles", "hostPath": "${MAPR_INST}/roles", "mode": "RW" },
+      { "containerPath": "/etc/localtime", "hostPath": "/etc/localtime", "mode": "RO" }
+    ]
+  }
+}
+MAREOF
+    @go.log INFO "MapR Setup complete for $NODE_HOST"
+}
+_installmaprnode "$@"

@@ -1,0 +1,245 @@
+#!/bin/bash
+#
+# Create conf file for initial MapR installation
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+
+IP_DETECT="./conf/ip-detect"
+
+if [ ! -f "$IP_DETECT" ]; then
+    @go.log FATAL "The ip-detect script should be located at $IP_DETECT but was not found. exiting"
+fi
+
+echo "The ip-detect script created during the dcos install was identified at $IP_DETECT"
+echo "We will now execute this on this node, please ensure it produces the results needed for your environment"
+echo ""
+$IP_DETECT
+echo ""
+echo "If nothing is returned, or the returned result is incorrect, please edit $IP_DETECT manually, if this is not working, MapR install will fail"
+echo ""
+echo ""
+echo "Now we will ask you a series of questions about your MapR installation."
+echo "---------------------------------------"
+echo ""
+echo "As we build the docker containers for MapR, we need a temporary Docker registry to host the containers"
+echo "This is ONLY for mapr based containers"
+echo "It will be named maprdocker-mapr-shared.marathon.slave.mesos by default, only change this name if you understand what that means"
+echo "Which name do you wish to give this docker registry instance?"
+echo ""
+read -p "MapR Docker Registry Host: " -e -i "maprdocker-mapr-shared.marathon.slave.mesos" DOCKER_REG_HOST
+echo ""
+read -p "Which port should the MapR Docker register run on (we recommend 5000): " -e -i "5000" DOCKER_REG_PORT
+echo ""
+echo "---------------------------------------"
+echo "Where would you like the MapR Installation directory to be location on the physical host?"
+echo "It should not be in /opt/mapr to avoid conflicts with clients or other things on the physical node"
+echo ""
+read -p "Mapr Installation Directory: " -e -i "/opt/maprdocker" MAPR_INST
+#########################
+# This is the list of Zookeepers. A few notes, we specify both the zkid and the ports used for leader/quorum elections so they don't conflict with other instances of Zookeeper
+# The format here is this: each ZK will be space separated and then for each ZK
+# id:hostname:client_port:master_election_port:quorumport
+#
+# Ideally in the future we will be looking to use exhibitor to create these and just specifying the hosts and client port. For now this is the easiest way to create this. 
+# Start your id with 0, MapR really wants you to use 5181 for the client port, and the 2880 and 3880 ports were selected by me to be different from the default of 2888:3888
+echo ""
+echo "---------------------------------------"
+echo "Next step is to identify which agents nodes will be zookeeper nodes"
+echo "The format for this is ZKID:HOSTNAME,ZKID:HOSTNAME"
+echo "ZKID: This is the ID the ZK will have. It's an integer, starts at 0"
+echo "HOSTNAME: This is obvious. The hostname of the physical node it will be running on"
+echo ""
+echo "Example: 0:node1,1:node2,2:node3"
+echo ""
+echo "The available agent internal IP - hostnames combos are:"
+AGENT_HOSTS=""
+for N in $AGENT_NODES; do
+    H=$(ssh $N "hostname -f")
+    AGENT_HOSTS="${AGENT_HOSTS}$N - $H"$'\n'
+done
+echo ""
+echo "$AGENT_HOSTS"
+echo ""
+read -p "Zookeeper String: " ZK_STRING
+echo ""
+echo "Please enter the client port. I recommend using 5181 the port used by MapR installs"
+read -p "ZK Client Port: " -e -i "5181" ZK_CLIENT_PORT
+echo ""
+echo "Please enter the master election port. Recommend using 2880 as it's different from the normal default for ZK"
+read -p "ZK Master Election Port: " -e -i "2880" ZK_MASTER_ELECTION_PORT
+echo ""
+echo "Please enter the quorum port. Recommend useing 3880 as it's different from the normal default for ZK"
+read -p "ZK Quorum Port: " -e -i "3880" ZK_QUORUM_PORT
+echo ""
+echo "---------------------------------------"
+echo "Next we need to understand which nodes will be running CLDB"
+echo "Note: All nodes are the real hostnames."
+echo "It's recommended to have 3-5 CLDBs in a production cluster"
+echo "Only one is needed for a test cluster"
+echo "Use the format node:port,node:port,node:port"
+echo ""
+echo "Example: node1:7222,node2:7222,node3:7222"
+echo ""
+echo "Use the MapR Default Port of 7222 unless you know what you are doing"
+echo ""
+echo "The Agent Hostnames are:"
+echo ""
+echo "$AGENT_HOSTS"
+echo ""
+read -p "CLDB String: " CLDB_STRING
+echo ""
+echo "---------------------------------------"
+echo "Initial Nodes - These are the initial nodes that are in the cluster"
+echo "Nodes can always be added, however, nodes that are running initially must the same or more than the CLDB nodes"
+echo "I.e. You need to have at least the CLDB Nodes in this list"
+echo ""
+echo "The format here is nodename:disk1/disk2/disk3;nodename:/dev/sda,/dev/sdb for that node"
+echo ""
+echo "Example: node1:/dev/sda,/dev/sdb,/dev/sdc;node2:/dev/sda,/dev/sdb"
+echo ""
+echo "We can make this easier if all the nodes that are agents have the same list of nodes, you can enter it once, and we'll create the string for you."
+read -e -p "Are the disks the same for all agent nodes? " -i "Y" SAME_AGENTS
+TEST_INITIAL=""
+if [ "$SAME_AGENTS" == "Y" ]; then
+    read -e -p "Enter just the disks for each node delimitted by commas: " JUST_DISKS
+    for N in $AGENT_NODES; do
+        H=$(ssh $N "hostname -f")
+        if [ "$TEST_INITIAL" == "" ]; then
+            TEST_INITIAL="${H}:${JUST_DISKS}"
+        else
+            TEST_INITIAL="${TEST_INITIAL};${H}:${JUST_DISKS}"
+        fi
+    done
+    echo "Disk String:"
+    echo ""
+    echo "$TEST_INITIAL"
+    echo ""
+    read -e -p "Does this initial disk string look correct (press Enter to accept)? " -i "Y" CORRECT_INITIAL
+    if [ "$CORRECT_INITIAL" != "Y" ]; then
+        TEST_INITIAL=""
+    fi
+fi
+if [ "$TEST_INITIAL" == "" ]; then
+    read -p "Enter the initial nodes and their disks: " INITIAL_NODES
+else
+    INITIAL_NODES="$TEST_INITIAL"
+fi
+echo ""
+echo "---------------------------------------"
+echo "Please enter the list of nodes that you want to include the NFS Service on."
+echo "It should be a CSV list of nodes: node1,node2,node3"
+echo "Leave blank (press enter) for no NFS Nodes"
+echo ""
+read -p "Enter nfs nodes: " NFS_NODES
+#########################
+# MapR SUBNETS is the value that is replaced in the /opt/mapr/conf/env.sh for MAPR_SUBNETS.  This is important because MapR will try to use the docker interfaces unless you limit this down.  
+# You can do commma separated subnets if you have more than one NIC you want to use
+#SUBNETS="10.0.2.0/24,10.0.3.0/24"
+echo ""
+echo "---------------------------------------"
+echo "MapR Allows you to tie your MapR comms to specific subnets.  So if you have two interfaces,and want mapr to use both, specify the IP rangages as subnets to user"
+echo "Examples: 10.0.2.0/24,10.0.3.0/24"
+echo ""
+read -p "Please specify MapR Subnets: " SUBNETS
+echo ""
+echo "---------------------------------------"
+echo "The MapR Clustername will be taken from the DCOS clustername"
+echo ""
+echo "MapR Clustername: $CLUSTERNAME"
+echo ""
+echo ""
+echo "---------------------------------------"
+echo "Please select a MapR Version file to utilize for the initial kickoff of the cluster"
+echo ""
+ls ./vers/mapr
+echo ""
+read -e -p "Please select version file: " -i "mapr_v5.2.0-39745.vers" MAPR_VERS
+if [ ! -f "./vers/mapr/$MAPR_VERS" ]; then
+    @go.log FATAL "./vers/mapr/$MAPR_VERS not found"
+fi
+
+cat > $MAPR_CONF << EOF
+#!/bin/bash
+
+#########################
+# These are the editable settings for installing a MapR running on Docker cluster.  Edit these settings prior to executing the scripts
+
+#########################
+# Need a list of nodes we'll be working on. In the future, we will get this auto matically, but for now you have to put a space separated list of the IP address of all nodes in your cluster. 
+export INODES="$INITIAL_NODES"
+
+#########################
+# Comma separated list of the hostnames for CLDBs. 
+# You can include ports (if no port is provided, 7222, the default is used)
+# You need at least one. Obviously more is good. If you are not going to run a licensed version of MapR, then 1 is fine.  If you are using M5/M7 put more in a for HA goodness
+# Ex:
+# CLDBS="host1:7222,host2:7222:host3:7222"
+# CLDBS="host1,host2,host3""
+# CLDBS="ip-10-22-87-235:7222"
+export CLDBS="$CLDB_STRING"
+
+#########################
+# This is the location on the physical node that MapR is installed to
+# It should be different than the mapr default of /opt/mapr
+# It will be mapped to /opt/mapr inside the docker container. 
+# It should not be /opt/mapr to keep it out of conflict with anything like mapr client you may install on a node. 
+#
+export MAPR_INST="$MAPR_INST"
+
+#########################
+# This is the docker registry that will be used to house the images so you don't have to build them on every node
+# After your cluster is started in AWS, pick a node and use the default port
+
+export DOCKER_REG_HOST="$DOCKER_REG_HOST"
+export DOCKER_REG_PORT="$DOCKER_REG_PORT"
+export DOCKER_REG_URL="\${DOCKER_REG_HOST}:\${DOCKER_REG_PORT}"
+
+
+export ZK_STRING="$ZK_STRING"
+export ZK_CLIENT_PORT="$ZK_CLIENT_PORT"
+export ZK_MASTER_ELECTION_PORT="$ZK_MASTER_ELECTION_PORT"
+export ZK_QUORUM_PORT="$ZK_QUORUM_PORT"
+
+export NFS_NODES="$NFS_NODES"
+export MAPR_CONF_OPTS=""
+export SUBNETS="$SUBNETS"
+
+export MAPR_VERS="$MAPR_VERS"
+export MAPR_LOCKED="1"
+
+# Do not change the rest of this script, this creates two more variables from your ZKs, one to put into the zoo.cfg on each ZK (ZOOCFG) and the other to pass to the mapr configure script ($ZKS)
+
+#Example: 0:node1,1:node2,2:node3"
+
+TZKS=""
+TZOOCFG=""
+OLDIFS=\$IFS
+IFS=","
+
+for ZK in \$ZK_STRING; do
+    ZID=\$(echo \$ZK|cut -d":" -f1)
+    HNAME=\$(echo \$ZK|cut -d":" -f2)
+
+    CPORT=\$ZK_CLIENT_PORT
+    QPORT=\$ZK_QUORUM_PORT
+    MPORT=\$ZK_MASTER_ELECTION_PORT
+
+    if [ "\$TZKS" != "" ]; then
+        TZKS="\${TZKS},"
+    fi
+    if [ "\$TZOOCFG" != "" ];then
+        TZOOCFG="\${TZOOCFG} "
+    fi
+    TZKS="\${TZKS}\${HNAME}:\${CPORT}"
+    TZOOCFG="\${TZOOCFG}server.\${ZID}=\${HNAME}:\${QPORT}:\${MPORT}"
+done
+IFS=\$OLDIFS
+export ZKS=\$TZKS
+export ZOOCFG=\$TZOOCFG
+
+
+EOF
+
+@go.log INFO "MapR Conf file written to $MAPR_CONF"

@@ -3,10 +3,7 @@
 # Create users on Zeta nodes for initial install
 #
 
-if [ ! -f "$PREP_CONF" ]; then
-    @go.log FATAL "Cannot create users without a prep.conf file located at $PREP_CONF - Exiting"
-fi
-. $PREP_CONF
+sourceconf "$PREP_CONF"
 
 SCRIPTS="./bin/ubuntu_prep.sh ./bin/centos_prep1.sh ./bin/centos_prep2.sh"
 
@@ -17,7 +14,7 @@ for SCRIPT in $SCRIPTS; do
     fi
 done
 if [ "$FOUND" == "0" ]; then
-    ./zeta prep createprepscripts
+    ./zeta prep createsystemprep
 fi
 
 if [ ! -f "$OUT_KEY" ]; then
@@ -25,7 +22,7 @@ if [ ! -f "$OUT_KEY" ]; then
     ./zeta prep genkey
 fi
 
-function systemprep() {
+function _systemprep() {
     HOST=$1
     ATONCE=$2
 
@@ -59,4 +56,4 @@ function systemprep() {
     fi
 }
 
-systemprep "$@"
+_systemprep "$@"

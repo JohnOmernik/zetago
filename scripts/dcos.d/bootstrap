@@ -2,15 +2,10 @@
 #
 # Bootstrap DCOS
 #
-if [ ! -f "$PREP_CONF" ]; then
-    @go.log FATAL "Cannot find $PREP_CONF - Exiting"
-fi
-. $PREP_CONF
 
-if [ ! -f "$DCOS_CONF" ]; then
-    @go.log FATAL "Cannot bootstrap DCOS without $DCOS_CONF. Please run ./zeta dcos to create"
-fi
-. $DCOS_CONF
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+
 
 ssh -o StrictHostKeyChecking=no $BOOTSTRAP_NODE "mkdir -p $BOOTSTRAP_LOC/genconf"
 

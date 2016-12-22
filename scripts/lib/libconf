@@ -1,7 +1,22 @@
 #!/bin/bash
 #
-# This function is a simple tool that will:
-# -Check if a Conf Exists
+# libconf
+#
+# Functions for use in conf files
+#
+# initconf - Load a conf and/or replace it. Used when the scripts assume a conf does not exist and needs to have it created
+#
+# sourceconf - Attempt to source a conf file, if the conf doesn't exist, exit with an error message
+#
+# lockconf - lock (or unlock) a give conf file
+#
+# --------------------------------------------
+#
+# function initconf
+# This function is a simple tool that will look for a conf file, and if it's found and not locked, or not found, instead of exiting, will run through a conf creation process
+# If the conf is found, and locked, it will simply source the conf and move on
+#
+#  Logic: Check if a Conf Exists
 #   - If No Call the Conf Creation script
 #   - If Yes then offer the user three option: Replace the conf, Use the existing conf, or examine the conf
 #     - E (Examine) the conf displays the conf to the user and then provides only two options Use the conf or Replace the Conf
@@ -15,8 +30,9 @@ function initconf(){
 
     CUR_CONF="$1"
     CONF_FILE=$(echo "$CUR_CONF"|sed "s@\./conf\/@@g")
-    CONF_CMD=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
-    CONF_VAR=$(echo "$CONF_CMD"|tr '[:lower:]' '[:upper:]')
+    CONF_CMD_BASE=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
+    CONF_CMD=$(echo "$CONF_CMD_BASE"|sed "s/_/ /g")
+    CONF_VAR=$(echo "$CONF_CMD_BASE"|tr '[:lower:]' '[:upper:]')
     CONF_VARNAME="${CONF_VAR}_LOCKED"
 
     if [ -f "$CUR_CONF" ]; then
@@ -39,15 +55,47 @@ function initconf(){
     fi
 
     if [ "$EXIST_PREP" == "R" ]; then
-        ./zeta ${CONF_CMD} create${CONF_CMD}conf
+        ./zeta ${CONF_CMD} createconf
     fi
     . $CUR_CONF
 }
 
-function lockconf(){
+#
+# function sourceconf
+# Check to see if a conf exists and then source it. If it doesn't exist, exit with a message.
+#
+# Argument(s):
+# The path the conf file
+#
+function sourceconf(){
     CUR_CONF="$1"
     CONF_FILE=$(echo "$CUR_CONF"|sed "s@\./conf\/@@g")
-    CONF_CMD=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
+    CONF_CMD_BASE=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
+    CONF_CMD=$(echo "$CONF_CMD_BASE"|sed "s/_/ /g")
+    CONF_VAR=$(echo "$CONF_CMD_BASE"|tr '[:lower:]' '[:upper:]')
+    CONF_VARNAME="${CONF_VAR}_LOCKED"
+
+    if [ -f "$CUR_CONF" ]; then
+        . $CUR_CONF
+    else
+        @go.log FATAL "The Conf file $CONF_FILE could not be found at $CUR CONF. That file must be present before you can run this command"
+    fi
+}
+
+
+#
+# function lockconf
+#
+# Change the lock value of a given conf file
+#
+function lockconf(){
+
+
+    CUR_CONF="$1"
+    CONF_FILE=$(echo "$CUR_CONF"|sed "s@\./conf\/@@g")
+    CONF_CMD_BASE=$(echo "$CONF_FILE"|sed "s@\.conf@@g")
+    CONF_CMD=$(echo "$CONF_CMD_BASE"|sed "s/_/ /g")
+    CONF_VAR=$(echo "$CONF_CMD_BASE"|tr '[:lower:]' '[:upper:]')
 
     CURVAR=$(grep "_LOCKED" $CUR_CONF|cut -d"=" -f1)
     CURVAL=$(grep "_LOCKED" $CUR_CONF|cut -d"=" -f2|sed "s/\"//g")
