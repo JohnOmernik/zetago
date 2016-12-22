@@ -59,7 +59,7 @@ function _installmaprnode(){
 
     scp $IP_DETECT $NODE_HOST:/home/zetaadm/
     ssh $NODE_HOST "chmod +x /home/zetaadm/ip-detect"
-    NODE_IP=$(ssh $NODE_HOST /home/zetaadm/ip-detect)
+    NODE_IP=$(ssh -o StrictHostKeyChecking=no $NODE_HOST /home/zetaadm/ip-detect)
 
     @go.log INFO "MapR Install requested on $NODE_HOST ($NODE_IP) with disks: $NODE_DISKS"
     echo ""
@@ -90,7 +90,7 @@ function _installmaprnode(){
     fi
 
 
-    NODE_TEST=$(ssh $NODE_HOST "sudo cat ${MAPR_INST}/conf/mapr-clusters.conf")
+    NODE_TEST=$(ssh $NODE_HOST "sudo cat ${MAPR_INST}/conf/mapr-clusters.conf 2> /dev/null")
 
     if [ "$NODE_TEST" == "" ]; then
         @go.log INFO "Clean install - proceeding"
