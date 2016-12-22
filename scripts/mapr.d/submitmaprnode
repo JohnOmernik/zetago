@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+# Take a node name and submit it as an app (that is running) to marathon
+#
+# Arguments:
+# %NODEHOSTNAME% - Hostname of node you want to start, if it can't find the marathon file it will error out
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+MYDIR=$(pwd)
+MEUSER=$(whoami)
+if [ "$MEUSER" != "zetaadm" ]; then
+    @go.log FATAL "This script needs to be un as zetaadm. Current User: $MEUSER"
+fi
+
+NODE=$1
+
+CLDB_HOST=$(echo $CLDBS|grep $NODE)
+
+MARDIR="./conf/marathon_files"
+
+if [ "$CLDB_HOST" != "" ]; then
+    echo "This is a CLDB Node"
+    MARATHON_FILE="${MARDIR}/cldb_marathon/mapr_cldb_${NODE}.marathon"
+else
+    echo "This is a standard node"
+    MARATHON_FILE="${MARDIR}/stdnode_marathon/mapr_std_${NODE}.marathon"
+fi
+
+if [ ! -f "$MARATHON_FILE" ]; then
+    @go.log FATAL "The marathon file for $NODE should be located: $MARATHON_FILE, however it was not found - exiting"
+fi
+
+@go.log INFO "Starting MapR Instance on $NODE using $MARATHON_FILE"
+
+./zeta cluster marathon submit $MARATHON_FILE $MARATHON_SUBMIT
+

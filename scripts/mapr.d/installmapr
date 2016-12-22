@@ -1,0 +1,84 @@
+#!/bin/bash
+#
+# mapr installmapr 
+# Install mapr on all nodes in conf
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+MYDIR=$(pwd)
+
+MEUSER=$(whoami)
+
+if [ "$MEUSER" != "zetaadm" ]; then
+    @go.log FATAL "This script needs to be un as zetaadm. Current User: $MEUSER"
+fi
+
+UNATTEND="0"
+
+for i in "$@"
+    do
+    case $i in
+        -u)
+        UNATTEND="1"
+        ;;
+        *)
+            # unknown option
+        ;;
+    esac
+done
+
+@go.log INFO "Creating Conf files for all nodes in mapr.conf"
+echo ""
+OLDIFS=$IFS
+IFS=";"
+for NODE in $INODES; do
+    NODE_HOST=$(echo $NODE|cut -d":" -f1)
+    NODE_DISKS=$(echo $NODE|cut -d":" -f2)
+    @go.log INFO "Node Host: $NODE_HOST - Node Disks: $NODE_DISKS"
+    echo ""
+    if [ "$UNATTEND" == "1" ]; then
+        ./zeta mapr installmaprnode -n"${NODE_HOST}" -d"${NODE_DISKS}" -u
+    else
+        ./zeta mapr installmaprnode -n"${NODE_HOST}" -d"${NODE_DISKS}"
+    fi
+done
+IFS=$OLDIFS
+
+echo "Starting CLDB Nodes"
+IFS=","
+
+STARTED=""
+
+for CLDB in $CLDBS; do
+    CLDB_HOST=$(echo $CLDB|cut -d":" -f1)
+    STARTED="$STARTED $CLDB_HOST"
+
+    ./start_mapr_node.sh $CLDB_HOST
+
+done
+echo ""
+echo ""
+echo "Waiting 30 seconds to let the CLDBs Start"
+sleep 30
+echo "At this point, please check to determine if CLDB is running, if it is, please press enter"
+read -e -p "I solemnly swear I checked to ensure the CLDB was running: " -i "YES" CHKMATE
+
+IFS=";"
+
+for NODE in $INODES; do
+    NODE_HOST=$(echo $NODE|cut -d":" -f1)
+    CHK=$(echo $STARTED|grep $NODE_HOST)
+    if [ "$CHK" == "" ]; then
+        ./start_mapr_node.sh $NODE_HOST
+        echo ""
+    fi
+done
+
+echo ""
+echo ""
+IFS=$OLDIFS
