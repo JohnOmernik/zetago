@@ -13,6 +13,7 @@ sourceconf "$MAPR_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
+. ./vers/mapr/$MAPR_VERS
 
 MYDIR=$(pwd)
 
@@ -33,10 +34,10 @@ function _installmaprnode(){
             -u)
             UNATTEND="1"
             ;;
-            "-n=*")
+            "-n="*)
             NODE_HOST="${i#*=}"
             ;;
-            "-d=*")
+            "-d="*)
             NODE_DISKS="${i#*=}"
             ;;
             *)
