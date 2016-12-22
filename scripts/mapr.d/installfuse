@@ -1,0 +1,47 @@
+#!/bin/bash
+#
+# mapr installfuse
+# Install MapR FUSE client on all nodes in the conf file
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+MYDIR=$(pwd)
+
+MEUSER=$(whoami)
+
+if [ "$MEUSER" != "zetaadm" ]; then
+    @go.log FATAL "This script needs to be un as zetaadm. Current User: $MEUSER"
+fi
+
+UNATTEND="0"
+
+for i in "$@"
+    do
+    case $i in
+        -u)
+        UNATTEND="1"
+        ;;
+        *)
+            # unknown option
+        ;;
+    esac
+done
+
+@go.log INFO "Installing MapR FUSE clients on all nodes in conf file"
+echo ""
+for NODE in $AGENT_NODES; do
+    @go.log INFO "Sending Node $NODE to FUSE Install Script"
+    echo ""
+    if [ "$UNATTEND" == "1" ]; then
+        ./zeta mapr fuseinstall -n="${NODE}" -u
+    else
+        ./zeta mapr fuseinstall -n="${NODE}"
+    fi
+done
+
+

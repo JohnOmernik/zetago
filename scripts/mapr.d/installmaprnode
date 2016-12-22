@@ -57,9 +57,9 @@ function _installmaprnode(){
         @go.log FATAL "Cannont connect to host"
     fi
 
-    scp $IP_DETECT $NODE_HOST:/home/zetaadm/
-    ssh $NODE_HOST "chmod +x /home/zetaadm/ip-detect"
-    NODE_IP=$(ssh -o StrictHostKeyChecking=no $NODE_HOST /home/zetaadm/ip-detect)
+    scp -o StrictHostKeyChecking=no $IP_DETECT $NODE_HOST:/home/zetaadm/
+    ssh -o StrictHostKeyChecking=no $NODE_HOST "chmod +x /home/zetaadm/ip-detect"
+    NODE_IP=$(ssh $NODE_HOST /home/zetaadm/ip-detect)
 
     @go.log INFO "MapR Install requested on $NODE_HOST ($NODE_IP) with disks: $NODE_DISKS"
     echo ""

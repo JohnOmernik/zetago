@@ -1,0 +1,108 @@
+#!/bin/bash
+#
+# mapr fuseremove - Remove MapR FUSE client from a single node
+#
+# Arguments:
+# -u - Unattended
+# -n=%NODE%  %NODE% being the node to install on
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+. ./vers/mapr/$MAPR_VERS
+
+MYDIR=$(pwd)
+
+MEUSER=$(whoami)
+
+if [ "$MEUSER" != "zetaadm" ]; then
+    @go.log FATAL "This script needs to be un as zetaadm. Current User: $MEUSER"
+fi
+
+
+function _fuseremove() {
+
+    UNATTEND="0"
+    NODE_HOST=""
+
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            "-n="*)
+            NODE_HOST="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ "$NODE_HOST" == "" ]; then
+        @go.log FATAL "This script must be passed a hostname via the -n= parameter Ex: -n=node1"
+    fi
+
+    NETTEST=$(ssh $NODE_HOST hostname)
+
+    if [ "$NETTEST" == "" ]; then
+        @go.log FATAL "Cannot connect to host $NODE_HOST for fuse install"
+    fi
+
+    # Need to update for Cent/RH detection We are only detecting Ubuntu right now
+    DIST=$(ssh $NODE_HOST "grep DISTRIB_ID /etc/lsb-release")
+
+
+    UBUNTU_CHK=$(echo $DIST|grep Ubuntu)
+
+    if [ "$UBUNTU_CHK" != "" ]; then
+        INST_DIST="ubuntu"
+    else
+        @go.log FATAL "Only detecting for Ubuntu at this time"
+    fi
+
+    CURCHK=$(ssh $NODE_HOST "ls /opt/mapr 2> /dev/null")
+
+    if [ "$CURCHK" == "" ]; then
+        @go.log FATAL "Fuse install not found"
+    fi
+
+    if [ "$UNATTEND" != "1" ]; then
+        echo "Client Removal requested on $NODE_HOST ($INST_DIST) - Previous Installation Detected"
+        read -p "Continue with Removal? " -e -i "N" CONT
+    else
+        CONT="Y"
+
+    if [ "$CONT" != "Y" ]; then
+        @go.log FATAL "FUSE removal on $NODE_HOST aborted by user"
+    fi
+    @go.log INFO "Removing FUSE client from $NODE_HOST"
+
+
+    if [ "$INST_DIST" == "ubuntu" ]; then
+        REM_CLIENT="mapr-client"
+        REM_POSIX="mapr-posix-client-basic"
+        REM_CMD="dpkg --purge --force-all"
+    elif [ "$INST_DIST" == "rh" ]; then
+        REM_CLIENT=""
+        REM_POSIX= ""
+        REM_CMD=""
+    fi
+
+
+    ssh $NODE_HOST "sudo /etc/init.d/mapr-posix-client-basic stop"
+    ssh $NODE_HOST "sudo $REM_CMD $REM_POSIX"
+    sleep 2
+    ssh $NODE_HOST "sudo $REM_CMD $REM_CLIENT"
+
+    echo ""
+    @go.log INFO "FUSE client removed from $NODE_HOST"
+    echo ""
+}
+
+_fuseremove "$@"

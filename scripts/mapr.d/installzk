@@ -45,7 +45,7 @@ MAPR_DEFAULTS="./conf/mapr_defaults"
 mkdir -p $MAPR_DEFAULTS
 mkdir -p $MAPR_DEFAULTS/conf
 mkdir -p ./conf/marathon_files/zk_marathon
-rm $MAPR_DEFAULTS/conf/*
+rm -f $MAPR_DEFAULTS/conf/*
 
 . ./vers/mapr/$MAPR_VERS
 
@@ -72,7 +72,7 @@ for ZK in $ZK_STRING; do
     echo "ID: $ZK_ID"
     echo "Host: $ZK_HOST"
     echo ""
-    ZKTEST=$(ssh $ZK_HOST "sudo cat ${MAPR_INST}/zkdata/myid 2> /dev/null")
+    ZKTEST=$(ssh -o StrictHostKeyChecking=no $ZK_HOST "sudo cat ${MAPR_INST}/zkdata/myid 2> /dev/null")
     if [ "$ZKTEST" == "" ]; then
         echo "No myid Safe to proceed"
     else
