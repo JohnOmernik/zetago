@@ -15,7 +15,6 @@ sourceconf "$CLUSTER_BASE_CONF"
 
 function _shareddocker() {
 
-
     CURUSER=$(whoami)
     if [ "$CURUSER" != "zetaadm" ]; then
         @go.log FATAL "Must use zetaadm user"
@@ -25,17 +24,10 @@ function _shareddocker() {
         @go.log FATAL "Cluster base conf found at $CLUSTER_BASE_CONF - Not installing"
     fi
 
-
-
-
-
     DOCKER_IMAGE_LOC="/mapr/$CLUSTERNAME/zeta/shared/dockerregv2/images"
 
-
-    echo "Looking for $DOCKER_IMAGE_LOC"
     if [ -d "$DOCKER_IMAGE_LOC" ]; then
         @go.log FATAL "$DOCKER_IMAGE_LOC already exists. Please remove volume and/or delete the directory prior to installing Shared Docker Registry"
-
     else
         mkdir -p /mapr/$CLUSTERNAME/zeta/shared/dockerregv2
         maprapi "/volume/create?name=zeta.shared.dockerregv2&path=/zeta/shared/dockerregv2/images&rootdirperms=775&user=zetaadm:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=zetaadm"
@@ -72,7 +64,6 @@ EOL
 
     sudo chmod +x /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/dockerregv2.sh
 
-
     APP_NAME="docker"
     APP_CERT_LOC="/mapr/$CLUSTERNAME/zeta/shared/dockerregv2/certs"
     sudo mkdir -p ${APP_CERT_LOC}
@@ -80,8 +71,8 @@ EOL
     sudo chmod 770 ${APP_CERT_LOC}
     CN_GUESS="dockerregv2-shared.marathon.slave.mesos"
 
-    . /home/$IUSER/zetaca/zetaca_env.sh
-    . /home/$IUSER/zetaca/gen_server_cert.sh
+    . /home/zetaadm/zetaca/zetaca_env.sh
+    . /home/zetaadm/zetaca/gen_server_cert.sh
 
     MARFILE="/mapr/$CLUSTERNAME/zeta/shared/dockerregv2/dockerregv2.shared.marathon"
 
@@ -116,6 +107,7 @@ cat > $MARFILE << EOF
 }
 EOF
     ./zeta cluster marathon submit "${MARFILE}" "${MARATHON_SUBMIT"
+
     @go.log INFO "Shared Docker Registry installed"
 
 }
