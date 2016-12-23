@@ -16,6 +16,7 @@ sourceconf "$CLUSTER_BASE_CONF"
 function _shareddocker() {
 
     CURUSER=$(whoami)
+
     if [ "$CURUSER" != "zetaadm" ]; then
         @go.log FATAL "Must use zetaadm user"
     fi
@@ -106,7 +107,7 @@ cat > $MARFILE << EOF
   }
 }
 EOF
-    ./zeta cluster marathon submit "${MARFILE}" "${MARATHON_SUBMIT"
+    ./zeta cluster marathon submit "${MARFILE}" "${MARATHON_SUBMIT}"
 
     @go.log INFO "Shared Docker Registry installed"
 
