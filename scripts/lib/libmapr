@@ -23,9 +23,9 @@ EOCRED
 
     BASE_REST="https://$WEBHOST/rest"
     CURL_GET_BASE="/opt/mesosphere/bin/curl -k -s --netrc-file $TFILE $BASE_REST"
-    echo ""
+
     CURL_RESULT=$(${CURL_GET_BASE}${CMD})
-    echo ""
+
     ERR_RESULT=$(echo $CURL_RESULT|grep "OK")
     if [ "$ERR_RESULT" != "" ]; then
         @go.log INFO "MAPR API Success: Command: $CMD - Result: $CURL_RESULT"
