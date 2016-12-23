@@ -17,9 +17,9 @@ function maprapi() {
     touch $TFILE
     chown zetaadm:zetaadm $TFILE
     chmod 600 $TFILE
-    cat > $TFILE << EOCRED
-    machine $HOST login mapr password $MAPR_PASS
-    EOCRED
+cat > $TFILE << EOCRED
+machine $HOST login mapr password $MAPR_PASS
+EOCRED
 
     BASE_REST="https://$WEBHOST/rest"
     CURL_GET_BASE="/opt/mesosphere/bin/curl -k --netrc-file $TFILE $BASE_REST"
