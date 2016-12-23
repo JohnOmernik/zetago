@@ -54,7 +54,11 @@ IFS=","
 STARTED=""
 for CLDB in $CLDBS; do
     CLDB_HOST=$(echo $CLDB|cut -d":" -f1)
-    STARTED="$STARTED $CLDB_HOST"
+    if [ "$STARTED" == "" ]; then
+        STARTED="$CLDB_HOST"
+    else
+        STARTED="$STARTED $CLDB_HOST"
+    fi
     ./zeta mapr submitmaprnode $CLDB_HOST
 done
 echo ""
@@ -67,8 +71,8 @@ while [ "$CLDBTEST" == "" ]; do
     @go.log INFO "Waiting 20 seconds to check again for CLDB Nodes up"
     sleep 20
     for H in $STARTED; do
-        @go.log INFO "Checking CLDB Node: $H"
         CLDBTEST=$(curl -s -k https://$H:8443)
+        @go.log INFO "Checking CLDB Node: '$H'"
         if [ "$CLDBTEST" != "" ]; then
             break
         fi
