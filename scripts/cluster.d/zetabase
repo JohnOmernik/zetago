@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+# cluster zetabase
+#
+# Base Directory installation for Zeta Architecture
+#
+#
+
+function _zetabase() {
+
+
+
+}
+
+
+
+_zetabase "$@"
