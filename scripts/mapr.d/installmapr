@@ -59,12 +59,22 @@ for CLDB in $CLDBS; do
 done
 echo ""
 echo ""
-echo "Waiting 30 seconds to let the CLDBs Start"
-echo ""
-echo "As an admonishment to myself, I am pointing out that I should write a check to ensure our CLDB is up instead of waiting for the user"
-sleep 30
-echo "At this point, please check to determine if CLDB is running, if it is, please press enter"
-read -e -p "I solemnly swear I checked to ensure the CLDB was running: " -i "YES" CHKMATE
+
+
+
+CLDBTEST=""
+while [ "$CLDBTEST" == "" ]; do
+    @go.log INFO "Waiting 20 seconds to check again for CLDB Nodes up"
+    sleep 20
+    for H in $STARTED; do
+        @go.log INFO "Checking CLDB Node: $H"
+        CLDBTEST=$(curl -s -k https://$H:8443)
+        if [ "$CLDBTEST" != "" ]; then
+            break
+        fi
+    done
+done
+@go.log INFO "CLDB Appears up and running"
 
 IFS=";"
 for NODE in $INODES; do
