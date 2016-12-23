@@ -21,10 +21,6 @@ function _shareddocker() {
         @go.log FATAL "Must use zetaadm user"
     fi
 
-    if [ -f "$CLUSTER_BASE_CONF" ]; then
-        @go.log FATAL "Cluster base conf found at $CLUSTER_BASE_CONF - Not installing"
-    fi
-
     DOCKER_IMAGE_LOC="/mapr/$CLUSTERNAME/zeta/shared/dockerregv2/images"
 
     if [ -d "$DOCKER_IMAGE_LOC" ]; then
