@@ -9,12 +9,12 @@ if [ ! -f "$BASE_CONF" ]; then
 cat > $BASE_CONF << EOF
 #!/bin/bash
 
-PREP_CONF="./conf/prep.conf"
-DCOS_CONF="./conf/dcos.conf"
-MAPR_CONF="./conf/mapr.conf"
-CLUSTER_CONF="./conf/cluster.conf"
-CLUSTER_ZETACA_CONF="./conf/cluster_zetaca.conf"
-CLUSTER_BASE_CONF="./conf/cluster_base.conf"
+export PREP_CONF="./conf/prep.conf"
+export DCOS_CONF="./conf/dcos.conf"
+export MAPR_CONF="./conf/mapr.conf"
+export CLUSTER_CONF="./conf/cluster.conf"
+export CLUSTER_ZETACA_CONF="./conf/cluster_zetaca.conf"
+export CLUSTER_BASE_CONF="./conf/cluster_base.conf"
 EOF
 fi
 . $BASE_CONF

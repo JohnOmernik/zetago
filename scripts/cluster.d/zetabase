@@ -27,11 +27,11 @@ function _zetabase() {
 
     @go.log INFO "Checking default hbase and apps volumes in MapR and removing if exists"
     if [ -d "/mapr/$CLUSTERNAME/hbase" ]; then
-        @go.maprapi "/volume/remove?name=mapr.hbase"
+        maprapi "/volume/remove?name=mapr.hbase"
         sudo rm -rf /mapr/$CLUSTERNAME/hbase
     fi
     if [ -d "/mapr/$CLUSTERNAME/apps" ]; then
-        @go.maprapi "/volume/remove?name=mapr.apps"
+        maprapi "/volume/remove?name=mapr.apps"
         sudo rm -rf /mapr/$CLUSTERNAME/apps
     fi
 
@@ -40,7 +40,7 @@ function _zetabase() {
     for U in $NAMES; do
         if [ ! -d "/mapr/$CLUSTERNAME/user/$U" ]; then
             @go.log INFO "User Directory for $U not found: Creating"
-            @go.maprapi "/volume/create?name=user.$U&path=/user/$U&rootdirperms=770&user=$U:fc,a,dump,restore,m,d%20zetaadm:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=$U"
+            maprapi "/volume/create?name=user.$U&path=/user/$U&rootdirperms=770&user=$U:fc,a,dump,restore,m,d%20zetaadm:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=$U"
             T=""
             while [ "$T" == "" ]; do
                 sleep 1
@@ -147,7 +147,7 @@ EOL3
             @go.log WARN "/mapr/$CLUSTERNAME/$DIR/shared already exists, skipping"
         else
             @go.log INFO "Creating /mapr/$CLUSTERNAME/$DIR/shared"
-            @go.maprapi "/volume/create?name=$DIR.shared&path=/$DIR/shared&rootdirperms=770&user=zetaadm:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=zetaadm"
+            maprapi "/volume/create?name=$DIR.shared&path=/$DIR/shared&rootdirperms=770&user=zetaadm:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=zetaadm"
             T=""
             while [ "$T" == "" ]; do
                 sleep 1
