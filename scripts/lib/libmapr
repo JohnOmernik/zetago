@@ -22,11 +22,12 @@ machine $HOST login mapr password $MAPR_PASS
 EOCRED
 
     BASE_REST="https://$WEBHOST/rest"
-    CURL_GET_BASE="/opt/mesosphere/bin/curl -k --netrc-file $TFILE $BASE_REST"
+    CURL_GET_BASE="/opt/mesosphere/bin/curl -k -s --netrc-file $TFILE $BASE_REST"
     echo ""
     CURL_RESULT=$(${CURL_GET_BASE}${CMD})
     echo ""
-    if [ $(echo $CURL_RESULT|grep OK) == "0" ]; then
+    ERR_RESULT=$(echo $CURL_RESULT|grep "OK")
+    if [ "$ERR_RESULT" != "" ]; then
         @go.log INFO "MAPR API Success: Command: $CMD - Result: $CURL_RESULT"
     else
         @go.log WARN "MAPR API Failure: Command $CMD - Result: $CURL_RESULT"
