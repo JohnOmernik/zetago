@@ -11,7 +11,7 @@ sourceconf "$MAPR_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
-. "$_GO_USE_MODULES" 'libconf'
+. "$_GO_USE_MODULES" 'libmapr'
 
 function _zetabase() {
 
@@ -31,7 +31,7 @@ function _zetabase() {
         sudo rm -rf /mapr/$CLUSTERNAME/hbase
     fi
     if [ -d "/mapr/$CLUSTERNAME/apps" ]; then
-        @go.maprap "/volume/remove?name=mapr.apps"
+        @go.maprapi "/volume/remove?name=mapr.apps"
         sudo rm -rf /mapr/$CLUSTERNAME/apps
     fi
 
@@ -40,7 +40,7 @@ function _zetabase() {
     for U in $NAMES; do
         if [ ! -d "/mapr/$CLUSTERNAME/user/$U" ]; then
             @go.log INFO "User Directory for $U not found: Creating"
-            @go.maprap "/volume/create?name=user.$U&path=/user/$U&rootdirperms=770&user=$U:fc,a,dump,restore,m,d%20zetaadm:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=$U"
+            @go.maprapi "/volume/create?name=user.$U&path=/user/$U&rootdirperms=770&user=$U:fc,a,dump,restore,m,d%20zetaadm:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=$U"
             T=""
             while [ "$T" == "" ]; do
                 sleep 1
@@ -190,7 +190,6 @@ fi
 EOL9
 
     chmod +x $ENV_FILE
-    
     #Create a dummy script in the env_prod directory so that file not found errors don't appear when sourcing main file
 cat > /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/env_shared.sh << EOL5
 #!/bin/bash
