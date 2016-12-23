@@ -56,7 +56,6 @@ function _zetabase() {
     @go.log INFO "Creating root directories for your zeta cluster"
     ROOTS=$(echo $ROOT_DIRS|tr "," " ")
     for DIR in $ROOTS; do
-        echo "Checking /mapr/$CLUSTERNAME/$DIR"
         if [ -d "/mapr/$CLUSTERNAME/$DIR" ]; then
             @go.log WARN "Directory /mapr/$CLUSTERNAME/$DIR already exists: Updating Permissions"
         else

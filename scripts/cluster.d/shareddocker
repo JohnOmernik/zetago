@@ -1,0 +1,124 @@
+#!/bin/bash
+#
+# Install Shared Docker
+#
+
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+. "$_GO_USE_MODULES" 'libmapr'
+
+function _shareddocker() {
+
+
+    CURUSER=$(whoami)
+    if [ "$CURUSER" != "zetaadm" ]; then
+        @go.log FATAL "Must use zetaadm user"
+    fi
+
+    if [ -f "$CLUSTER_BASE_CONF" ]; then
+        @go.log FATAL "Cluster base conf found at $CLUSTER_BASE_CONF - Not installing"
+    fi
+
+
+
+
+
+    DOCKER_IMAGE_LOC="/mapr/$CLUSTERNAME/zeta/shared/dockerregv2/images"
+
+
+    echo "Looking for $DOCKER_IMAGE_LOC"
+    if [ -d "$DOCKER_IMAGE_LOC" ]; then
+        @go.log FATAL "$DOCKER_IMAGE_LOC already exists. Please remove volume and/or delete the directory prior to installing Shared Docker Registry"
+
+    else
+        mkdir -p /mapr/$CLUSTERNAME/zeta/shared/dockerregv2
+        maprapi "/volume/create?name=zeta.shared.dockerregv2&path=/zeta/shared/dockerregv2/images&rootdirperms=775&user=zetaadm:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=zetaadm"
+        T=""
+        while [ "$T" == "" ]; do
+            sleep 1
+            T=$(ls -1 /mapr/$CLUSTERNAME/zeta/shared/dockerregv2|grep images)
+        done
+        sudo chown zetaadm:zetaadm $DOCKER_IMAGE_LOC
+    fi
+
+    sudo docker pull registry:2
+    sudo docker tag registry:2 zeta/registry:2
+
+    echo "We use the MapR Bootstrap Docker Registry to host the Shared Docker Registry"
+
+    sudo docker tag registry:2 ${DOCKER_REG_URL}/dockerregv2
+    sudo docker push ${DOCKER_REG_URL}/dockerregv2
+
+    echo "What Service port should this new shared Docker Registry use? The MapR Docker Container is using port 5000, we recommend something different: How about 5005?"
+    read -e -p "What service port should we used for the shared docker registry instance? " -i "5005" NEW_DOCKER_REG_PORT
+
+    NEW_DOCKER_REG_HOST="dockerregv2-shared.marathon.slave.mesos"
+    ZETA_DOCKER_REG_URL="${NEW_DOCKER_REG_HOST}:${NEW_DOCKER_REG_PORT}"
+
+cat > /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/dockerregv2.sh << EOL
+
+export ZETA_DOCKER_REG_HOST="$NEW_DOCKER_REG_HOST"
+export ZETA_DOCKER_REG_PORT="$NEW_DOCKER_REG_PORT"
+export ZETA_DOCKER_REG_URL="\${ZETA_DOCKER_REG_HOST}:\${ZETA_DOCKER_REG_PORT}"
+
+EOL
+
+
+    sudo chmod +x /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/dockerregv2.sh
+
+
+    APP_NAME="docker"
+    APP_CERT_LOC="/mapr/$CLUSTERNAME/zeta/shared/dockerregv2/certs"
+    sudo mkdir -p ${APP_CERT_LOC}
+    sudo chown zetaadm:root ${APP_CERT_LOC}
+    sudo chmod 770 ${APP_CERT_LOC}
+    CN_GUESS="dockerregv2-shared.marathon.slave.mesos"
+
+    . /home/$IUSER/zetaca/zetaca_env.sh
+    . /home/$IUSER/zetaca/gen_server_cert.sh
+
+    MARFILE="/mapr/$CLUSTERNAME/zeta/shared/dockerregv2/dockerregv2.shared.marathon"
+
+cat > $MARFILE << EOF
+{
+  "id": "shared/dockerregv2",
+  "cpus": 1,
+  "mem": 1024,
+  "instances": 1,
+  "labels": {
+   "CONTAINERIZER":"Docker"
+  },
+  "env": {
+    "REGISTRY_HTTP_TLS_CERTIFICATE": "/certs/srv_cert.pem",
+    "REGISTRY_HTTP_TLS_KEY": "/certs/key-no-password.pem"
+  },
+  "ports": [],
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "${DOCKER_REG_URL}/dockerregv2",
+      "network": "BRIDGE",
+      "portMappings": [
+        { "containerPort": 5000, "hostPort": ${NEW_DOCKER_REG_PORT}, "servicePort": 0, "protocol": "tcp"}
+      ]
+    },
+    "volumes": [
+      { "containerPath": "/var/lib/registry", "hostPath": "${DOCKER_IMAGE_LOC}", "mode": "RW" },
+      { "containerPath": "/certs", "hostPath": "${APP_CERT_LOC}", "mode": "RO" }
+    ]
+  }
+}
+EOF
+    ./zeta cluster marathon submit "${MARFILE}" "${MARATHON_SUBMIT"
+    @go.log INFO "Shared Docker Registry installed"
+
+}
+
+_shareddocker "$@"
+
