@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# Mapr helper fuctions for use with Zeta
+#
+
+function maprapi() {
+    #Base is https://HOST/rest"
+    # CMD should be like "/volume/remove?name=mapr.hbase"
+    CMD=$1
+
+    HOST=$(echo $CLDBS|cut -d"," -f1|cut -d":" -f1)
+
+    WEBHOST="$HOST:8443"
+
+    TFILE="./tmp/netrc.tmp"
+
+    touch $TFILE
+    chown zetaadm:zetaadm $TFILE
+    chmod 600 $TFILE
+    cat > $TFILE << EOCRED
+    machine $HOST login mapr password $MAPR_PASS
+    EOCRED
+
+    BASE_REST="https://$WEBHOST/rest"
+    CURL_GET_BASE="/opt/mesosphere/bin/curl -k --netrc-file $TFILE $BASE_REST"
+    ${CURL_GET_BASE}${CMD}
+
+    RESULT=$?
+
+    if [ "$RESULT" == "0" ]; then
+        @go.log INFO "MAPR API Success: $CMD"
+    else
+        @go.log WARN "MAPR API Failure: $CMD"
+    fi
+
+    rm $TFILE
+
+}

@@ -14,6 +14,7 @@ DCOS_CONF="./conf/dcos.conf"
 MAPR_CONF="./conf/mapr.conf"
 CLUSTER_CONF="./conf/cluster.conf"
 CLUSTER_ZETACA_CONF="./conf/cluster_zetaca.conf"
+CLUSTER_BASE_CONF="./conf/cluster_base.conf"
 EOF
 fi
 . $BASE_CONF
