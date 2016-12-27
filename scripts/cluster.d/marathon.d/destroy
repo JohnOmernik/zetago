@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# marathon delete
+# This takes two arguments
+# - Marathon ID
+# - MARATHON Submit URL
+#
+# Example: ./zeta cluster marathon delete myrole/myapp http://marathon.mesos:8080/v2/apps
+function _marathon_delete() {
+
+    MARID=$1
+    MARATHON_URL=$2
+
+    @go.log INFO "Destroying App $MARID via $MARATHON_URL"
+    echo ""
+    curl -X DELETE ${MARATHON_URL}/${MARID} -H "Content-type: application/json"
+    echo ""
+}
+
+_marathon_delete "$@"
+
+
+
+
+
+
+

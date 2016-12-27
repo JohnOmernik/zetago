@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # Move the tmp ZetaCA to the final location in /mapr
+# This script only needs to be run once and will ensure the CA moves to a more HA form. 
 #
 
 sourceconf "$PREP_CONF"
@@ -27,12 +28,6 @@ function _finalzetaca() {
     echo "This script updates and moves the currently running zetaca to be running from the MapR Filesystem"
     echo ""
     read -e -p "Please enter location of current zetaca: " -i "/home/zetaadm/zetaca" OLD_APP_LOC
-    echo ""
-    echo "When we create the new location at $NEW_APP_LOC you have the option to remove the old location at $OLD_APP_LOC"
-    echo "This is entirely up to you, if you want to keep a copy of your CA or not"
-    echo ""
-    read -e -p "Remove location zetaCA Location? " -i "Y" REMOVE_CA
-    echo ""
     echo ""
     echo "************************************"
     echo ""
@@ -122,13 +117,20 @@ EOL4
 
 
     MARID="shared/zetaca"
-    curl -X DELETE ${MARATHON_SUBMIT}/${MARID} -H "Content-type: application/json"
-    echo "Waiting for the deployment to finish"
+    ./zeta cluster marathon destroy "$MARID" "$MARATHON_SUBMIT"
 
-    sleep 20
-echo "Submitting new Zeta CA"
-curl -X POST $MARATHON_SUBMIT -d @${NEW_APP_LOC}/marathon.json -H "Content-type: application/json"
-echo ""
-echo "CA Moved!"
+    echo "Waiting 30 seconds for the Application to close"
+    sleep 30
 
-echo "This is where I would delete the old one"
+    echo "Submitting new Zeta CA"
+    ./zeta cluster marathon submit "${MAR_FILE}" "$MARATHON_SUBMIT"
+    echo ""
+    sleep2
+    echo "CA Moved!"
+    echo ""
+    echo "This is where I would delete the old one"
+    echo "But because I am a coward, I leave it for you to remove the copy of the CA located at ${OLD_APP_LOC}"
+    echo ""
+}
+
+_finalzetaca "$@"
