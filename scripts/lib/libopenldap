@@ -85,7 +85,7 @@ function runldapcommand() {
 
     buildldapclient
 
-    TMP_LDIF="./tmpldif"
+    TMP_LDIF="`pwd`/tmpldif"
     PASSFILE="${TMP_LDIF}/p.txt"
     TMPPASSFILE="${TMP_LDIF}/o.txt"
     LDIF_FILE="${TMP_LDIF}/tmpldif.ldif"
@@ -129,18 +129,12 @@ ERUN
 
 
 
-
-
-
-
-
-
 #
 # function buildldapclient
 # If a ldaputils image doesn't exist, try to pull it and if that fails build it
 #
 function buildldapclient(){
-
+ 
     APP_IMG="${ZETA_DOCKER_REG_URL}/ldaputils"
 
     OUT=$(sudo docker images|grep ldaputils)
