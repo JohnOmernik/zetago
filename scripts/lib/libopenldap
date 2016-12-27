@@ -174,8 +174,7 @@ $DOCKER_LINE3
 $DOCKER_LINE4
 $DOCKER_LINE5
 $DOCKER_LINE6
-
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y ldap-utils db-util curl slapd ca-certificates && rm -f /usr/local/share/ca-certificates/zetaroot.crt && update-ca-certificates -f && curl -o /usr/local/share/ca-certificates/zetaroot.crt http://zetaca-shared.marathon.slave.mesos:10443/cacert $
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y ldap-utils curl slapd ca-certificates && rm -f /usr/local/share/ca-certificates/zetaroot.crt && update-ca-certificates -f && curl -o /usr/local/share/ca-certificates/zetaroot.crt http://zetaca-shared.marathon.slave.mesos:10443/cacert && update-ca-certificates
 CMD ["/bin/bash"]
 EOF
 
