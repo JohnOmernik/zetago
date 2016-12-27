@@ -1,0 +1,188 @@
+#!/bin/bash
+#
+# Install Shared LDAP Server for Zeta installations
+#
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+. "$_GO_USE_MODULES" 'getpass'
+
+function _installldap() {
+
+    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+
+    CURUSER=$(whoami)
+
+    if [ "$CURUSER" != "zetaadm" ]; then
+        echo "Must use zetaadm: User: $CURUSER"
+    fi
+
+    APP_IMG="${ZETA_DOCKER_REG_URL}/openldap"
+
+    SOURCE_GIT="https://github.com/osixia/docker-openldap.git"
+
+    DCK=$(sudo docker images|grep openldap)
+
+    if [ "$DCK" == "" ]; then
+        BUILD="Y"
+    else
+        @go.log WARN "openldap image detected $DCK - rebuild?"
+        read -e -p "Rebuild?" -i "N" BUILD
+    fi
+    if [ "$BUILD" == "Y" ]; then
+
+        git clone $SOURCE_GIT
+        cd docker-openldap
+        cd image
+
+        if [ "$DOCKER_PROXY" != "" ]; then
+            DOCKER_LINE1="ENV http_proxy=$DOCKER_PROXY"
+            DOCKER_LINE2="ENV HTTP_PROXY=$DOCKER_PROXY"
+            DOCKER_LINE3="ENV https_proxy=$DOCKER_PROXY"
+            DOCKER_LINE4="ENV HTTPS_PROXY=$DOCKER_PROXY"
+            DOCKER_LINE5="ENV NO_PROXY=$DOCKER_NOPROXY"
+            DOCKER_LINE6="ENV no_proxy=$DOCKER_NOPROXY"
+
+            sed -i "/MAINTAINER /a $DOCKER_LINE6" Dockerfile
+            sed -i "/MAINTAINER /a $DOCKER_LINE5" Dockerfile
+            sed -i "/MAINTAINER /a $DOCKER_LINE4" Dockerfile
+            sed -i "/MAINTAINER /a $DOCKER_LINE3" Dockerfile
+            sed -i "/MAINTAINER /a $DOCKER_LINE2" Dockerfile
+            sed -i "/MAINTAINER /a $DOCKER_LINE1" Dockerfile
+        fi
+        sed -i "s/RUN groupadd -r openldap/RUN groupadd -g 2500 openldap/" ./Dockerfile
+        sed -i "s/useradd -r -g openldap/useradd -u 2500 -g openldap/" ./Dockerfile
+        sudo docker build -t $APP_IMG .
+        sudo docker push $APP_IMG
+        cd ..
+        cd ..
+        rm -rf docker-openldap
+    fi
+
+
+    APP_ROOT="/mapr/$CLUSTERNAME/zeta/shared/openldap"
+
+    if [ -d "$APP_ROOT" ]; then
+        @go.log FATAL "OpenLDAP Root at $APP_ROOT already exists. Refusing to go on..."
+    fi
+
+    getpass "ldapadmin" LDAP_PASS
+
+
+    mkdir -p ${APP_ROOT}
+    mkdir -p ${APP_ROOT}/ldap
+    mkdir -p ${APP_ROOT}/slapd.d
+    mkdir -p ${APP_ROOT}/ldapmod
+    mkdir -p ${APP_ROOT}/initconf
+    mkdir -p ${APP_ROOT}/certs
+
+    sudo chown -R zetaadm:zetaadm ${APP_ROOT}
+    sudo chmod -R 750 ${APP_ROOT}
+
+    APP_CERT_LOC="${APP_ROOT}/certs"
+    CN_GUESS="openldap-shared.marathon.slave.mesos"
+
+    . /mapr/$CLUSTERNAME/zeta/shared/zetaca/gen_server_cert.sh
+
+
+cat > /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/openldap.sh << EOL
+export ZETA_OPENLDAP_HOST="openldap-shared.marathon.slave.mesos"
+export ZETA_OPENLDAP_PORT="389"
+export ZETA_OPENLDAP_SECURE_PORT="636"
+EOL
+
+
+cat > ${APP_ROOT}/initconf/default.yaml << EOL1
+# This is the default image configuration file
+# These values will persists in container environment.
+
+# All environment variables used after the container first start
+# must be defined here.
+# more information : https://github.com/osixia/docker-light-baseimage
+
+# General container configuration
+# see table 5.1 in http://www.openldap.org/doc/admin24/slapdconf2.html for the available log levels.
+LDAP_LOG_LEVEL: 256
+
+LDAP_ORGANISATION: $CLUSTERNAME
+LDAP_DOMAIN: marathon.mesos
+LDAP_BASE_DN: dc=marathon,dc=mesos
+LDAP_ADMIN_PASSWORD: $LDAP_PASS
+LDAP_READONLY_USER: true
+LDAP_READONLY_USER_USERNAME: readonly
+LDAP_READONLY_USER_PASSWORD: readonly
+
+EOL1
+
+cat > ${APP_ROOT}/initconf/default.yaml.startup << EOL2
+# This is the default image configuration file
+# These values will persists in container environment.
+
+# All environment variables used after the container first start
+# must be defined here.
+# more information : https://github.com/osixia/docker-light-baseimage
+
+LDAP_ORGANISATION: $CLUSTERNAME
+LDAP_DOMAIN: marathon.mesos
+LDAP_BASE_DN: dc=marathon,dc=mesos
+LDAP_ADMIN_PASSWORD: $LDAP_PASS
+LDAP_READONLY_USER: true
+LDAP_READONLY_USER_USERNAME: readonly
+LDAP_READONLY_USER_PASSWORD: readonly
+EOL2
+
+    sudo chmod +x /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/openldap.sh
+
+    MARFILE="${APP_ROOT}/marathon.json"
+
+cat > $MARFILE << EOF
+{
+  "id": "shared/openldap",
+  "cpus": 1,
+  "mem": 1024,
+  "env": {
+            "HOSTNAME":"openldap-shared.marathon.slave.mesos",
+            "LDAP_TLS_CRT_FILENAME":"cert.pem",
+            "LDAP_TLS_KEY_FILENAME":"key-no-password.pem",
+            "LDAP_TLS_CA_CRT_FILENAME":"cacert.pem"
+         },
+  "instances": 1,
+  "labels": {
+   "CONTAINERIZER":"Docker"
+  },
+  "ports": [],
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "${APP_IMG}",
+      "network": "HOST"
+    },
+    "volumes": [
+      { "containerPath": "/var/lib/ldap", "hostPath": "${APP_ROOT}/ldap", "mode": "RW" },
+      { "containerPath": "/container/service/slapd/assets/certs", "hostPath": "${APP_ROOT}/certs", "mode": "RW" },
+      { "containerPath": "/tmp/ldapmod", "hostPath": "${APP_ROOT}/ldapmod", "mode": "RW" },
+      { "containerPath": "/etc/ldap/slapd.d", "hostPath": "${APP_ROOT}/slapd.d", "mode": "RW" },
+      { "containerPath": "/container/environment/02-custom", "hostPath": "${APP_ROOT}/initconf", "mode": "RO" }
+    ]
+  }
+}
+EOF
+
+    # Add this to Docker file to increase container logginer (remove the bash comments)
+    #  "args":[
+    #  "--loglevel", "debug"
+    #  ],
+
+
+    ./zeta cluster marathon submit "$MARFILE" "$MARATHON_SUBMIT"
+
+}
+
+_installldap "$@"
+
