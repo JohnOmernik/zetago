@@ -10,7 +10,7 @@ sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
 
-AUTH_LIB="lib${LDAP_PROVIER}"
+AUTH_LIB="lib${LDAP_PROVIDER}"
 
 # Load the Auth lib for this cluster
 . "$_GO_USE_MODULES" $AUTH_LIB
