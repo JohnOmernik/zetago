@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+# Work with users in Zeta Environment
+#
+#
+function _ldapusers() {
+
+
+echo "./zeta users - Work with and manipulate zeta users"
+
+
+
+
+}
+
+_ldapuser "$@"

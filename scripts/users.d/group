@@ -1,0 +1,132 @@
+#!/bin/bash
+#
+# Interface to do group things in Zeta
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+AUTH_LIB="lib${LDAP_PROVIER}"
+
+# Load the Auth lib for this cluster
+. "$_GO_USE_MODULES" $AUTH_LIB
+
+
+function _group() {
+
+    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+
+    for i in "$@"
+        do
+        case $i in
+            -a)
+            GROUP_ADD="1"
+            ;;
+            -d)
+            GROUP_DEL="1"
+            ;;
+            -q)
+            GROUP_QUERY="1"
+            ;;
+            -u)
+            UNATTEND="1"
+            ;;
+            "-g="*)
+            GROUP_NAME="${i#*=}"
+            ;;
+            "-i="*)
+            GROUP_ID="${i#*=}"
+            ;;
+            "-r="*)
+            GROUP_ROLE="${i#*=}"
+            ;;
+            "-D="*)
+            GROUP_DESC="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+    if [ "$GROUP_ADD" == "1" ]; then
+        if [ "$GROUP_DEL" == "1" ] || [ "$GROUP_QUERY" == "1" ]; then
+            @go.log FATAL "Group Add (-a) specified with either Group Delete (-d) or Group Query (-q) - Exiting"
+        fi
+        if [ "$GROUP_NAME" == "" ]; then
+            @go.log FATAL "To add a group you must provide a group name with -g"
+        fi
+        if [ "$GROUP_ID" == "" ]; then
+            @go.log FATAL "To add a group you must provide a group id with -i"
+        fi
+        if [ "$GROUP_ROLE" == "" ]; then
+            @go.log WARN "No Group Role Provided: Defaults to shared role"
+            GROUP_ROLE="shared"
+        fi
+
+        if [ "$GROUP_ROLE" != "" ]; then
+            START_GID=$(cat /mapr/$CLUSTERNAME/zeta/kstore/zetasync/zetauid.list|grep $ROLE|cut -d":" -f2)
+
+            if [ "$START_GID" == "" ]; then
+                @go.log FATAL "The starting GID for role $GROUP_ROLE was not found, are you sure this role is installed?"
+            fi
+            VALID_GID=$(($START_GID + 500000))
+        fi
+
+        if [ "$GROUP_ID" -ge $VALID_GID ] && [ "$GROUP_ID" -lt $(($VALID_GID + 500000)) ]; then
+            echo "$GROUP_ID is valid in role $GROUP_ROLE - However we do not check for duplicates (yet)"
+        else
+            echo "$GROUP_ID is not valid in role $GROUP_ROLE"
+        fi
+
+
+    elif [ "$GROUP_DEL" == "1" ]; then
+        if [ "$GROUP_ADD" == "1" ] || [ "$GROUP_QUERY" == "1" ]; then
+            @go.log FATAL "Group Delete (-d) specified with either Group Add (-a) or Group Query (-q) - Exiting"
+        fi
+        if [ "$GROUP_NAME" == "" ] && [ "$GROUP_ID" == "" ]; then
+            @go.log FATAL "With Group Delete (-d) you must specify either a group name (-g=) or a group id (-i=) - Exiting"
+        fi
+    elif [ "$GROUP_QUERY" == "1" ]; then
+        if [ "$GROUP_ADD" == "1" ] || [ "$GROUP_DEL" == "1" ]; then
+            @go.log FATAL "Group Query (-q) specified with either Group Add (-a) or Group Delete (-d) - Exiting"
+        fi
+        if [ "$GROUP_NAME" == "" ] && [ "$GROUP_ID" == "" ]; then
+            @go.log FATAL "With Group Delete (-d) you must specify either a group name (-g=) or a group id (-i=) - Exiting"
+        fi
+    else
+        @go.log FATAL "./zeta users group invoked without specifying either Add, Delete, or Query - Exiting"
+    fi
+
+
+    if [ "$GROUP_ADD" == "1" ]; then
+        echo "You wish to create group following group:"
+        echo ""
+        echo "Group: $GROUP_NAME"
+        echo "GID: $GROUP_ID"
+        echo "Role: $GROUP_ROLE"
+        echo "Group Descrption: $GROUP_DESC"
+        echo ""
+        if [ "$UNATTEND" != "1" ]; then
+            read -e -p "Is this correct? " -i "N" CHK
+            if [ "$CHK" != "Y" ]; then
+                @go.log FATAL "User did not confirm group creation"
+            fi
+        fi
+        @go.log INFO "Additing Group: $GROUP_NAME with GID $GROUP_ID to role $GROUP_ROLE"
+        addgroup "$GROUP_NAME" "$GROUP_ID" "$GROUP_ROLE" "$GROUP_DESC"
+    elif [ "$GROUP_DEL" == "1" ]; then
+        @go.log FATAL "Group Deletion not yet implemented"
+    elif [ "$GROUP_QUERY" == "1" ]; then
+        @go.log FATAL "Group Query not yet implemented"
+    else
+        @go.log FATAL "Unknown Command requested"
+    fi
+
+}
+_group "$@"

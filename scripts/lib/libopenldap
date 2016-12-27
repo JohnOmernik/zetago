@@ -1,0 +1,160 @@
+#!/bin/bash
+#
+# Open Ldap  helper fuctions for use with Zeta
+#
+
+
+#
+# addgroup
+# Adds a group to openldap
+# Arguments:
+# $1 = group name
+# $2 = group id
+# $3 = group role
+# $4 = Group description
+#
+function addgroup() {
+
+    GROUP_NAME=$1
+    GROUP_ID=$2
+    GROUP_ROLE=$3
+    GROUP_DESC=$4
+
+    if [ "$GROUP_DESC" == "" ]; then
+        GROUP_DESC="No Description"
+    fi
+
+    LDIF_DATA="dn: cn=${GROUP_NAME},ou=groups,ou=zeta${GROUP_ROLE},${LDAP_BASE}"$'\n'
+    LDIF_DATA="${LDIF_DATA}changetype: add"$'\n'
+    LDIF_DATA="${LDIF_DATA}objectClass: top"$'\n'
+    LDIF_DATA="${LDIF_DATA}objectClass: posixGroup"$'\n'
+    LDIF_DATA="${LDIF_DATA}gidNumber: ${GROUP_ID}"$'\n'
+    LDIF_DATA="${LDIF_DATA}description: ${GROUP_DESC}"$'\n'
+
+    runldapcommand "$LDIF_DATA" "ADD"
+
+}
+
+function runldapcommand() {
+
+
+    LDIF_CONTENTS=$1
+    LDIF_COMMAND=$2
+
+    LDAP_ROOT="/mapr/$CLUSTERNAME/zeta/shared/openldap"
+
+    if [ ! -d "$LDAP_ROOT" ]; then
+        @go.log FATAL "Open LDAP doesn't appear to be installed at $LDAP_ROOT"
+    fi
+
+
+    LDAPPASS=$(cat ${LDAP_ROOT}/initconf/default.yaml.startup|grep ADMIN|sed "s/LDAP_ADMIN_PASSWORD: //")
+
+    APP_IMG="${ZETA_DOCKER_REG_URL}/ldaputils"
+
+    buildldapclient
+
+    TMP_LDIF="./tmpldif"
+    PASSFILE="${TMP_LDIF}/p.txt"
+    TMPPASSFILE="${TMP_LDIF}/o.txt"
+    LDIF_FILE="${TMP_LDIF}/tmpldif.ldif"
+
+    mkdir -p $TMP_LDIF
+
+    chmod -R 750 $TMP_LDIF
+    touch $PASSFILE
+    touch $TMPPASSFILE
+    chmod 600 $PASSFILE
+    chmod 600 $TMPPASSFILE
+
+cat > $TMPPASSFILE << PWF
+${LDAPPASS}
+PWF
+
+    cat $TMPPASSFILE|tr -d "\n" > $PASSFILE
+    rm $TMPPASSFILE
+    chmod 600 $PASSFILE
+
+cat > ${LDIF_FILE} << EOL
+$LDIF_CONTENTS
+EOL
+    if [ "$LDIF_COMMAND" == "ADD" ]; then
+        RUN_CMD="ldapadd -H ${LDAP_URL} -x -y /tmp/ldif/p.txt -D \"cn=admin,${LDAP_BASE}\" -f /tmp/ldif/tmpldif.ldif"
+    else
+        RUN_CMD="echo \"oops - command not found\""
+    fi
+
+cat > ${TMP_LDIF}/run.sh << ERUN
+#!/bin/bash
+$RUN_CMD
+ERUN
+    chmod +x ${TMP_LDIF}/run.sh
+    @go.log INFO "Running LDAP Command - Type: $LDIF_COMMAND"
+    DCKR="sudo docker run --rm -v=${TMP_LDIF}:/tmp/ldif:ro ${APP_IMG}"
+    $DCKR /tmp/ldif/run.sh
+    rm -rf $TMP_LDIF
+
+}
+
+
+
+
+
+
+
+
+
+#
+# function buildldapclient
+# If a ldaputils image doesn't exist, try to pull it and if that fails build it
+#
+function buildldapclient(){
+
+    APP_IMG="${ZETA_DOCKER_REG_URL}/ldaputils"
+
+    OUT=$(sudo docker images|grep ldaputils)
+    if [ "$OUT" == "" ]; then
+        sudo docker pull $APP_IMG
+        OUT=$(sudo docker images|grep ldaputils)
+        if [ "$OUT" == "" ]; then
+            if [ "$DOCKER_PROXY" != "" ]; then
+                DOCKER_LINE1="ENV http_proxy=$DOCKER_PROXY"
+                DOCKER_LINE2="ENV HTTP_PROXY=$DOCKER_PROXY"
+                DOCKER_LINE3="ENV https_proxy=$DOCKER_PROXY"
+                DOCKER_LINE4="ENV HTTPS_PROXY=$DOCKER_PROXY"
+                DOCKER_LINE5="ENV NO_PROXY=$DOCKER_NOPROXY"
+                DOCKER_LINE6="ENV no_proxy=$DOCKER_NOPROXY"
+            else
+                DOCKER_LINE1=""
+                DOCKER_LINE2=""
+                DOCKER_LINE3=""
+                DOCKER_LINE4=""
+                DOCKER_LINE5=""
+                DOCKER_LINE6=""
+            fi
+
+
+             mkdir -p ./tmp
+cat > ./tmp/Dockerfile << EOF
+FROM ubuntu:latest
+$DOCKER_LINE1
+$DOCKER_LINE2
+$DOCKER_LINE3
+$DOCKER_LINE4
+$DOCKER_LINE5
+$DOCKER_LINE6
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y ldap-utils db-util curl slapd ca-certificates && rm -f /usr/local/share/ca-certificates/zetaroot.crt && update-ca-certificates -f && curl -o /usr/local/share/ca-certificates/zetaroot.crt http://zetaca-shared.marathon.slave.mesos:10443/cacert $
+CMD ["/bin/bash"]
+EOF
+
+            cd ./tmp
+            sudo docker build -t ${APP_IMG} .
+            sudo docker push ${APP_IMG}
+            cd ..
+            rm -rf ./tmp
+        fi
+
+    fi
+}
+
