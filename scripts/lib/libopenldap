@@ -35,6 +35,37 @@ function addgroup() {
 
 }
 
+
+function addusers() {
+
+
+}
+
+
+function addou() {
+
+    ROLE=$1
+    OU=$2
+    OUPREFIX=$3
+    OUDESC=$4
+
+    if [ "$OUDESC" == "" ]; then
+        OUDESC="No Description"
+    fi
+
+    LDIF_DATA="dn: ${OUPREFIX},${LDAP_BASE}"$'\n'
+    LDIF_DATA="${LDIF_DATA}changetype: add"$'\n'
+    LDIF_DATA="${LDIF_DATA}ou: ${OU}"$'\n'
+    LDIF_DATA="${LDIF_DATA}objectClass: top"$'\n'
+    LDIF_DATA="${LDIF_DATA}objectClass: organizationalUnit"$'\n'
+    LDIF_DATA="${LDIF_DATA}description: $OUDESC"$'\n'
+    LDIF_DATA="${LDIF_DATA}"$'\n'
+
+    runldapcommand "$LDIF_DATA" "ADD"
+
+}
+
+
 function runldapcommand() {
 
 
