@@ -65,6 +65,15 @@ function adduser() {
 
 }
 
+function hashpass() {
+
+    local PASS2HASH=$1
+    local RESULT=$2
+    THASH=""
+    runldapcommand "$PASS2HASH" "HASHPASS" "THASH"
+    eval $RESULT="'$THASH'"
+}
+
 
 function addou() {
 
@@ -95,6 +104,7 @@ function runldapcommand() {
 
     LDIF_CONTENTS=$1
     LDIF_COMMAND=$2
+    PASSRESULT=$3
 
     LDAP_ROOT="/mapr/$CLUSTERNAME/zeta/shared/openldap"
 
@@ -133,10 +143,16 @@ PWF
 cat > ${LDIF_FILE} << EOL
 $LDIF_CONTENTS
 EOL
+
+
     if [ "$LDIF_COMMAND" == "ADD" ]; then
         RUN_CMD="ldapadd -H ${LDAP_URL} -x -y /tmp/ldif/p.txt -D \"cn=admin,${LDAP_BASE}\" -f /tmp/ldif/tmpldif.ldif"
     elif [ "$LDIF_COMMAND" == "MODIFY" ]; then
         RUN_CMD="ldapmodify -H ${LDAP_URL} -x -y /tmp/ldif/p.txt -D \"cn=admin,${LDAP_BASE}\" -f /tmp/ldif/tmpldif.ldif"
+    elif [ "$LDIF_COMMAND" == "HASHPASS" ]; then
+        chmod 600 ${LDIF_FILE}
+        echo -n "$LDIF_CONTENTS" > ${LDIF_FILE}
+        RUN_CMD="slappasswd -T /tmp/ldof/tmpldif.ldif"
     else
         RUN_CMD="echo \"oops - command not found\""
     fi
@@ -148,7 +164,12 @@ ERUN
     chmod +x ${TMP_LDIF}/run.sh
     @go.log INFO "Running LDAP Command - Type: $LDIF_COMMAND"
     DCKR="sudo docker run --rm -v=${TMP_LDIF}:/tmp/ldif:ro ${APP_IMG}"
-    $DCKR /tmp/ldif/run.sh
+    if [ "$LDIF_COMMAND" == "HASHPASS" ]; then
+        PHASH=$($DCKR /tmp/ldif/run.sh)
+        eval $PASSRESULT="'$PHASH'"
+    else
+        $DCKR /tmp/ldif/run.sh
+    fi
     rm -rf $TMP_LDIF
 
 }

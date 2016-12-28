@@ -1,16 +1,30 @@
 #!/bin/bash
 #
-# Work with users in Zeta Environment
+# Work with users/groups  in Zeta Environment
 #
 #
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
 function _ldapusers() {
 
-
-echo "./zeta users - Work with and manipulate zeta users"
-
-
+    echo ""
+    echo "********************************"
+    echo "Scripts should now be run on users"
+    echo "********************************"
+    echo ""
+    echo ""
+    echo "Cluster specfic tasks:"
+    echo "./zeta users user - Add user to Zeta"
+    echo "./zeta users group  - Add group to Zeta"
+    echo "./zeta users roleschema - Add Role Schema (OUs etc for new role) to Zeta"
+    echo ""
 
 
 }
 
-_ldapuser "$@"
+_ldapusers "$@"

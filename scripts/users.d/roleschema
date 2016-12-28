@@ -94,7 +94,7 @@ function _roleschema() {
         if [ "$SHRD" != "" ]; then
             echo "It looks like the role you are trying to add already has a STARTID specified"
             echo "We will use this."
-            echo SHRD
+            echo "$SHRD"
             STARTID=$(echo $SHRD|cut -d":" -f2)
         else
             read -e -p "Please enter the starting UID for role $ROLE: " -i "1000000" STARTID
@@ -112,7 +112,7 @@ function _roleschema() {
         CURGID=$(($CURGID + 1))
         ZETAGID=$CURGID
 
-
+        # OU's are added directly with helper lib
         @go.log INFO "Adding base OU for $ROLE"
         addou "$ROLE" "zeta$ROLE" "ou=zeta$ROLE" "Base OU for Zeta Role $ROLE"
         @go.log INFO "Adding groups OU for $ROLE"
@@ -122,19 +122,24 @@ function _roleschema() {
 
         if [ "$ROLE" == "shared" ]; then
             @go.log INFO "Adding global group 'zetausers' to shared role groups OU"
+            # Since this would fail group ID validation, we call the lib$LDAPPROVIDER group add directly
             addgroup "zetausers" "2501" "$ROLE" "Master list of users in Zeta"
         fi
+
         @go.log INFO "Adding $ROLE apps group at GID $APPGID"
-        addgroup "zeta${ROLE}apps" "$APPGID" "$ROLE" "Access group for the apps directory in role $ROLE"
+        ./zeta users group -a -g="zeta${ROLE}apps" -i="${APPGID}" -r="${ROLE}" -D="Access group for the apps directory in role $ROLE" -u
 
         @go.log INFO "Adding $ROLE data group at GID $DATAGID"
-        addgroup "zeta${ROLE}data" "$DATAGID" "$ROLE" "Access group for the data directory in role $ROLE"
+        ./zeta users group -a -g="zeta${ROLE}data" -i="${DATAGID}" -r="${ROLE}" -D="Access group for the data directory in role $ROLE" -u
 
         @go.log INFO "Adding $ROLE etl group at GID $ETLGID"
-        addgroup "zeta${ROLE}etl" "$ETLGID" "$ROLE" "Access group for the etl directory in role $ROLE "
+        ./zeta users group -a -g="zeta${ROLE}etl" -i="${ETLGID}" -r="${ROLE}" -D="Access group for the etl directory in role $ROLE" -u
 
         @go.log INFO "Adding $ROLE zeta group at GID $ZETAGID"
-        addgroup "zeta${ROLE}zeta" "$ZETAGID" "$ROLE" "Access group for the zeta directory in role $ROLE "
+        ./zeta users group -a -g="zeta${ROLE}zeta" -i="${ZETAGID}" -r="${ROLE}" -D="Access group for the zeta directory in role $ROLE" -u
+
+        @go.log INFO "Adding Service User zetasvc${PROD} at $SVCUID for role $ROLE"
+        ./zeta users user -a -n="zetasvc${ROLE}" -i="${SVCUID}" -f="Service" -l="${ROLE}" -r="${ROLE}" -u
 
     elif [ "$ACTION_DEL" == "1" ]; then
         @go.log FATAL "$ACTION_SRC Deletion not yet implemented"

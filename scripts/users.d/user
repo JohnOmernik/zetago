@@ -14,12 +14,10 @@ AUTH_LIB="lib${LDAP_PROVIDER}"
 
 # Load the Auth lib for this cluster
 . "$_GO_USE_MODULES" $AUTH_LIB
-
-
-function _group() {
+. "$_GO_USE_MODULES" 'getpass'
+function _user() {
 
     . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
-
 
     ACTION_SRC="user"
     for i in "$@"
@@ -34,11 +32,26 @@ function _group() {
             -q)
             ACTION_QUERY="1"
             ;;
+            -p)
+            ACTION_RESETPASS="1"
+            ;;
             -u)
             UNATTEND="1"
             ;;
+            "-n="*)
+            USER_NAME="${i#*=}"
+            ;;
+            "-i="*)
+            USER_UID="${i#*=}"
+            ;;
+            "-f="*)
+            USER_FNAME="${i#*=}"
+            ;;
+            "-l="*)
+            USER_LNAME="${i#*=}"
+            ;;
             "-r="*)
-            ROLE="${i#*=}"
+            USER_ROLE="${i#*=}"
             ;;
             *)
             # unknown option
@@ -48,32 +61,89 @@ function _group() {
 
 
     if [ "$ACTION_ADD" == "1" ]; then
-        if [ "$ACTION_DEL" == "1" ] || [ "$ACTION_QUERY" == "1" ]; then
-            @go.log FATAL "Requested $ACTION_SRC Add (-a) specified with either $ACTION_SRC Delete (-d) or $ACTION_SRC Query (-q) - Exiting"
+        if [ "$ACTION_DEL" == "1" ] || [ "$ACTION_QUERY" == "1" ] || [ "$ACTION_RESETPASS" == "1" ]; then
+            @go.log FATAL "Requested $ACTION_SRC Add (-a) specified with either $ACTION_SRC Delete (-d),  $ACTION_SRC Query (-q), or $ACTION_SRC Reset Password  (-p) - Exiting"
         fi
+        if [ "$USER_NAME" == "" ]; then
+            @go.log FATAL "To add a user you must provide a user name with -n"
+        fi
+        if [ "$USER_UID" == "" ]; then
+            @go.log FATAL "To add a useryou must provide a user id with -i"
+        fi
+        if [ "$USER_ROLE" == "" ]; then
+            @go.log WARN "No User Role Provided: Defaults to shared role"
+            USER_ROLE="shared"
+        fi
+        if [ "$USER_ROLE" != "" ]; then
+            START_UID=$(cat /mapr/$CLUSTERNAME/zeta/kstore/zetasync/zetauid.list|grep $USER_ROLE|cut -d":" -f2)
+
+            if [ "$START_UID" == "" ]; then
+                @go.log FATAL "The starting UID for role $USER_ROLE was not found, are you sure this role is installed?"
+            fi
+            VALID_UID=$(($START_UID + 1))
+        fi
+        if [ "$USER_UID" -ge $VALID_UID ] && [ "$USER_UID" -lt $(($VALID_UID + 500000)) ]; then
+            echo "$USER_UID is valid in role $USER_ROLE - However we do not check for duplicates (yet)"
+        else
+            @go.log FATAL "$USER_UID is not valid in role $USER_ROLE"
+        fi
+
+        if [ "$USER_FNAME" == "" ]; then
+            echo "Please enter the user's first name: "
+            read -e -p "Firstname: " USER_FNAME
+        fi
+        if [ "$USER_LNAME" == "" ]; then
+            echo "Please enter the user's last name: "
+            read -e -p "Lastname: " USER_LNAME
+        fi
+
+
     elif [ "$ACTION_DEL" == "1" ]; then
-        if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_QUERY" == "1" ]; then
-            @go.log FATAL "Requested $ACTION_SRC Delete (-d) specified with either $ACTION_SRC Add (-a) or $ACTION_SRC Query (-q) - Exiting"
+        if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_QUERY" == "1" ] || [ "$ACTION_RESETPASS" == "1" ]; then
+            @go.log FATAL "Requested $ACTION_SRC Delete (-d) specified with either $ACTION_SRC Add (-a), $ACTION_SRC Query (-q), or $ACTION_SRC Reset Password  (-p) - Exiting"
         fi
     elif [ "$ACTION_QUERY" == "1" ]; then
-        if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_DEL" == "1" ]; then
-            @go.log FATAL "Requested $ACTION_SRC Query (-q) specified with either $ACTION_SRC Add (-a) or $ACTION_SRC Delete (-d) - Exiting"
+        if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_DEL" == "1" ] || [ "$ACTION_RESETPASS" == "1" ]; then
+            @go.log FATAL "Requested $ACTION_SRC Query (-q) specified with either $ACTION_SRC Add (-a) , $ACTION_SRC Delete (-d), or $ACTION_SRC Reset Password  (-p) - Exiting"
+        fi
+    elif [ "$ACTION_RESETPASS" == "1" ]; then
+        if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_DEL" == "1" ] || [ "$ACTION_QUERY" == "1" ]; then
+            @go.log FATAL "Requested $ACTION_SRC Reset Password (-p) specified with either $ACTION_SRC Add (-a) , $ACTION_SRC Delete (-d), or $ACTION_SRC Query (-q) - Exiting"
         fi
     else
-        @go.log FATAL "./zeta users user invoked without specifying either Add, Delete, or Query - Exiting"
+        @go.log FATAL "./zeta users user invoked without specifying either Add, Delete, Query, or Reset Password - Exiting"
     fi
 
-
-
     if [ "$ACTION_ADD" == "1" ]; then
+        getpass "$USER_NAME" USER_PASS
+        hashpass "$USER_PASS" USER_HASH
+
+        echo "You wish to create the following user:"
+        echo ""
+        echo "User: $USER_NAME"
+        echo "UID: $USER_UID"
+        echo "Role: $USER_ROLE"
+        echo "First Name: $USER_FNAME"
+        echo "Last Name: $USER_LNAME"
+        echo ""
+        if [ "$UNATTEND" != "1" ]; then
+            read -e -p "Is this correct? " -i "N" CHK
+            if [ "$CHK" != "Y" ]; then
+                @go.log FATAL "User did not confirm user creation"
+            fi
+        fi
+        @go.log INFO "Additing User: $USER_NAME with UID $USER_UID to role $USER_ROLE"
+        adduser "$USER_NAME" "$USER_UID" "$USER_FNAME" "$USER_LNAME" "$USER_ROLE" "$USER_HASH"
 
     elif [ "$ACTION_DEL" == "1" ]; then
         @go.log FATAL "$ACTION_SRC Deletion not yet implemented"
     elif [ "$ACTION_QUERY" == "1" ]; then
         @go.log FATAL "$ACTION_SRC Query not yet implemented"
+    elif [ "$ACTION_RESETPASS" == "1" ]; then
+        @go.log FATAL "$ACTION_SRC Reset Password not yet implemented"
     else
         @go.log FATAL "Unknown Command requested"
     fi
 
 }
-_group "$@"
+_user "$@"

@@ -54,6 +54,8 @@ function _group() {
         esac
     done
 
+    # Parameter Validation
+
     if [ "$ACTION_ADD" == "1" ]; then
         if [ "$ACTION_DEL" == "1" ] || [ "$ACTION_QUERY" == "1" ]; then
             @go.log FATAL "Requested $ACTION_SRC Add (-a) specified with either $ACTION_SRC Delete (-d) or $ACTION_SRC Query (-q) - Exiting"
@@ -70,7 +72,7 @@ function _group() {
             GROUP_ROLE="shared"
         fi
         if [ "$GROUP_ROLE" != "" ]; then
-            START_GID=$(cat /mapr/$CLUSTERNAME/zeta/kstore/zetasync/zetauid.list|grep $ROLE|cut -d":" -f2)
+            START_GID=$(cat /mapr/$CLUSTERNAME/zeta/kstore/zetasync/zetauid.list|grep $GROUP_ROLE|cut -d":" -f2)
 
             if [ "$START_GID" == "" ]; then
                 @go.log FATAL "The starting GID for role $GROUP_ROLE was not found, are you sure this role is installed?"
@@ -102,6 +104,9 @@ function _group() {
     else
         @go.log FATAL "./zeta users group invoked without specifying either Add, Delete, or Query - Exiting"
     fi
+
+    # End Parameter Validation
+
 
     if [ "$ACTION_ADD" == "1" ]; then
         echo "You wish to create group following group:"
