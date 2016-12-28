@@ -29,8 +29,14 @@ EOCRED
     ERR_RESULT=$(echo $CURL_RESULT|grep "OK")
     if [ "$ERR_RESULT" != "" ]; then
         @go.log INFO "MAPR API Success: Command: $CMD - Result: $CURL_RESULT"
+        echo ""
+        echo "Success: $CMD"
+        echo "Result: $CURL_RESULT"
     else
         @go.log WARN "MAPR API Failure: Command $CMD - Result: $CURL_RESULT"
+        echo ""
+        echo "Fail: $CMD"
+        echo "Result: $CURL_RESULT"
     fi
     rm $TFILE
 
