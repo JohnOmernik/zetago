@@ -11,8 +11,10 @@ bin/*.sh
 # No Conf Data
 conf/
 conf/*
+/conf/*
+
 # No Temp data
-tmp/*.tmp
+/tmp/*.tmp
 
 clearcluster.sh
 
