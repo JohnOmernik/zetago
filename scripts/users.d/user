@@ -15,6 +15,7 @@ AUTH_LIB="lib${LDAP_PROVIDER}"
 # Load the Auth lib for this cluster
 . "$_GO_USE_MODULES" $AUTH_LIB
 . "$_GO_USE_MODULES" 'getpass'
+. "$_GO_USE_MODULES" 'libmapr'
 function _user() {
 
     . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
@@ -132,8 +133,33 @@ function _user() {
                 @go.log FATAL "User did not confirm user creation"
             fi
         fi
-        @go.log INFO "Additing User: $USER_NAME with UID $USER_UID to role $USER_ROLE"
+        @go.log INFO "Adding User: $USER_NAME with UID $USER_UID to role $USER_ROLE"
         adduser "$USER_NAME" "$USER_UID" "$USER_FNAME" "$USER_LNAME" "$USER_ROLE" "$USER_HASH"
+
+        @go.log INFO "User $USER_NAME Added to LDAP - Waiting for ldap sync"
+        sleep 1
+        TST=$(id $USER_NAME)
+        while [ "$TST" == "" ]; do
+            echo "...waiting for ldap sync"
+            sleep 1
+            TST=$(id $USER_NAME)
+        done
+
+        if [ ! -d "/mapr/$CLUSTERNAME/user/$USER_NAME" ]; then
+            @go.log INFO "$USER_NAME Home Directory not found: Creating"
+            maprapi "/volume/create?name=user.${USER_NAME}U&path=/user/${USER_NAME}&rootdirperms=770&user=${USER_NAME}:fc,a,dump,restore,m,d%20${IUSER}:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=${USER_NAME}"
+            echo ""
+            T=""
+            while [ "$T" == "" ]; do
+                sleep 1
+                T=$(ls -1 /mapr/$CLUSTERNAME/user|grep $USER_NAME)
+            done
+            sudo chown $USER_NAME:$IUSER /mapr/$CLUSTERNAME/user/$USER_NAME
+            sudo chmod 770 /mapr/$CLUSTERNAME/user/$USER_NAME
+        else
+            @go.log WARN "User Directory for $USER_NAME Already Exists: Ensure to check permissions for reuse"
+        fi
+
 
     elif [ "$ACTION_DEL" == "1" ]; then
         @go.log FATAL "$ACTION_SRC Deletion not yet implemented"
