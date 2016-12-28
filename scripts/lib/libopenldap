@@ -104,8 +104,10 @@ echo ""
 EOY
     chmod +x ${UPDATE_FILE}
 
-    OLDAP_ID="$MARATHON_SUBMIT/shared/openldap"
-    CURHOST=$(curl -s -X GET $OLDAP_ID/tasks|grep -o -P "\"host\":\"[^\"]+\""|cut -d":" -f2|sed "s/\"//g")
+    CURHOST=$(./zeta cluster marathon getinfo "shared/openldap" "$MARATHON_SUBMIT" "host")
+
+#    OLDAP_ID="$MARATHON_SUBMIT/shared/openldap"
+#    CURHOST=$(curl -s -X GET $OLDAP_ID/tasks|grep -o -P "\"host\":\"[^\"]+\""|cut -d":" -f2|sed "s/\"//g")
 
     @go.log INFO "Open LDAP Currently Running on Host: $CURHOST - Adding Indexes there"
     scp -o StrictHostKeyChecking=no update_script.sh $CURHOST:/home/$IUSER/

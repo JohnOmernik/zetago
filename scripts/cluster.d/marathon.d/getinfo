@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# marathon getinfo
+# This takes two arguments
+# - Marathon ID
+# - MARATHON Submit URL
+# - Optional field name to return (default is to return whole ugly json)
+#
+# Example: ./zeta cluster marathon getinfo myrole/myapp http://marathon.mesos:8080/v2/apps hostname
+
+function _marathon_getinfo() {
+
+
+    MARID=$1
+    MARATHON_URL=$2
+    FIELDNAME=$3
+
+    FULL_URL="${MARATHON_URL}/${MARID}"
+    FULLRESULT=$(curl -s -X GET $FULL_URL/tasks)
+
+    if [ "$FIELDNAME" != "" ]; then
+        # I think we should learn jq here
+        RESULT=$(echo "$FULLRESULT"|grep -o -P "\"${FIELDNAME}\":\"[^\"]+\""|cut -d":" -f2|sed "s/\"//g")
+    else
+        RESULT="$FULLRESULT"
+    fi
+
+    echo "$RESULT"
+
+}
+
+_marathon_getinfo "$@"
+
+
+
+
+
+
+

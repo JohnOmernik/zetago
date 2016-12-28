@@ -121,6 +121,7 @@ function _openldapperf() {
             addindexcache "olcDbIDLcacheSize" "1000000"
             touch $LDAP_CACHE_FILE
         fi
+
     elif [ "$ACTION_INDEX" == "1" ]; then
         @go.log WARN "Attempting to add index: $INDEX_NAME of type $INDEX_TYPE"
         addindexcache "$INDEX_NAME" "$INDEX_TYPE"
@@ -131,6 +132,29 @@ function _openldapperf() {
     else
         @go.log FATAL "No command specified to ldap perf scripts"
     fi
+
+
+    if [ "$UNATTEND" == "1" ]; then
+        RSTR="Y"
+    else
+        read -e -p "Should we restart the openldap instance?" -i "N" RSTR
+    fi
+    if [ "$RSTR" != "Y" ]; then
+        @go.FATAL "Indexes and Caches added, but Open LDAP not restarted"
+    fi
+
+    MARID="shared/openldap"
+    CURHOST=$(./zeta cluster marathon getinfo "$MARID" "$MARATHON_SUBMIT" "host")
+    @go.log INFO "Open LDAP Currenting running on host: $CURHOST - Stopping"
+    ./zeta cluster marathon scale "$MARID" "0" "$MARATHON_SUBMIT" "1"
+
+    @go.log INFO "Open LDAP Instance Stopped - Restarting"
+    ./zeta cluster marathon scale "$MARID" "1" "$MARATHON_SUBMIT" "1"
+
+    NEWHOST=$(./zeta cluster marathon getinfo "shared/openldap" "$MARATHON_SUBMIT" "host")
+    @go.log INFO "Open LDAP Instance Restarted - Now running on $NEWHOST"
+
+
 
 }
 _openldapperf "$@"
