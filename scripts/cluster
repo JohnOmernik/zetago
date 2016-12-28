@@ -55,6 +55,7 @@ function _cluster() {
     echo ""
     echo "Helper Scripts:"
     echo "./zeta cluster hostldapupdate - Update a single host to use OpenLDAP"
+    echo "./zeta cluster addzetarole - Create role users, directories, and shared files for a single role with -r="
     echo ""
     echo "Config Management:"
     echo "./zeta cluster -l|--lockconf Lock cluster.conf file"
