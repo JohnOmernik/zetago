@@ -137,10 +137,10 @@ function _openldapperf() {
     if [ "$UNATTEND" == "1" ]; then
         RSTR="Y"
     else
-        read -e -p "Should we restart the openldap instance?" -i "N" RSTR
+        read -e -p "Should we restart the openldap instance? " -i "N" RSTR
     fi
     if [ "$RSTR" != "Y" ]; then
-        @go.FATAL "Indexes and Caches added, but Open LDAP not restarted"
+        @go.log FATAL "Indexes and Caches added, but Open LDAP not restarted"
     fi
 
     MARID="shared/openldap"
