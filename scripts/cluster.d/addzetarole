@@ -1,0 +1,100 @@
+#!/bin/bash
+#
+# adds the shared role to Zeta Schemas
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+. "$_GO_USE_MODULES" 'libmapr'
+
+function _addzetarole() {
+    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            "-r="*)
+            ROLE="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ "$ROLE" == "" ]; then
+        @go.log FATAL "Must pass a role to add with -r="
+    fi
+
+    @go.log INFO "Adding LDAP Role Schema for $ROLE"
+    ./zeta users roleschema -a -r="$ROLE" -u
+
+    @go.log INFO "Adding Role Directories"
+
+    RDS=$(echo "$ROOT_DIRS"|tr "," " ")
+
+    for DIR in $RDS; do
+        ROLE_OWNER="${IUSER}:zeta${ROLE}${DIR}"
+        if [ -d "/mapr/$CLUSTERNAME/$DIR/$ROLE" ]; then
+            @go.log WARN "${DIR}/${ROLE} directory already exists - Updating permissions to be $ROLE_OWNER"
+            sudo chown ${ROLE_OWNER} /mapr/$CLUSTERNAME/$DIR/$ROLE
+        else
+            maprapi "/volume/create?name=${DIR}.${ROLE}&path=/${DIR}/${ROLE}&rootdirperms=770&user=${IUSER}:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=${IUSER}"
+            echo "Waiting for Directory"
+            T=""
+            while [ "$T" == "" ]; do
+                sleep 1
+                T=$(ls -1 /mapr/$CLUSTERNAME/$DIR|grep $ROLE)
+            done
+            sudo chown ${ROLE_OWNER} /mapr/$CLUSTERNAME/$DIR/$ROLE
+        fi
+    done
+
+
+
+
+    DIR="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${ROLE}"
+    sudo mkdir -p $DIR
+    sudo chown ${IUSER}:${IUSER} $DIR
+    sudo chmod 775 $DIR
+    ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/zeta_${ROLE}.sh"
+
+cat > $ENV_FILE << EOL3
+# Source Master Zeta ENV File
+. /mapr/\$(ls -1 /mapr)/zeta/kstore/env/master_env.sh
+# START GLOBAL ENV Variables for Zeta Environment
+
+export ZETA_MARATHON_ENV="marathon${ROLE}"
+export ZETA_MARATHON_HOST="\${ZETA_MARATHON_ENV}.\${ZETA_MESOS_DOMAIN}"
+export ZETA_MARATHON_PORT="error" # Fix this
+export ZETA_MARATHON_URL="\$ZETA_MARATHON_HOST:\$ZETA_MARATHON_PORT"
+export ZETA_MARATHON_SUBMIT="http://\$ZETA_MARATHON_URL/v2/apps"
+# Source env_$ROLE
+for SRC in /mapr/\$ZETA_CLUSTERNAME/zeta/kstore/env/env_${ROLE}/*.sh; do
+   . \$SRC
+done
+
+if [ "\$1" == "1" ]; then
+    env|grep -P "^ZETA_"
+fi
+
+EOL3
+
+    chmod +x $ENV_FILE
+
+    #Create a dummy script in the env_prod directory so that file not found errors don't appear when sourcing main file
+cat > /mapr/$CLUSTERNAME/zeta/kstore/env/env_${ROLE}/env_${ROLE}.sh << EOL5
+#!/bin/bash
+# Basic script to keep file not found errors from happening
+EOL5
+    @go.log INFO "Role: $ROLE Added to Zeta"
+}
+_addzetarole "$@"
