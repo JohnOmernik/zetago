@@ -152,9 +152,8 @@ function adduser() {
     FNAME=$3
     LNAME=$4
     ROLE=$5
-    UHASH=$5
+    UHASH=$6
 
-    @go.log WARN "Pass Hash: $UHASH"
 
     LDIF_DATA="dn: cn=$UNAME,ou=users,ou=zeta$ROLE,$LDAP_BASE"$'\n'
     LDIF_DATA="${LDIF_DATA}changetype: add"$'\n'
