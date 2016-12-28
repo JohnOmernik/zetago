@@ -178,8 +178,11 @@ function hashpass() {
 
     local PASS2HASH=$1
     local RESULT=$2
+    @go.log WARN "Password to HASH: $PASS2HASH"
     THASH=""
     runldapcommand "$PASS2HASH" "HASHPASS" "THASH"
+    @go.log WARN "Hashed Password: $THASH"
+
     eval $RESULT="'$THASH'"
 }
 
