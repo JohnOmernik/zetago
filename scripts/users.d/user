@@ -81,7 +81,7 @@ function _user() {
             if [ "$START_UID" == "" ]; then
                 @go.log FATAL "The starting UID for role $USER_ROLE was not found, are you sure this role is installed?"
             fi
-            VALID_UID=$(($START_UID + 1))
+            VALID_UID="$START_UID"
         fi
         if [ "$USER_UID" -ge $VALID_UID ] && [ "$USER_UID" -lt $(($VALID_UID + 500000)) ]; then
             echo "$USER_UID is valid in role $USER_ROLE - However we do not check for duplicates (yet)"

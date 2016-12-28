@@ -181,6 +181,8 @@ EOF
 
 
     ./zeta cluster marathon submit "$MARFILE" "$MARATHON_SUBMIT"
+    echo ""
+    @go.log INFO "Shared LDAP Server installed"
 
 }
 

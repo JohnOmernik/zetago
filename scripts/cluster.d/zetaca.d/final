@@ -125,7 +125,7 @@ EOL4
     echo "Submitting new Zeta CA"
     ./zeta cluster marathon submit "${MAR_FILE}" "$MARATHON_SUBMIT"
     echo ""
-    sleep2
+    sleep 1
     echo "CA Moved!"
     echo ""
     echo "This is where I would delete the old one"
