@@ -14,8 +14,8 @@ sourceconf "$CLUSTER_ZETACA_CONF"
 
 CURUSER=$(whoami)
 
-if [ "$CURUSER" != "zetaadm" ]; then
-    @go.log FATAL "Must use zetaadm user"
+if [ "$CURUSER" != "${IUSER}" ]; then
+    @go.log FATAL "Must use ${IUSER} user"
 fi
 
 ARGVAL=$1

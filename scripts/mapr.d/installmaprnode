@@ -19,8 +19,8 @@ MYDIR=$(pwd)
 
 MEUSER=$(whoami)
 
-if [ "$MEUSER" != "zetaadm" ]; then
-    @go.log FATAL "This script needs to be un as zetaadm. Current User: $MEUSER"
+if [ "$MEUSER" != "${IUSER}" ]; then
+    @go.log FATAL "This script needs to be un as ${IUSER}. Current User: $MEUSER"
 fi
 
 function _installmaprnode(){
@@ -57,9 +57,9 @@ function _installmaprnode(){
         @go.log FATAL "Cannont connect to host"
     fi
 
-    scp -o StrictHostKeyChecking=no $IP_DETECT $NODE_HOST:/home/zetaadm/
-    ssh -o StrictHostKeyChecking=no $NODE_HOST "chmod +x /home/zetaadm/ip-detect"
-    NODE_IP=$(ssh $NODE_HOST /home/zetaadm/ip-detect)
+    scp -o StrictHostKeyChecking=no $IP_DETECT $NODE_HOST:/home/${IUSER}/
+    ssh -o StrictHostKeyChecking=no $NODE_HOST "chmod +x /home/${IUSER}/ip-detect"
+    NODE_IP=$(ssh $NODE_HOST /home/${IUSER}/ip-detect)
 
     @go.log INFO "MapR Install requested on $NODE_HOST ($NODE_IP) with disks: $NODE_DISKS"
     echo ""
@@ -76,8 +76,8 @@ function _installmaprnode(){
 
         sudo docker cp ${CID}:/opt/mapr/conf ${MAPR_DEFAULTS}
         sudo docker cp ${CID}:/opt/mapr/roles ${MAPR_DEFAULTS}
-        sudo chown zetaadm:zetaadm ${MAPR_DEFAULTS}/conf/*
-        sudo chown zetaadm:zetaadm ${MAPR_DEFAULTS}/roles/*
+        sudo chown ${IUSER}:${IUSER} ${MAPR_DEFAULTS}/conf/*
+        sudo chown ${IUSER}:${IUSER} ${MAPR_DEFAULTS}/roles/*
 
         cd $MAPR_DEFAULTS
         cd conf
@@ -166,8 +166,8 @@ function _installmaprnode(){
 
     echo ""
     echo "Copying MapR Defaults to $NODE_HOST"
-    scp ${MAPR_DEFAULTS}/conf_default.tgz $NODE_HOST:/home/zetaadm/
-    scp ${MAPR_DEFAULTS}/roles_default.tgz $NODE_HOST:/home/zetaadm/
+    scp ${MAPR_DEFAULTS}/conf_default.tgz $NODE_HOST:/home/${IUSER}/
+    scp ${MAPR_DEFAULTS}/roles_default.tgz $NODE_HOST:/home/${IUSER}/
 
     echo ""
     echo "Creating Directories"
@@ -176,9 +176,9 @@ function _installmaprnode(){
     echo ""
     echo "Unpacking Defaults"
 
-    ssh $NODE_HOST "sudo mv /home/zetaadm/conf_default.tgz ${MAPR_INST}/conf/ && sudo tar zxf ${MAPR_INST}/conf/conf_default.tgz -C ${MAPR_INST}/conf && sudo rm ${MAPR_INST}/conf/conf_default.tgz"
+    ssh $NODE_HOST "sudo mv /home/${IUSER}/conf_default.tgz ${MAPR_INST}/conf/ && sudo tar zxf ${MAPR_INST}/conf/conf_default.tgz -C ${MAPR_INST}/conf && sudo rm ${MAPR_INST}/conf/conf_default.tgz"
 
-    ssh $NODE_HOST "sudo mv /home/zetaadm/roles_default.tgz ${MAPR_INST}/roles/ && sudo tar zxf ${MAPR_INST}/roles/roles_default.tgz -C ${MAPR_INST}/roles && sudo rm ${MAPR_INST}/roles/roles_default.tgz"
+    ssh $NODE_HOST "sudo mv /home/${IUSER}/roles_default.tgz ${MAPR_INST}/roles/ && sudo tar zxf ${MAPR_INST}/roles/roles_default.tgz -C ${MAPR_INST}/roles && sudo rm ${MAPR_INST}/roles/roles_default.tgz"
 
     echo ""
     echo "Updating MAPR_SUBNETS"
@@ -202,8 +202,8 @@ function _installmaprnode(){
     done
     IFS=$OLDIFS
 
-    scp $TFILE $NODE_HOST:/home/zetaadm/
-    ssh $NODE_HOST "sudo mv /home/zetaadm/$TFILENAME ${MAPR_INST}/conf/initial_disks.txt"
+    scp $TFILE $NODE_HOST:/home/${IUSER}/
+    ssh $NODE_HOST "sudo mv /home/${IUSER}/$TFILENAME ${MAPR_INST}/conf/initial_disks.txt"
     rm  $TFILE
 
     echo ""

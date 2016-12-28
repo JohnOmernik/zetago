@@ -14,8 +14,8 @@ MYDIR=$(pwd)
 
 MEUSER=$(whoami)
 
-if [ "$MEUSER" != "zetaadm" ]; then
-    @go.log FATAL "This script needs to be un as zetaadm. Current User: $MEUSER"
+if [ "$MEUSER" != "${IUSER}" ]; then
+    @go.log FATAL "This script needs to be run as ${IUSER}. Current User: $MEUSER"
 fi
 
 UNATTEND="0"
@@ -54,17 +54,39 @@ IFS=","
 STARTED=""
 for CLDB in $CLDBS; do
     CLDB_HOST=$(echo $CLDB|cut -d":" -f1)
-    STARTED="$STARTED $CLDB_HOST"
+    if [ "$STARTED" == "" ]; then
+        STARTED="$CLDB_HOST"
+    else
+        STARTED="$STARTED $CLDB_HOST"
+    fi
     ./zeta mapr submitmaprnode $CLDB_HOST
 done
 echo ""
 echo ""
-echo "Waiting 30 seconds to let the CLDBs Start"
-echo ""
-echo "As an admonishment to myself, I am pointing out that I should write a check to ensure our CLDB is up instead of waiting for the user"
-sleep 30
-echo "At this point, please check to determine if CLDB is running, if it is, please press enter"
-read -e -p "I solemnly swear I checked to ensure the CLDB was running: " -i "YES" CHKMATE
+
+CLDB_ADDRESSES=""
+for S in $STARTED; do
+    EXT_IP=$(ssh $S curl -s icanhazip.com)
+    if [ "$CLDB_ADDRESSES" == "" ]; then
+        CLDB_ADDRESSES="https://${EXT_IP}:8443"$'\n'
+    else
+        CLDB_ADDRESSES="${CLDB_ADDRESSES}https://${EXT_IP}:8443"$'\n'
+    fi
+done
+
+CLDBTEST=""
+while [ "$CLDBTEST" == "" ]; do
+    @go.log INFO "Waiting 20 seconds to check again for CLDB Nodes up"
+    sleep 20
+    for H in $STARTED; do
+        CLDBTEST=$(curl -s -k https://$H:8443)
+        @go.log INFO "Checking CLDB Node: '$H'"
+        if [ "$CLDBTEST" != "" ]; then
+            break
+        fi
+    done
+done
+@go.log INFO "CLDB Appears up and running"
 
 IFS=";"
 for NODE in $INODES; do
@@ -79,3 +101,6 @@ done
 echo ""
 echo ""
 IFS=$OLDIFS
+echo "External CLDB Addresses:"
+echo "$CLDB_ADDRESSES"
+

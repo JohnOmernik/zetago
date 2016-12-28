@@ -1,0 +1,158 @@
+#!/bin/bash
+#
+# adds the shared role to Zeta Schemas
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+AUTH_LIB="lib${LDAP_PROVIDER}"
+
+# Load the Auth lib for this cluster
+. "$_GO_USE_MODULES" $AUTH_LIB
+
+function _openldapperf() {
+
+    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+
+    CURUSER=$(whoami)
+    if [ "$CURUSER" != "$IUSER" ]; then
+        @go.log FATAL "Must use $IUSER: User: $CURUSER"
+    fi
+
+ for i in "$@"
+        do
+        case $i in
+            -a)
+            ACTION_ALL="1"
+            ;;
+            -i)
+            ACTION_INDEX="1"
+            ;;
+            -c)
+            ACTION_CACHE="1"
+            ;;
+            -u)
+            UNATTEND="1"
+            ;;
+            "-x="*)
+            INDEX_NAME="${i#*=}"
+            ;;
+            "-t="*)
+            INDEX_TYPE="${i#*=}"
+            ;;
+            "-s="*)
+            CACHE_SIZE="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+    if [ "$ACTION_ALL" == "1" ]; then
+        if [ "$ACTION_INDEX" == "1" ] || [ "$ACTION_CACHE" == "1" ]; then
+            @go.log FATAL "You can only specify Action All by itself, not with add index (-i) or update cache (-c)"
+        fi
+    fi
+    if [ "$ACTION_INDEX" == "1" ]; then
+        if [ "$ACTION_ALL" == "1" ] || [ "$ACTION_CACHE" == "1" ]; then
+            @go.log FATAL "Adding index (-i) cannot be specified with all perf updates (-a) or update cache (-c)"
+        fi
+        if [ "$INDEX_NAME" == "" ]; then
+            @go.log FATAL "Manual adding of indexes (-i) cannot be done without an index name -x="
+        fi
+        if [ "$INDEX_TYPE" == "" ]; then
+            @go.log WARN "Index type not specified: defaulting to equality (eq)"
+            INDEX_TYPE="eq"
+        fi
+    fi
+    if [ "$ACTION_CACHE" == "1" ]; then
+        if [ "$ACTION_ALL" == "1" ] || [ "$ACTION_INDEX" == "1" ]; then
+            @go.log FATAL "Updating cache values -c can not be done with update all perf options (-a) or adding of indexes (-i)"
+        fi
+        if [ "$CACHE_SIZE" == "" ]; then
+            @go.log FATAL "To update cache sizes, you must specify a value (only number) with -s= - Example: -s=500000"
+        fi
+    fi
+
+    echo ""
+    echo "****************************************"
+    echo "This attempts to enable caches and indexes to make openldap faster with Zeta"
+    echo ""
+    echo "--------> This is experimental use at your own risk <---------"
+    echo ""
+    if [ "$UNATTEND" != "1" ]; then
+        read -e -p "Do you wish to proceed here? " -i "N" PROCEED
+    else
+        @go.log WARN "Unattended adding of indexes or caches specified"
+        PROCEED="Y"
+    fi
+    if [ "$PROCEED" != "Y" ]; then
+        @go.log FATAL "User decided against caching"
+    fi
+
+    if [ "$ACTION_ALL" == "1" ]; then
+
+        LDAP_CACHE_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/ldap_cache.sh"
+        LDAP_INDEX_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/ldap_indexes.sh"
+
+        if [ -f "$LDAP_INDEX_FILE" ]; then
+            @go.log WARN "Indexes already added to this install - skipping"
+        else
+            addindexcache "gidNumber" "eq"
+            addindexcache "uidNumber" "eq"
+            addindexcache "cn" "eq"
+            addindexcache "memberUid" "eq"
+            addindexcache "member" "eq"
+            touch $LDAP_INDEX_FILE
+        fi
+
+        if [ -f "$LDAP_CACHE_FILE" ]; then
+            @go.log WARN "Caches already added to this install - skipping"
+        else
+            addindexcache "UPDATECACHE" "1000000"
+            touch $LDAP_CACHE_FILE
+        fi
+
+    elif [ "$ACTION_INDEX" == "1" ]; then
+        @go.log WARN "Attempting to add index: $INDEX_NAME of type $INDEX_TYPE"
+        addindexcache "$INDEX_NAME" "$INDEX_TYPE"
+    elif [ "$ACTION_CACHE" == "1" ]; then
+        @go.log WARN "Attempting to update Cache size to : $CACHE_SIZE"
+        addindexcache "UPDATECACHE" "$CACHE_SIZE"
+    else
+        @go.log FATAL "No command specified to ldap perf scripts"
+    fi
+
+
+    if [ "$UNATTEND" == "1" ]; then
+        RSTR="Y"
+    else
+        read -e -p "Should we restart the openldap instance? " -i "N" RSTR
+    fi
+    if [ "$RSTR" != "Y" ]; then
+        @go.log FATAL "Indexes and Caches added, but Open LDAP not restarted"
+    fi
+
+    MARID="shared/openldap"
+    CURHOST=$(./zeta cluster marathon getinfo "$MARID" "$MARATHON_SUBMIT" "host")
+    @go.log INFO "Open LDAP Currenting running on host: $CURHOST - Stopping"
+    ./zeta cluster marathon scale "$MARID" "0" "$MARATHON_SUBMIT" "1"
+
+    @go.log INFO "Open LDAP Instance Stopped - Restarting"
+    ./zeta cluster marathon scale "$MARID" "1" "$MARATHON_SUBMIT" "1"
+
+    NEWHOST=$(./zeta cluster marathon getinfo "shared/openldap" "$MARATHON_SUBMIT" "host")
+    @go.log INFO "Open LDAP Instance Restarted - Now running on $NEWHOST"
+
+
+
+}
+_openldapperf "$@"

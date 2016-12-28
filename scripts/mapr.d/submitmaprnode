@@ -14,8 +14,8 @@ sourceconf "$CLUSTER_ZETACA_CONF"
 
 MYDIR=$(pwd)
 MEUSER=$(whoami)
-if [ "$MEUSER" != "zetaadm" ]; then
-    @go.log FATAL "This script needs to be un as zetaadm. Current User: $MEUSER"
+if [ "$MEUSER" != "${IUSER}" ]; then
+    @go.log FATAL "This script needs to be un as ${IUSER}. Current User: $MEUSER"
 fi
 
 NODE=$1

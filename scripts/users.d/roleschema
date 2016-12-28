@@ -1,0 +1,162 @@
+#!/bin/bash
+#
+# Interface to add a role schema to zeta 
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+AUTH_LIB="lib${LDAP_PROVIDER}"
+
+# Load the Auth lib for this cluster
+. "$_GO_USE_MODULES" $AUTH_LIB
+
+
+function _roleschema() {
+
+    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+
+
+    ACTION_SRC="schema"
+    for i in "$@"
+        do
+        case $i in
+            -a)
+            ACTION_ADD="1"
+            ;;
+            -d)
+            ACTION_DEL="1"
+            ;;
+            -q)
+            ACTION_QUERY="1"
+            ;;
+            -u)
+            UNATTEND="1"
+            ;;
+            "-r="*)
+            ROLE="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+    if [ "$ACTION_ADD" == "1" ]; then
+        if [ "$ACTION_DEL" == "1" ] || [ "$ACTION_QUERY" == "1" ]; then
+            @go.log FATAL "Requested $ACTION_SRC Add (-a) specified with either $ACTION_SRC Delete (-d) or $ACTION_SRC Query (-q) - Exiting"
+        fi
+        if [ "$ROLE" == "" ]; then
+            @go.log FATAL "Cannot Take $ACTION_SRC action without providing role with -r="
+        fi
+    elif [ "$ACTION_DEL" == "1" ]; then
+        if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_QUERY" == "1" ]; then
+            @go.log FATAL "Requested $ACTION_SRC Delete (-d) specified with either $ACTION_SRC Add (-a) or $ACTION_SRC Query (-q) - Exiting"
+        fi
+        if [ "$ROLE" == "" ]; then
+            @go.log FATAL "With $ACTION_SRC Delete (-d) you must specify either a role to delete (-r=) "
+        fi
+    elif [ "$ACTION_QUERY" == "1" ]; then
+        if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_DEL" == "1" ]; then
+            @go.log FATAL "Requested $ACTION_SRC Query (-q) specified with either $ACTION_SRC Add (-a) or $ACTION_SRC Delete (-d) - Exiting"
+        fi
+        if [ "$ROLE" == "" ]; then
+            @go.log FATAL "With $ACTION_SRC query (-q) you must specify either a role to delete (-r=) "
+        fi
+    else
+        @go.log FATAL "./zeta users group invoked without specifying either Add, Delete, or Query - Exiting"
+    fi
+
+
+    if [ "$ACTION_ADD" == "1" ]; then
+        SCHEMA_INST="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${ROLE}/schema.sh"
+        if [ -f "$SCHEMA_INST" ]; then
+            @go.log FATAL "Schema for $ROLE already installed - exiting"
+        fi
+        mkdir -p /mapr/$CLUSTERNAME/zeta/kstore/env/env_$ROLE
+        touch $SCHEMA_INST
+        echo "Please enter the starting UID number for this role - $ROLE"   
+        echo "To help, here is a list of the currently defined roles"
+        echo "If no roles are established, we recommend starting with 1000000"
+        echo "If roles are established take the highest role and add 1000000"
+        echo ""
+        cat /mapr/$CLUSTERNAME/zeta/kstore/zetasync/zetauid.list
+        echo ""
+
+
+        SHRD=$(cat /mapr/$CLUSTERNAME/zeta/kstore/zetasync/zetauid.list|grep $ROLE)
+
+        if [ "$SHRD" != "" ]; then
+            echo "It looks like the role you are trying to add already has a STARTID specified"
+            echo "We will use this."
+            echo "$SHRD"
+            STARTID=$(echo $SHRD|cut -d":" -f2)
+        else
+            read -e -p "Please enter the starting UID for role $ROLE: " -i "1000000" STARTID
+            echo "$ROLE:$STARTID" >> /mapr/$CLUSTERNAME/zeta/kstore/zetasync/zetauid.list
+        fi
+        CURUID="$STARTID"
+        CURGID=$(($STARTID + 500000))
+        SVCUID=$CURUID
+        CURUID=$((CURUID + 1))
+        APPGID=$CURGID
+        CURGID=$(($CURGID + 1))
+        DATAGID=$CURGID
+        CURGID=$(($CURGID + 1))
+        ETLGID=$CURGID
+        CURGID=$(($CURGID + 1))
+        ZETAGID=$CURGID
+
+        # OU's are added directly with helper lib
+        @go.log INFO "Adding base OU for $ROLE"
+        addou "$ROLE" "zeta$ROLE" "ou=zeta$ROLE" "Base OU for Zeta Role $ROLE"
+        @go.log INFO "Adding groups OU for $ROLE"
+        addou "$ROLE" "groups" "ou=groups,ou=zeta$ROLE" "Groups for use in Zeta Role $ROLE"
+        @go.log INFO "Adding users OU for $ROLE"
+        addou "$ROLE" "users" "ou=users,ou=zeta$ROLE" "Users for use in Zeta Role $ROLE"
+
+        if [ "$ROLE" == "shared" ]; then
+            @go.log INFO "Adding global group 'zetausers' to shared role groups OU"
+            # Since this would fail group ID validation, we call the lib$LDAPPROVIDER group add directly
+            addgroup "zetausers" "2501" "$ROLE" "Master list of users in Zeta"
+        fi
+
+        @go.log INFO "Adding $ROLE apps group at GID $APPGID"
+        ./zeta users group -a -g="zeta${ROLE}apps" -i="${APPGID}" -r="${ROLE}" -D="Access group for the apps directory in role $ROLE" -u
+
+        @go.log INFO "Adding $ROLE data group at GID $DATAGID"
+        ./zeta users group -a -g="zeta${ROLE}data" -i="${DATAGID}" -r="${ROLE}" -D="Access group for the data directory in role $ROLE" -u
+
+        @go.log INFO "Adding $ROLE etl group at GID $ETLGID"
+        ./zeta users group -a -g="zeta${ROLE}etl" -i="${ETLGID}" -r="${ROLE}" -D="Access group for the etl directory in role $ROLE" -u
+
+        @go.log INFO "Adding $ROLE zeta group at GID $ZETAGID"
+        ./zeta users group -a -g="zeta${ROLE}zeta" -i="${ZETAGID}" -r="${ROLE}" -D="Access group for the zeta directory in role $ROLE" -u
+
+        @go.log INFO "Adding Service User zetasvc${ROLE} at $SVCUID for role $ROLE"
+        ./zeta users user -a -n="zetasvc${ROLE}" -i="${SVCUID}" -f="Service" -l="${ROLE}" -r="${ROLE}" -u
+
+        @go.log INFO "Adding Service User zetasvc${ROLE} to global zetausers group"
+        ./zeta users usergroups -a -g=zetausers -n=zetasvc${ROLE} -u
+
+        @go.log INFO "Adding Service User to main groups for role: $ROLE"
+        ./zeta users usergroups -a -g="zeta${ROLE}apps" -r="${ROLE}" -n="zetasvc${ROLE}" -u
+        ./zeta users usergroups -a -g="zeta${ROLE}data" -r="${ROLE}" -n="zetasvc${ROLE}" -u
+        ./zeta users usergroups -a -g="zeta${ROLE}etl" -r="${ROLE}" -n="zetasvc${ROLE}" -u
+        ./zeta users usergroups -a -g="zeta${ROLE}zeta" -r="${ROLE}" -n="zetasvc${ROLE}" -u
+
+    elif [ "$ACTION_DEL" == "1" ]; then
+        @go.log FATAL "$ACTION_SRC Deletion not yet implemented"
+    elif [ "$ACTION_QUERY" == "1" ]; then
+        @go.log FATAL "$ACTION_SRC Query not yet implemented"
+    else
+        @go.log FATAL "Unknown Command requested"
+    fi
+
+}
+_roleschema "$@"

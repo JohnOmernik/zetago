@@ -1,0 +1,146 @@
+#!/bin/bash
+#
+# Move the tmp ZetaCA to the final location in /mapr
+# This script only needs to be run once and will ensure the CA moves to a more HA form. 
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+function _finalzetaca() {
+
+    CURUSER=$(whoami)
+
+    if [ "$CURUSER" != "${IUSER}" ]; then
+        @go.log FATAL "Must use ${IUSER} user"
+    fi
+
+    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+
+
+    NEW_APP_LOC="/mapr/$CLUSTERNAME/zeta/shared/zetaca"
+
+    echo ""
+    echo "This script updates and moves the currently running zetaca to be running from the MapR Filesystem"
+    echo ""
+    DEF_OLD_APP_LOC="/home/${IUSER}/zetaca"
+
+    if [ -d "$DEF_OLD_APP_LOC" ]; then
+        OLD_APP_LOC="$DEF_OLD_APP_LOC"
+    else
+        @go.log WARN "No zetaca Directory found at /home/${IUSER} Did you put it somewhere else? if so put please let us know!"
+        read -e -p "Please enter location of current zetaca: " -i "/home/${IUSER}/zetaca" OLD_APP_LOC
+        if [ ! -d "$OLD_APP_LOC" ]; then
+            @go.log FATAL "Can't find a zetaca directory provided: $OLD_APP_LOC"
+        fi
+    fi
+    echo ""
+    echo "************************************"
+    echo ""
+    echo "We will be copying the CA located at $OLD_APP_LOC to $NEW_APP_LOC"
+    echo ""
+    echo "We will also be:"
+    echo ""
+    echo "- Stopping the current instance of ZetaCA"
+    echo "- Updating the location of the CA certs in the marathon definition"
+    echo "- Updating the ENV information for Zeta CA"
+    echo "- Restarting ZetaCA in Marathon"
+
+#    echo "At this point no changes have been made, do you wish to proceed?"
+#    read -e -p "Do you wish to proceed with Zeta CA Move? " -i "N" PROCEED
+    PROCEED="Y"
+    if [ -d "$NEW_APP_LOC" ]; then
+        @go.log FATAL "The new Zeta CA Location already exists at $NEW_APP_LOC, exiting"
+    fi
+    if [ ! -d "$OLD_APP_LOC" ]; then
+    @go.log FATAL "The old Zeta CA could not be found"
+    fi
+
+    if [ "$PROCEED" != "Y" ]; then
+        @go.log FATAL "User gave up - exiting"
+    fi
+
+
+    mkdir -p $NEW_APP_LOC
+    mkdir -p ${NEW_APP_LOC}/CA
+    sudo chown -R ${IUSER}:${IUSER} ${NEW_APP_LOC}
+    sudo chmod -R 770 ${NEW_APP_LOC}/CA
+    cp -R ${OLD_APP_LOC}/CA/* ${NEW_APP_LOC}/CA/
+    cp ${OLD_APP_LOC}/gen_java_keystore.sh ${NEW_APP_LOC}/
+    cp ${OLD_APP_LOC}/gen_server_cert.sh ${NEW_APP_LOC}/
+    cp ${OLD_APP_LOC}/zetaca_env.sh /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/
+    MAR_FILE="/mapr/$CLUSTERNAME/zeta/shared/zetaca/marathon.json"
+
+    APP_IMG="${ZETA_DOCKER_REG_URL}/zetaca"
+
+    . ${OLD_APP_LOC}/zetaca_env.sh
+
+
+    DOCKER_TAG=$(sudo docker images|grep zetaca|grep -o -P "[a-f0-9]{12}")
+    sudo docker tag $DOCKER_TAG $APP_IMG
+    sudo docker push $APP_IMG
+
+cat > ${MAR_FILE} << EOL4
+{
+  "id": "shared/zetaca",
+  "cpus": 1,
+  "mem": 512,
+  "cmd":"/bin/bash -l -c '/root/ca_rest/main.rb'",
+  "instances": 1,
+  "env": {
+     "SERVER_PORT": "3000",
+     "CA_ROOT": "/root/ca_rest/CA"
+  },
+  "labels": {
+   "CONTAINERIZER":"Docker"
+  },
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "${APP_IMG}",
+      "network": "BRIDGE",
+      "portMappings": [
+        { "containerPort": 3000, "hostPort": ${ZETA_CA_PORT}, "servicePort": 0, "protocol": "tcp"}
+      ]
+    },
+  "volumes": [
+      {
+        "containerPath": "/root/ca_rest/CA",
+        "hostPath": "${NEW_APP_LOC}/CA",
+        "mode": "RW"
+      }
+    ]
+  }
+}
+
+EOL4
+
+
+
+    echo ""
+    echo "Removing old instance"
+    echo ""
+
+
+    MARID="shared/zetaca"
+    ./zeta cluster marathon destroy "$MARID" "$MARATHON_SUBMIT"
+
+    echo "Waiting 30 seconds for the Application to close"
+    sleep 30
+
+    echo "Submitting new Zeta CA"
+    ./zeta cluster marathon submit "${MAR_FILE}" "$MARATHON_SUBMIT"
+    echo ""
+    sleep 1
+    echo "CA Moved!"
+    echo ""
+    echo "This is where I would delete the old one"
+    echo "But because I am a coward, I leave it for you to remove the copy of the CA located at ${OLD_APP_LOC}"
+    echo ""
+}
+
+_finalzetaca "$@"

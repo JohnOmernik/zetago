@@ -1,0 +1,112 @@
+#!/bin/bash
+#
+# Interface to add and remove users to and from groups
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+AUTH_LIB="lib${LDAP_PROVIDER}"
+
+# Load the Auth lib for this cluster
+. "$_GO_USE_MODULES" $AUTH_LIB
+
+
+function _group() {
+
+    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+
+    ACTION_SRC="usergroups"
+    for i in "$@"
+        do
+        case $i in
+            -a)
+            ACTION_ADD="1"
+            ;;
+            -d)
+            ACTION_DEL="1"
+            ;;
+            -q)
+            ACTION_QUERY="1"
+            ;;
+            -u)
+            UNATTEND="1"
+            ;;
+            "-g="*)
+            GROUP_NAME="${i#*=}"
+            ;;
+            "-r="*)
+            GROUP_ROLE="${i#*=}"
+            ;;
+            "-n="*)
+            USER_NAME="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+    # Parameter Validation
+
+    if [ "$ACTION_ADD" == "1" ]; then
+        if [ "$ACTION_DEL" == "1" ] || [ "$ACTION_QUERY" == "1" ]; then
+            @go.log FATAL "Requested $ACTION_SRC Add (-a) specified with either $ACTION_SRC Delete (-d) or $ACTION_SRC Query (-q) - Exiting"
+        fi
+
+        if [ "$GROUP_NAME" == "" ] || [ "$USER_NAME" == "" ]; then
+            @go.log FATAL "To add a user to a group (-a) you must specify both a group name (-g=) and a user name (-n=) - Exiting"
+        fi
+
+        if [ "$GROUP_ROLE" == "" ]; then
+            @go.log WARN "No Group Role Provided: Defaults to shared role"
+            GROUP_ROLE="shared"
+        fi
+
+    elif [ "$ACTION_DEL" == "1" ]; then
+        if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_QUERY" == "1" ]; then
+            @go.log FATAL "Requested $ACTION_SRC Delete (-d) specified with either $ACTION_SRC Add (-a) or $ACTION_SRC Query (-q) - Exiting"
+        fi
+        if [ "$GROUP_NAME" == "" ] || [ "$USER_NAME" == "" ]; then
+            @go.log FATAL "With Group Delete (-d) you must specify both a group name (-g=) and a user name (-n=) - Exiting"
+        fi
+
+    elif [ "$ACTION_QUERY" == "1" ]; then
+        if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_DEL" == "1" ]; then
+            @go.log FATAL "Requested $ACTION_SRC Query (-q) specified with either $ACTION_SRC Add (-a) or $ACTION_SRC Delete (-d) - Exiting"
+        fi
+        if [ "$GROUP_NAME" == "" ] && [ "$USER_NAME" == "" ]; then
+            @go.log FATAL "With Query (-q) you must specify either a group name (-g=) or a user name (-n=) - Exiting"
+        fi
+    else
+        @go.log FATAL "./zeta usergroups invoked without specifying either Add, Delete, or Query - Exiting"
+    fi
+
+    # End Parameter Validation
+
+
+    if [ "$ACTION_ADD" == "1" ]; then
+        echo "You wish to add the user $USER_NAME to the group $GROUP_NAME in role $GROUP_ROLE"
+        echo ""
+        if [ "$UNATTEND" != "1" ]; then
+            read -e -p "Is this correct? " -i "N" CHK
+            if [ "$CHK" != "Y" ]; then
+                @go.log FATAL "User did not confirm adding user to group"
+            fi
+        fi
+        @go.log INFO "Adding user $USER_NAME to group $GROUP_NAME in role $GROUP_ROLE"
+        adduser2group "$USER_NAME" "$GROUP_NAME" "$GROUP_ROLE"
+    elif [ "$ACTION_DEL" == "1" ]; then
+        @go.log FATAL "$ACTION_SRC Deletion not yet implemented"
+    elif [ "$ACTION_QUERY" == "1" ]; then
+        @go.log FATAL "$ACTION_SRC Query not yet implemented"
+    else
+        @go.log FATAL "Unknown Command requested"
+    fi
+
+}
+_group "$@"

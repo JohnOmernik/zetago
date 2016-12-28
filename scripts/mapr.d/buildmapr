@@ -92,7 +92,7 @@ function _build_mapr() {
     fi
 
     MAPR_CRED="mapr:$MAPR_PASS"
-    ZETA_CRED="zetaadm:$ZETAADM_PASS"
+    ZETA_CRED="${IUSER}:$ZETAADM_PASS"
 
 
     BUILD_TMP="./tmp/maprdocker"
@@ -169,13 +169,13 @@ $DOCKER_LINE4
 $DOCKER_LINE5
 $DOCKER_LINE6
 
-RUN adduser --disabled-login --gecos '' --uid=2500 zetaadm
+RUN adduser --disabled-login --gecos '' --uid=2500 ${IUSER}
 RUN adduser --disabled-login --gecos '' --uid=2000 mapr
 
 RUN echo "$MAPR_CRED"|chpasswd
 RUN echo "$ZETA_CRED"|chpasswd
 
-RUN usermod -a -G root mapr && usermod -a -G root zetaadm && usermod -a -G adm mapr && usermod -a -G adm zetaadm && usermod -a -G disk mapr && usermod -a -G disk zetaadm
+RUN usermod -a -G root mapr && usermod -a -G root ${IUSER} && usermod -a -G adm mapr && usermod -a -G adm ${IUSER} && usermod -a -G disk mapr && usermod -a -G disk ${IUSER}
 
 RUN echo "deb $MAPR_MAIN_URL mapr optional" > /etc/apt/sources.list.d/mapr.list
 

@@ -1,0 +1,48 @@
+#!/bin/bash
+# 
+# Update all hosts to use open ldap
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+function _updateallldaphosts() {
+
+
+  for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ "$UNATTEND" != "1" ]; then
+
+        echo "Zeta nodes in conf file:"
+        echo ""
+        echo "$INTERNAL_NODES"
+        echo ""
+        read -e -p "Do you wish to update all Zeta nodes in conf? " -i "Y" IUPDATE
+    fi
+
+    if [ "$IUPDATE" == "Y" ] || [ "$UNATTEND" == "1" ]; then
+        @go.log INFO "Updating all INTERNAL_NODES"
+        for NODE in $INTERNAL_NODES; do
+            ./zeta cluster hostldapupdate -h="$NODE" -u
+        done
+    else
+        @go.log FATAL "Not updating LDAP on INTERNAL_NODES"
+    fi
+
+}
+_updateallldaphosts "$@"

@@ -50,9 +50,9 @@ $RESOLVERS
 dns_search: $DNS_SEARCH
 process_timeout: 300
 oauth_enabled: 'false'
-ssh_key_path: /home/zetaadm/.ssh/id_rsa
+ssh_key_path: /home/${IUSER}/.ssh/id_rsa
 ssh_port: '22'
-ssh_user: zetaadm
+ssh_user: ${IUSER}
 EOF
 
 scp /tmp/config.yaml $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/

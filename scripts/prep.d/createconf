@@ -27,22 +27,24 @@ echo ""
 read -e -p "Private key for initial user on zeta nodes: " -i "/home/$INIT_USER/.ssh/id_rsa" INIT_KEY_LOC
 echo ""
 GEN_KEY="Y"
-OUT_KEY="./conf/zetaadm.key"
-OUT_KEY_PUB="./conf/zetaadm.key.pub"
+OUT_KEY="./conf/iuser.key"
+OUT_KEY_PUB="./conf/iuser.key.pub"
 echo ""
-echo "As part of this process, we will generate a key for the zetaadm user"
+echo "As part of this process, we will generate a key for the IUSER user"
 echo "It will be stored at $OUT_KEY and its public key will be stored at $OUT_KEY_PUB"
 echo "These values will be saved in the conf for use as well"
 echo ""
 ZETAADM_UID="2500"
 MAPR_UID="2000"
+
+IUSER="zetaadm" # The Main User for Zeta
 echo "-----------------------------------"
-echo "The UID for the zetaadm user will be $ZETAADM_UID and the UID for the mapr user will be $MAPR_UID"
+echo "The UID for the IUSER user will be $ZETAADM_UID and the UID for the mapr user will be $MAPR_UID"
 echo "These values are stored in the conf"
 echo ""
 echo "-----------------------------------"
 echo ""
-getpass "zetaadm" ZETAADM_PASS
+getpass "$IUSER" ZETAADM_PASS
 echo ""
 getpass "mapr" MAPR_PASS
 echo ""
@@ -74,6 +76,9 @@ cat > $PREP_CONF << EOF
 INIT_USERS="$INIT_USERS"
 # INIT_KEY_LOC is the location of the SSH private key to connect to the cluster with
 INIT_KEY_LOC="$INIT_KEY_LOC"
+
+# The Main user for Zeta  (zetaadm by default)
+IUSER="$IUSER"
 
 # The following Variables determine whether to generate a key for zetaadm, what that key will be called, and what the public key will be called
 GEN_KEY="$GEN_KEY"
