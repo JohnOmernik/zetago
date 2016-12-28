@@ -17,8 +17,8 @@ function _shareddocker() {
 
     CURUSER=$(whoami)
 
-    if [ "$CURUSER" != "zetaadm" ]; then
-        @go.log FATAL "Must use zetaadm user"
+    if [ "$CURUSER" != "${IUSER}" ]; then
+        @go.log FATAL "Must use ${IUSER} user"
     fi
 
     DOCKER_IMAGE_LOC="/mapr/$CLUSTERNAME/zeta/shared/dockerregv2/images"
@@ -27,13 +27,13 @@ function _shareddocker() {
         @go.log FATAL "$DOCKER_IMAGE_LOC already exists. Please remove volume and/or delete the directory prior to installing Shared Docker Registry"
     else
         mkdir -p /mapr/$CLUSTERNAME/zeta/shared/dockerregv2
-        maprapi "/volume/create?name=zeta.shared.dockerregv2&path=/zeta/shared/dockerregv2/images&rootdirperms=775&user=zetaadm:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=zetaadm"
+        maprapi "/volume/create?name=zeta.shared.dockerregv2&path=/zeta/shared/dockerregv2/images&rootdirperms=775&user=${IUSER}:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=${IUSER}"
         T=""
         while [ "$T" == "" ]; do
             sleep 1
             T=$(ls -1 /mapr/$CLUSTERNAME/zeta/shared/dockerregv2|grep images)
         done
-        sudo chown zetaadm:zetaadm $DOCKER_IMAGE_LOC
+        sudo chown ${IUSER}:${IUSER} $DOCKER_IMAGE_LOC
     fi
 
     sudo docker pull registry:2
@@ -64,12 +64,12 @@ EOL
     APP_NAME="docker"
     APP_CERT_LOC="/mapr/$CLUSTERNAME/zeta/shared/dockerregv2/certs"
     sudo mkdir -p ${APP_CERT_LOC}
-    sudo chown zetaadm:root ${APP_CERT_LOC}
+    sudo chown ${IUSER}:root ${APP_CERT_LOC}
     sudo chmod 770 ${APP_CERT_LOC}
     CN_GUESS="dockerregv2-shared.marathon.slave.mesos"
 
-    . /home/zetaadm/zetaca/zetaca_env.sh
-    . /home/zetaadm/zetaca/gen_server_cert.sh
+    . /home/${IUSER}/zetaca/zetaca_env.sh
+    . /home/${IUSER}/zetaca/gen_server_cert.sh
 
     MARFILE="/mapr/$CLUSTERNAME/zeta/shared/dockerregv2/dockerregv2.shared.marathon"
 

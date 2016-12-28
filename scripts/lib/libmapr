@@ -14,7 +14,7 @@ function maprapi(){
     TFILE="./tmp/netrc.tmp"
 
     touch $TFILE
-    chown zetaadm:zetaadm $TFILE
+    chown ${IUSER}:${IUSER} $TFILE
     chmod 600 $TFILE
 
 cat > $TFILE << EOCRED

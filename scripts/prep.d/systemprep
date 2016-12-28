@@ -32,24 +32,24 @@ function _systemprep() {
 
     @go.log INFO "Connecing to and updating host $HOST"
 
-    scp -o StrictHostKeyChecking=no -i ${OUT_KEY} ./bin/system_type.sh zetaadm@${HOST}:/home/zetaadm/system_type.sh
-    SYS_TYPE=$(ssh -i ${OUT_KEY} zetaadm@${HOST} "/home/zetaadm/system_type.sh")
-    ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo mkdir -p /root/scripts && sudo chown root:root /root/scripts && sudo chmod 700 /root/scripts"
+    scp -o StrictHostKeyChecking=no -i ${OUT_KEY} ./bin/system_type.sh ${IUSER}@${HOST}:/home/${IUSER}/system_type.sh
+    SYS_TYPE=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "/home/${IUSER}/system_type.sh")
+    ssh -i ${OUT_KEY} ${IUSER}@${HOST} "sudo mkdir -p /root/scripts && sudo chown root:root /root/scripts && sudo chmod 700 /root/scripts"
     @go.log INFO "System Type: $SYS_TYPE - Running Appropriate Scripts"
     if [ "$SYS_TYPE" == "ubuntu" ]; then
-        scp -i ${OUT_KEY} ./bin/ubuntu_prep.sh zetaadm@${HOST}:/home/zetaadm/ubuntu_prep.sh
+        scp -i ${OUT_KEY} ./bin/ubuntu_prep.sh ${IUSER}@${HOST}:/home/${IUSER}/ubuntu_prep.sh
         if [ "$ATONCE" == "-p" ]; then
-            ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo sh -c 'mv /home/zetaadm/ubuntu_prep.sh /root/scripts/; nohup /root/scripts/ubuntu_prep.sh > /dev/null 2>&1 &'"
+            ssh -i ${OUT_KEY} ${IUSER}@${HOST} "sudo sh -c 'mv /home/${IUSER}/ubuntu_prep.sh /root/scripts/; nohup /root/scripts/ubuntu_prep.sh > /dev/null 2>&1 &'"
         else
-            ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo mv /home/zetaadm/ubuntu_prep.sh /root/scripts/ && sudo /root/scripts/ubuntu_prep.sh"
+            ssh -i ${OUT_KEY} ${IUSER}@${HOST} "sudo mv /home/${IUSER}/ubuntu_prep.sh /root/scripts/ && sudo /root/scripts/ubuntu_prep.sh"
         fi
     elif [ "$SYS_TYPE" == "rh_centos" ]; then
-        scp -i ${OUT_KEY} ./bin/centos_prep1.sh zetaadm@${HOST}:/home/zetaadm/centos_prep1.sh
-        scp -i ${OUT_KEY} ./bin/centos_prep2.sh zetaadm@${HOST}:/home/zetaadm/centos_prep2.sh
+        scp -i ${OUT_KEY} ./bin/centos_prep1.sh ${IUSER}@${HOST}:/home/${IUSER}/centos_prep1.sh
+        scp -i ${OUT_KEY} ./bin/centos_prep2.sh ${IUSER}@${HOST}:/home/${IUSER}/centos_prep2.sh
         if [ "$ATONCE" == "-p" ]; then
-            ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo sh -c 'mv /home/zetaadm/centos_prep1.sh /root/scripts/; mv /home/zetaadm/centos_prep2.sh /root/scripts/; nohup /root/scripts/centos_prep1.sh > /dev/null 2>&1 &'"
+            ssh -i ${OUT_KEY} ${IUSER}@${HOST} "sudo sh -c 'mv /home/${IUSER}/centos_prep1.sh /root/scripts/; mv /home/${IUSER}/centos_prep2.sh /root/scripts/; nohup /root/scripts/centos_prep1.sh > /dev/null 2>&1 &'"
         else
-            ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo mv /home/zetaadm/centos_prep1.sh /root/scripts/ && sudo mv /home/zetaadm/centos_prep2.sh /root/scripts/ && sudo /root/scripts/centos_prep1.sh"
+            ssh -i ${OUT_KEY} ${IUSER}@${HOST} "sudo mv /home/${IUSER}/centos_prep1.sh /root/scripts/ && sudo mv /home/${IUSER}/centos_prep2.sh /root/scripts/ && sudo /root/scripts/centos_prep1.sh"
         fi
     else
         @go.log ERROR "Unknown System Type: $SYS_TYPE"

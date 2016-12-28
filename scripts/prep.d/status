@@ -18,16 +18,16 @@ function _prep_status() {
     fi
     for HOST in $MYHOSTS; do
         TESTVAL=""
-        TESTVAL=$(ssh -i ${OUT_KEY} zetaadm@${HOST} "hostname")
+        TESTVAL=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "hostname")
         if [ "$TESTVAL" != "" ]; then
             HOSTUP="true"
-            SYS_TYPE=$(ssh -i ${OUT_KEY} zetaadm@${HOST} "/home/zetaadm/system_type.sh")
+            SYS_TYPE=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "/home/${IUSER}/system_type.sh")
             TESTVAL=""
-            TESTVAL=$(ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo whoami")
+            TESTVAL=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "sudo whoami")
             if [ "$TESTVAL" == "root" ]; then
                 SUDOPRIV="true"
                 TESTVAL=""
-                TESTVAL=$(ssh -i ${OUT_KEY} zetaadm@${HOST} "sudo docker info 2> /dev/null")
+                TESTVAL=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "sudo docker info 2> /dev/null")
                 if [ "$TESTVAL" != "" ]; then
                     DOCKER="true"
                 else

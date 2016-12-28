@@ -50,7 +50,7 @@ function _prep() {
     echo ""
     echo "To log into the initial node, please use:"
     echo ""
-    echo "ssh -i $OUT_KEY zetaadm@$INIT_NODE"
+    echo "ssh -i $OUT_KEY ${IUSER}@$INIT_NODE"
     echo ""
 
     if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then

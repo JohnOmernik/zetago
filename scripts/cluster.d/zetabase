@@ -16,8 +16,8 @@ sourceconf "$CLUSTER_ZETACA_CONF"
 function _zetabase() {
 
     CURUSER=$(whoami)
-    if [ "$CURUSER" != "zetaadm" ]; then
-        @go.log FATAL "Must use zetaadm user"
+    if [ "$CURUSER" != "$IUSER" ]; then
+        @go.log FATAL "Must use $IUSER user"
     fi
 
     if [ -f "$CLUSTER_BASE_CONF" ]; then
@@ -35,18 +35,18 @@ function _zetabase() {
         sudo rm -rf /mapr/$CLUSTERNAME/apps
     fi
 
-    @go.log INFO "Checking for and creating if not existing, home directories for mapr and zetaadm users"
-    UNAMES="mapr zetaadm"
+    @go.log INFO "Checking for and creating if not existing, home directories for mapr and $IUSER users"
+    UNAMES="mapr $IUSER"
     for U in $NAMES; do
         if [ ! -d "/mapr/$CLUSTERNAME/user/$U" ]; then
             @go.log INFO "User Directory for $U not found: Creating"
-            maprapi "/volume/create?name=user.$U&path=/user/$U&rootdirperms=770&user=$U:fc,a,dump,restore,m,d%20zetaadm:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=$U"
+            maprapi "/volume/create?name=user.$U&path=/user/$U&rootdirperms=770&user=$U:fc,a,dump,restore,m,d%20${IUSER}:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=$U"
             T=""
             while [ "$T" == "" ]; do
                 sleep 1
                 T=$(ls -1 /mapr/$CLUSTERNAME/user|grep $U)
             done
-            sudo chown -R $U:zetaadm /mapr/$CLUSTERNAME/user/$U
+            sudo chown -R $U:${IUSER} /mapr/$CLUSTERNAME/user/$U
         else
             @go.log INFO "User directory for $U found"
         fi
@@ -62,7 +62,7 @@ function _zetabase() {
             @go.log INFO "Creating directory /mapr/$CLUSTERNAME/$DIR and updating permissions"
             sudo mkdir -p /mapr/$CLUSTERNAME/$DIR
         fi
-        sudo chown -R zetaadm:2501 /mapr/$CLUSTERNAME/$DIR
+        sudo chown -R ${IUSER}:2501 /mapr/$CLUSTERNAME/$DIR
         sudo chmod -R 750 /mapr/$CLUSTERNAME/$DIR
     done
 
@@ -73,13 +73,13 @@ function _zetabase() {
     @go.log INFO "Setting up zeta kstore directory"
     DIR="/mapr/$CLUSTERNAME/zeta/kstore"
     sudo mkdir -p $DIR
-    sudo chown zetaadm:2501 $DIR
+    sudo chown ${IUSER}:2501 $DIR
     sudo chmod 755 $DIR
 
     # Group Sync
     DIR="/mapr/$CLUSTERNAME/zeta/kstore/zetasync"
     sudo mkdir -p $DIR
-    sudo chown zetaadm:zetaadm $DIR
+    sudo chown ${IUSER}:${IUSER} $DIR
     sudo chmod 775 $DIR
 
     if [ ! -f "$DIR/zetagroups.list" ]; then
@@ -104,7 +104,7 @@ USROF
     # ENV Main
     DIR="/mapr/$CLUSTERNAME/zeta/kstore/env"
     sudo mkdir -p $DIR
-    sudo chown zetaadm:zetaadm $DIR
+    sudo chown ${IUSER}:${IUSER} $DIR
     sudo chmod 775 $DIR
 
     if [ ! -f "$DIR/master_env.sh" ]; then
@@ -130,15 +130,15 @@ EOL3
 
     #########
     # By creating a world reable directory in MapRFS for tickets, and then setting permission on each ticket to be only user readble, we have a one stop shop to store tickets
-    # The only caveat is the mapr and zetaadm tickets need TLC, if especially the mapr ticket expires on a secure cluster, the result is NFS mount that don't work breaking all the things
+    # The only caveat is the mapr and $IUSER tickets need TLC, if especially the mapr ticket expires on a secure cluster, the result is NFS mount that don't work breaking all the things
     DIR="/mapr/$CLUSTERNAME/zeta/kstore/maprtickets"
     sudo mkdir -p $DIR
-    sudo chown mapr:zetaadm $DIR
+    sudo chown mapr:${IUSER} $DIR
     sudo chmod 775 $DIR
 
     ##########
     # Installing global role directories
-    # This is only available to zetaadm and is used for shared services like a cluster wide docker registry, and cluster wide ldap server
+    # This is only available to $IUSER and is used for shared services like a cluster wide docker registry, and cluster wide ldap server
     #
     @go.log INFO "Looking for shared directory (volume) in each root direcory, create if not found"
     for DIR in $ROOTS; do
@@ -146,19 +146,19 @@ EOL3
             @go.log WARN "/mapr/$CLUSTERNAME/$DIR/shared already exists, skipping"
         else
             @go.log INFO "Creating /mapr/$CLUSTERNAME/$DIR/shared"
-            maprapi "/volume/create?name=$DIR.shared&path=/$DIR/shared&rootdirperms=770&user=zetaadm:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=zetaadm"
+            maprapi "/volume/create?name=$DIR.shared&path=/$DIR/shared&rootdirperms=770&user=${IUSER}:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=${IUSER}"
             T=""
             while [ "$T" == "" ]; do
                 sleep 1
                 T=$(ls -1 /mapr/$CLUSTERNAME/$DIR|grep shared)
             done
-            sudo chown -R zetaadm:zetaadm /mapr/$CLUSTERNAME/$DIR/shared
+            sudo chown -R ${IUSER}:${IUSER} /mapr/$CLUSTERNAME/$DIR/shared
         fi
     done
 
     DIR="/mapr/$CLUSTERNAME/zeta/kstore/env/env_shared"
     sudo mkdir -p $DIR
-    sudo chown zetaadm:zetaadm $DIR
+    sudo chown ${IUSER}:${IUSER} $DIR
     sudo chmod 775 $DIR
     ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh"
 

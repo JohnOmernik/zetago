@@ -19,8 +19,8 @@ function _installldap() {
 
     CURUSER=$(whoami)
 
-    if [ "$CURUSER" != "zetaadm" ]; then
-        echo "Must use zetaadm: User: $CURUSER"
+    if [ "$CURUSER" != "${IUSER}" ]; then
+        echo "Must use ${IUSER}: User: $CURUSER"
     fi
 
     APP_IMG="${ZETA_DOCKER_REG_URL}/openldap"
@@ -82,7 +82,7 @@ function _installldap() {
     mkdir -p ${APP_ROOT}/initconf
     mkdir -p ${APP_ROOT}/certs
 
-    sudo chown -R zetaadm:zetaadm ${APP_ROOT}
+    sudo chown -R ${IUSER}:${IUSER} ${APP_ROOT}
     sudo chmod -R 750 ${APP_ROOT}
 
     APP_CERT_LOC="${APP_ROOT}/certs"

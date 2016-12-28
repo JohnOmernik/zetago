@@ -15,8 +15,8 @@ function _finalzetaca() {
 
     CURUSER=$(whoami)
 
-    if [ "$CURUSER" != "zetaadm" ]; then
-        @go.log FATAL "Must use zetaadm user"
+    if [ "$CURUSER" != "${IUSER}" ]; then
+        @go.log FATAL "Must use ${IUSER} user"
     fi
 
     . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
@@ -27,7 +27,7 @@ function _finalzetaca() {
     echo ""
     echo "This script updates and moves the currently running zetaca to be running from the MapR Filesystem"
     echo ""
-    read -e -p "Please enter location of current zetaca: " -i "/home/zetaadm/zetaca" OLD_APP_LOC
+    read -e -p "Please enter location of current zetaca: " -i "/home/${IUSER}/zetaca" OLD_APP_LOC
     echo ""
     echo "************************************"
     echo ""
@@ -57,7 +57,7 @@ function _finalzetaca() {
 
     mkdir -p $NEW_APP_LOC
     mkdir -p ${NEW_APP_LOC}/CA
-    sudo chown -R zetaadm:zetaadm ${NEW_APP_LOC}
+    sudo chown -R ${IUSER}:${IUSER} ${NEW_APP_LOC}
     sudo chmod -R 770 ${NEW_APP_LOC}/CA
     cp -R ${OLD_APP_LOC}/CA/* ${NEW_APP_LOC}/CA/
     cp ${OLD_APP_LOC}/gen_java_keystore.sh ${NEW_APP_LOC}/

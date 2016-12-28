@@ -12,8 +12,8 @@ sourceconf "$CLUSTER_ZETACA_CONF"
 
 ME=$(whoami)
 
-if [ "$ME" != "zetaadm" ]; then
-    @go.log FATAL "This script must be run as zetaadm"
+if [ "$ME" != "${IUSER}" ]; then
+    @go.log FATAL "This script must be run as ${IUSER}"
 fi
 
 REG_IP=$(./conf/ip-detect)
@@ -46,11 +46,11 @@ APP_NAME="maprdocker"
 APP_CERT_LOC="/opt/maprdocker/dockercerts"
 
 sudo mkdir -p ${APP_CERT_LOC}
-sudo chown zetaadm:root ${APP_CERT_LOC}
+sudo chown ${IUSER}:root ${APP_CERT_LOC}
 sudo chmod 770 ${APP_CERT_LOC}
 CN_GUESS="maprdocker-mapr-shared.marathon.slave.mesos"
-. /home/zetaadm/zetaca/zetaca_env.sh
-. /home/zetaadm/zetaca/gen_server_cert.sh
+. /home/${IUSER}/zetaca/zetaca_env.sh
+. /home/${IUSER}/zetaca/gen_server_cert.sh
 
 @go.log INFO "Creating Marathon file"
 mkdir -p ./conf/marathon_files

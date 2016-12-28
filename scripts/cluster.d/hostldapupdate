@@ -17,8 +17,8 @@ function _hostldapupdate() {
     CURUSER=$(whoami)
 
 
-    if [ "$CURUSER" != "zetaadm" ]; then
-        echo "Must use zetaadm: User: $CURUSER"
+    if [ "$CURUSER" != "${IUSER}" ]; then
+        echo "Must use ${IUSER}: User: $CURUSER"
     fi
 
 
@@ -81,7 +81,7 @@ echo ""
 echo "Creating LDAP Update Script"
 
 SCRIPTSRC="./bin/ldapupdate.sh"
-SCRIPTDST="/home/zetaadm/ldapupdate.sh"
+SCRIPTDST="/home/${IUSER}/ldapupdate.sh"
 
 cat > $SCRIPTSRC << EOF
 #!/bin/bash

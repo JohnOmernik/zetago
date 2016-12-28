@@ -21,11 +21,11 @@ function _userprep() {
         ./zeta prep createuserprep
     fi
     @go.log INFO "Connecing to and updating host $HOST"
-    for IUSER in $INIT_USERS; do
-        OUTTEST=$(ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${IUSER}@${HOST} hostname)
+    for USR in $INIT_USERS; do
+        OUTTEST=$(ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${USR}@${HOST} hostname)
             if [ "$OUTTEST" != "" ]; then
-                @go.log INFO "Using $IUSER for INIT_USER"
-                INIT_USER="$IUSER"
+                @go.log INFO "Using $USR for INIT_USER"
+                INIT_USER="$USR"
                 break
             fi
     done
@@ -40,21 +40,24 @@ function _userprep() {
     ssh -o StrictHostKeyChecking=no -t -i ${INIT_KEY_LOC} ${INIT_USER}@$HOST "chmod 700 $REM_SCRIPT && sudo $REM_SCRIPT"
     echo "Removing Script"
     ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${INIT_USER}@$HOST "sudo rm $REM_SCRIPT"
-    echo "Updating Public Key for Zetaadm user"
-    ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${INIT_USER}@$HOST "sudo mkdir -p /home/zetaadm/.ssh && echo \"$PUB_KEY\"|sudo tee -a /home/zetaadm/.ssh/authorized_keys && sudo chown -R zetaadm:zetaadm /home/zetaadm/.ssh && sudo chmod 700 /home/zetaadm/.ssh && sudo chmod 600 /home/zetaadm/.ssh/authorized_keys"
+    echo "Updating Public Key for ${IUSER} user"
+    ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${INIT_USER}@$HOST "sudo mkdir -p /home/${IUSER}/.ssh && echo \"$PUB_KEY\"|sudo tee -a /home/${IUSER}/.ssh/authorized_keys && sudo chown -R ${IUSER}:${IUSER} /home/${IUSER}/.ssh && sudo chmod 700 /home/${IUSER}/.ssh && sudo chmod 600 /home/${IUSER}/.ssh/authorized_keys"
 
 
     if [ "$HOST" == "$INIT_NODE" ]; then
-        @go.log INFO "$HOST is the INIT_NODE for the cluster updating this node to have the private keys, as well as this repo under zetaadm"
+        @go.log INFO "$HOST is the INIT_NODE for the cluster updating this node to have the private keys, as well as this repo under ${IUSER}"
         echo "Trying to install git on initial host via apt-get install git - This may fail that's ok"
-        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "sudo apt-get update && sudo apt-get install -y git"
-        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "sudo yum install -y --assumeyes git"
+        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} ${IUSER}@${HOST} "sudo apt-get update && sudo apt-get install -y git"
+        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} ${IUSER}@${HOST} "sudo yum install -y --assumeyes git"
         echo ""
-        echo "Pulling this repo to the init node under /home/zetaadm/zetago"
-        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "git clone https://github.com/JohnOmernik/zetago.git && mkdir -p ./zetago/conf && chmod 700 ./zetago/conf"
-        scp -o StrictHostKeyChecking=no -i ${OUT_KEY} ${OUT_KEY} zetaadm@${HOST}:/home/zetaadm/.ssh/id_rsa
-        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} zetaadm@${HOST} "chmod 600 /home/zetaadm/.ssh/id_rsa"
-        scp -o StrictHostKeyChecking=no -i ${OUT_KEY} $PREP_CONF zetaadm@${HOST}:/home/zetaadm/zetago/conf/prep.conf
+        echo "Pulling this repo to the init node under /home/${IUSER}/zetago"
+        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} ${IUSER}@${HOST} "git clone https://github.com/JohnOmernik/zetago.git && mkdir -p ./zetago/conf && chmod 700 ./zetago/conf"
+        scp -o StrictHostKeyChecking=no -i ${OUT_KEY} ${OUT_KEY} ${IUSER}@${HOST}:/home/${IUSER}/.ssh/id_rsa
+        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} ${IUSER}@${HOST} "chmod 600 /home/${IUSER}/.ssh/id_rsa"
+        scp -o StrictHostKeyChecking=no -i ${OUT_KEY} $PREP_CONF ${IUSER}@${HOST}:/home/${IUSER}/zetago/conf/prep.conf
+        scp -o StrictHostKeyChecking=no -i ${OUT_KEY} ${OUT_KEY} ${IUSER}@${HOST}:/home/${IUSER}/zetago/conf/
+        scp -o StrictHostKeyChecking=no -i ${OUT_KEY} ${OUT_KEY_PUB} ${IUSER}@${HOST}:/home/${IUSER}/zetago/conf/
+
     fi
 
 }
