@@ -44,7 +44,7 @@ function _installldap() {
         BUILD="Y"
     else
         @go.log WARN "openldap image detected $DCK - rebuild?"
-        read -e -p "Rebuild?" -i "N" BUILD
+        read -e -p "Rebuild? " -i "N" BUILD
     fi
     if [ "$BUILD" == "Y" ]; then
 
