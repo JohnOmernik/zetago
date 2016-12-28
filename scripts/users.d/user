@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+# Interface to do user things in Zeta
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+AUTH_LIB="lib${LDAP_PROVIDER}"
+
+# Load the Auth lib for this cluster
+. "$_GO_USE_MODULES" $AUTH_LIB
+
+
+function _group() {
+
+    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+
+
+    ACTION_SRC="user"
+    for i in "$@"
+        do
+        case $i in
+            -a)
+            ACTION_ADD="1"
+            ;;
+            -d)
+            ACTION_DEL="1"
+            ;;
+            -q)
+            ACTION_QUERY="1"
+            ;;
+            -u)
+            UNATTEND="1"
+            ;;
+            "-r="*)
+            ROLE="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+    if [ "$ACTION_ADD" == "1" ]; then
+        if [ "$ACTION_DEL" == "1" ] || [ "$ACTION_QUERY" == "1" ]; then
+            @go.log FATAL "Requested $ACTION_SRC Add (-a) specified with either $ACTION_SRC Delete (-d) or $ACTION_SRC Query (-q) - Exiting"
+        fi
+    elif [ "$ACTION_DEL" == "1" ]; then
+        if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_QUERY" == "1" ]; then
+            @go.log FATAL "Requested $ACTION_SRC Delete (-d) specified with either $ACTION_SRC Add (-a) or $ACTION_SRC Query (-q) - Exiting"
+        fi
+    elif [ "$ACTION_QUERY" == "1" ]; then
+        if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_DEL" == "1" ]; then
+            @go.log FATAL "Requested $ACTION_SRC Query (-q) specified with either $ACTION_SRC Add (-a) or $ACTION_SRC Delete (-d) - Exiting"
+        fi
+    else
+        @go.log FATAL "./zeta users user invoked without specifying either Add, Delete, or Query - Exiting"
+    fi
+
+
+
+    if [ "$ACTION_ADD" == "1" ]; then
+
+    elif [ "$ACTION_DEL" == "1" ]; then
+        @go.log FATAL "$ACTION_SRC Deletion not yet implemented"
+    elif [ "$ACTION_QUERY" == "1" ]; then
+        @go.log FATAL "$ACTION_SRC Query not yet implemented"
+    else
+        @go.log FATAL "Unknown Command requested"
+    fi
+
+}
+_group "$@"

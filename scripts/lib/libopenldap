@@ -37,7 +37,31 @@ function addgroup() {
 
 
 function adduser() {
-    echo "Hello"
+
+    UNAME=$1
+    UUID=$2
+    FNAME=$3
+    LNAME=$4
+    ROLE=$5
+    UHASH=$5
+
+    LDIF_DATA="dn: cn=$UNAME,ou=users,ou=zeta$ROLE,$LDAP_BASE"$'\n'
+    LDIF_DATA="${LDIF_DATA}changetype: add"$'\n'
+    LDIF_DATA="${LDIF_DATA}objectClass: top"$'\n'
+    LDIF_DATA="${LDIF_DATA}objectClass: posixAccount"$'\n'
+    LDIF_DATA="${LDIF_DATA}objectClass: inetOrgPerson"$'\n'
+    LDIF_DATA="${LDIF_DATA}cn: $UNAME"$'\n'
+    LDIF_DATA="${LDIF_DATA}givenName: $FNAME"$'\n'
+    LDIF_DATA="${LDIF_DATA}sn: $LNAME"$'\n'
+    LDIF_DATA="${LDIF_DATA}uidNumber: $UUID"$'\n'
+    LDIF_DATA="${LDIF_DATA}uid: $UNAME"$'\n'
+    LDIF_DATA="${LDIF_DATA}gidNumber: 2501"$'\n'
+    LDIF_DATA="${LDIF_DATA}homeDirectory: /home/$UNAME"$'\n'
+    LDIF_DATA="${LDIF_DATA}loginShell: /bin/bash"$'\n'
+    LDIF_DATA="${LDIF_DATA}userPassword: $UHASH"$'\n'
+
+    runldapcommand "$LDIF_DATA" "MODIFY"
+
 
 }
 
@@ -111,6 +135,8 @@ $LDIF_CONTENTS
 EOL
     if [ "$LDIF_COMMAND" == "ADD" ]; then
         RUN_CMD="ldapadd -H ${LDAP_URL} -x -y /tmp/ldif/p.txt -D \"cn=admin,${LDAP_BASE}\" -f /tmp/ldif/tmpldif.ldif"
+    elif [ "$LDIF_COMMAND" == "MODIFY" ]; then
+        RUN_CMD="ldapmodify -H ${LDAP_URL} -x -y /tmp/ldif/p.txt -D \"cn=admin,${LDAP_BASE}\" -f /tmp/ldif/tmpldif.ldif"
     else
         RUN_CMD="echo \"oops - command not found\""
     fi
