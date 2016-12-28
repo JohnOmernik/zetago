@@ -61,6 +61,22 @@ function initconf(){
 }
 
 #
+# function reqshared 
+#
+# Take a space separated list of shared services and determine if they have been installed, if not error out with a FATAL
+#
+#
+function reqshared() {
+    SHAREDREQS="$1"
+    for REQ in $SHAREDREQS; do
+        if [ ! -d "/mapr/$CLUSTERNAME/zeta/shared/$REQ" ]; then
+            @go.log FATAL "Shared service $REQ is required for this service, please install"
+        fi
+    done
+}
+
+
+#
 # function sourceconf
 # Check to see if a conf exists and then source it. If it doesn't exist, exit with a message.
 #

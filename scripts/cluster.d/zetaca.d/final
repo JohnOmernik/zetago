@@ -27,7 +27,17 @@ function _finalzetaca() {
     echo ""
     echo "This script updates and moves the currently running zetaca to be running from the MapR Filesystem"
     echo ""
-    read -e -p "Please enter location of current zetaca: " -i "/home/${IUSER}/zetaca" OLD_APP_LOC
+    DEF_OLD_APP_LOC="/home/${IUSER}/zetaca"
+
+    if [ -d "$DEF_OLD_APP_LOC" ]; then
+        OLD_APP_LOC="$DEF_OLD_APP_LOC"
+    else
+        @go.log WARN "No zetaca Directory found at /home/${IUSER} Did you put it somewhere else? if so put please let us know!"
+        read -e -p "Please enter location of current zetaca: " -i "/home/${IUSER}/zetaca" OLD_APP_LOC
+        if [ ! -d "$OLD_APP_LOC" ]; then
+            @go.log FATAL "Can't find a zetaca directory provided: $OLD_APP_LOC"
+        fi
+    fi
     echo ""
     echo "************************************"
     echo ""
@@ -40,9 +50,9 @@ function _finalzetaca() {
     echo "- Updating the ENV information for Zeta CA"
     echo "- Restarting ZetaCA in Marathon"
 
-    echo "At this point no changes have been made, do you wish to proceed?"
-    read -e -p "Do you wish to proceed with Zeta CA Move? " -i "N" PROCEED
-
+#    echo "At this point no changes have been made, do you wish to proceed?"
+#    read -e -p "Do you wish to proceed with Zeta CA Move? " -i "N" PROCEED
+    PROCEED="Y"
     if [ -d "$NEW_APP_LOC" ]; then
         @go.log FATAL "The new Zeta CA Location already exists at $NEW_APP_LOC, exiting"
     fi

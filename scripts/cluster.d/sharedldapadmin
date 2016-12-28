@@ -1,0 +1,104 @@
+#!/bin/bash
+#
+# Install Shared LDAP Admin Server for Zeta installations
+#
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+function _installldapadmin() {
+
+    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+
+    CURUSER=$(whoami)
+
+    if [ "$CURUSER" != "${IUSER}" ]; then
+        echo "Must use ${IUSER}: User: $CURUSER"
+    fi
+
+    SOURCE_IMG="osixia/phpldapadmin"
+    @go.log INFO "Pulling $SOURCE_IMG to local cluster"
+    sudo docker pull $SOURCE_IMG
+    APP_IMG="${ZETA_DOCKER_REG_URL}/ldapadmin"
+    sudo docker tag $SOURCE_IMG $APP_IMG
+    sudo docker push $APP_IMG
+
+    APP_ROOT="/mapr/$CLUSTERNAME/zeta/shared/ldapadmin"
+
+    if [ -d "$APP_ROOT" ]; then
+        @go.log FATAL "LDAP Admin Root at $APP_ROOT already exists. Refusing to go on..."
+    fi
+
+
+    mkdir -p ${APP_ROOT}
+    mkdir -p ${APP_ROOT}/conf
+    mkdir -p ${APP_ROOT}/certs
+
+    sudo chown -R ${IUSER}:${IUSER} ${APP_ROOT}
+    sudo chmod -R 750 ${APP_ROOT}
+
+    echo "What port do you want to run ldap admin on? (Default 6443)"
+    read -e -p "LDAP Admin Port: " -i "6443" APP_PORT
+
+cat > /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/ldapadmin.sh << EOL
+export ZETA_LDAPADMIN_HOST="ldapadmin-shared.marathon.slave.mesos"
+export ZETA_LDAPADMIN_PORT="$APP_PORT"
+EOL
+
+    sudo chmod +x /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/ldapadmin.sh
+
+    MARFILE="${APP_ROOT}/marathon.json"
+
+    APP_NAME="ldapadmin"
+    APP_CERT_LOC="${APP_ROOT}/certs"
+    CN_GUESS="ldapadmin-shared.marathon.slave.mesos"
+
+    . /mapr/$CLUSTERNAME/zeta/shared/zetaca/gen_server_cert.sh
+
+cat > $MARFILE << EOF
+{
+  "id": "shared/ldapadmin",
+  "cpus": 1,
+  "mem": 1024,
+  "instances": 1,
+  "labels": {
+   "CONTAINERIZER":"Docker"
+  },
+  "env": {
+  "PHPLDAPADMIN_LDAP_HOSTS":"#PYTHON2BASH:[{'openldap-shared.marathon.slave.mesos': [{'server': [{'tls': False}]}, {'login': [{'bind_id': 'cn=admin,dc=marathon,dc=mesos'}]}]}]",
+  "PHPLDAPADMIN_HTTPS_CRT_FILENAME":"srv_cert.pem",
+  "PHPLDAPADMIN_HTTPS_KEY_FILENAME":"key-no-password.pem",
+  "PHPLDAPADMIN_HTTPS_CA_CRT_FILENAME":"cacert.pem"
+  },
+  "ports": [],
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "$APP_IMG",
+      "network": "BRIDGE",
+      "portMappings": [
+        { "containerPort": 443, "hostPort": ${APP_PORT}, "servicePort": 0, "protocol": "tcp"}
+      ]
+    },
+    "volumes": [
+      { "containerPath": "/container/service/phpldapadmin/assets/apache2/certs", "hostPath": "${APP_ROOT}/certs", "mode": "RW" }
+    ]
+  }
+}
+EOF
+
+    ./zeta cluster marathon submit "$MARFILE" "$MARATHON_SUBMIT"
+    echo ""
+    @go.log INFO "Shared LDAP Admin Server installed"
+
+}
+
+_installldapadmin "$@"
+

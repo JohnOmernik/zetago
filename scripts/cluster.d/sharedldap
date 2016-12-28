@@ -13,6 +13,8 @@ sourceconf "$CLUSTER_BASE_CONF"
 
 . "$_GO_USE_MODULES" 'getpass'
 
+reqshared "dockerregv2"
+
 function _installldap() {
 
     . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
@@ -21,6 +23,15 @@ function _installldap() {
 
     if [ "$CURUSER" != "${IUSER}" ]; then
         echo "Must use ${IUSER}: User: $CURUSER"
+    fi
+
+    if [ ! -d "/mapr/$CLUSTERNAME/zeta/shared/zetaca" ]; then
+        @go.log WARN "zetaca not yet moved to shared location"
+        read -e -p "Should we invoke ./zeta cluster zetaca final to move zeta to final location?" -i "Y" MOVECA
+        if [ "$MOVECA" != "Y" ]; then
+            @go.log FATAL "Cannot proceed with openldap install until CA is moved to final locaiton with ./zeta cluster zetaca final"
+        fi
+        ./zeta cluster zetaca final
     fi
 
     APP_IMG="${ZETA_DOCKER_REG_URL}/openldap"
@@ -84,9 +95,10 @@ function _installldap() {
 
     sudo chown -R ${IUSER}:${IUSER} ${APP_ROOT}
     sudo chmod -R 750 ${APP_ROOT}
-
+    APP_NAME="openldap"
     APP_CERT_LOC="${APP_ROOT}/certs"
     CN_GUESS="openldap-shared.marathon.slave.mesos"
+
 
     . /mapr/$CLUSTERNAME/zeta/shared/zetaca/gen_server_cert.sh
 
