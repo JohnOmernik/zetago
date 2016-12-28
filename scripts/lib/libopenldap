@@ -35,6 +35,90 @@ function addgroup() {
 
 }
 
+function addindexcache(){
+    IDX=$1
+    IDX_TYPE=$2
+
+    if [ "$IDX" == "olcDbIDLcacheSize" ]; then
+        # Updating Cache Size of olcDbIDLcachesize
+        LDIF_DATA="dn: olcDatabase={1}hdb,cn=config"$'\n'
+        LDIF_DATA="${LDIF_DATA}changetype:modify"$'\n'
+        LDIF_DATA="${LDIF_DATA}add: olcDbIDLcacheSize"$'\n'
+        LDIF_DATA="${LDIF_DATA}olcDbIDLcacheSize: ${IDX_TYPE}"$'\n'
+    elif [ "$IDX" == "olcDbCachesize" ]; then
+        # Update Cache Size of olcDbCachesize
+        LDIF_DATA="dn: olcDatabase={1}hdb,cn=config"$'\n'
+        LDIF_DATA="${LDIF_DATA}changetype:modify"$'\n'
+        LDIF_DATA="${LDIF_DATA}add: olcDbCachesize"$'\n'
+        LDIF_DATA="${LDIF_DATA}olcDbCachesize: ${IDX_TYPE}"$'\n'
+    else
+        # Adding Index
+        LDIF_DATA="dn: olcDatabase={1}hdb,cn=config"$'\n'
+        LDIF_DATA="${LDIF_DATA}changetype:modify"$'\n'
+        LDIF_DATA="${LDIF_DATA}add: olcDbIndex"$'\n'
+        LDIF_DATA="${LDIF_DATA}olcDbIndex: ${IDX} ${IDX_TYPE}"$'\n'
+    fi
+
+    LDAP_ROOT="/mapr/$CLUSTERNAME/zeta/shared/openldap"
+    LDIF_FILE_ZETA="${LDAP_ROOT}/slapd.d/tmp_index.ldif"
+    LDIF_FILE_DOCKER="/etc/ldap/slapd.d/tmp_index.ldif"
+
+    RUN_FILE_ZETA="${LDAP_ROOT}/slapd.d/run.sh"
+    RUN_FILE_DOCKER="/etc/ldap/slapd.d/run.sh"
+
+
+    ADD_CMD="ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f ${LDIF_FILE_DOCKER}"
+
+
+cat > ${LDIF_FILE_ZETA} << EOLDIF
+$LDIF_DATA
+EOLDIF
+
+
+cat > ${RUN_FILE_ZETA} << EOR
+#!/bin/bash
+echo "Adding Index $IDX in Docker Container"
+echo ""
+$ADD_CMD
+echo ""
+echo "Finished Adding Index $IDX"
+echo ""
+EOR
+chmod +x ${RUN_FILE_ZETA}
+
+UPDATE_FILE="./update_script.sh"
+
+cat > ${UPDATE_FILE} << EOY
+#!/bin/bash
+CID=\$(sudo docker ps|grep openldap|cut -d" " -f1)
+if [ "\$CID" == "" ]; then
+    echo "Open Ldap not found on this host, INDEXES NOT ADDED!!!!"
+    exit 1
+fi
+echo "Running script now in docker container"
+echo ""
+sudo docker exec \$CID ${RUN_FILE_DOCKER}
+echo ""
+echo "Finished Docker Exec"
+echo ""
+EOY
+    chmod +x ${UPDATE_FILE}
+
+    OLDAP_ID="$MARATHON_SUBMIT/shared/openldap"
+    CURHOST=$(curl -s -X GET $OLDAP_ID/tasks|grep -o -P "\"host\":\"[^\"]+\""|cut -d":" -f2|sed "s/\"//g")
+
+    @go.log INFO "Open LDAP Currently Running on Host: $CURHOST - Adding Indexes there"
+    scp -o StrictHostKeyChecking=no update_script.sh $CURHOST:/home/$IUSER/
+    ssh -o StrictHostKeyChecking=no $CURHOST "/home/$IUSER/update_script.sh && rm /home/$IUSER/update_script.sh"
+
+    rm $UPDATE_FILE
+    rm $RUN_FILE_ZETA
+    rm $LDIF_FILE_ZETA
+
+    @go.log INFO "Added Index $IDX to Open LDAP"
+}
+
+
 function adduser2group(){
 
     USER_NAME=$1

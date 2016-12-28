@@ -138,8 +138,17 @@ function _roleschema() {
         @go.log INFO "Adding $ROLE zeta group at GID $ZETAGID"
         ./zeta users group -a -g="zeta${ROLE}zeta" -i="${ZETAGID}" -r="${ROLE}" -D="Access group for the zeta directory in role $ROLE" -u
 
-        @go.log INFO "Adding Service User zetasvc${PROD} at $SVCUID for role $ROLE"
+        @go.log INFO "Adding Service User zetasvc${ROLE} at $SVCUID for role $ROLE"
         ./zeta users user -a -n="zetasvc${ROLE}" -i="${SVCUID}" -f="Service" -l="${ROLE}" -r="${ROLE}" -u
+
+        @go.log INFO "Adding Service User zetasvc${ROLE} to global zetausers group"
+        ./zeta users usergroups -a -g=zetausers -n=zetasvc${ROLE} -u
+
+        @go.log INFO "Adding Service User to main groups for role: $ROLE"
+        ./zeta users usergroups -a -g="zeta${ROLE}apps" -n="zetasvc${ROLE}" -u
+        ./zeta users usergroups -a -g="zeta${ROLE}data" -n="zetasvc${ROLE}" -u
+        ./zeta users usergroups -a -g="zeta${ROLE}etl" -n="zetasvc${ROLE}" -u
+        ./zeta users usergroups -a -g="zeta${ROLE}zeta" -n="zetasvc${ROLE}" -u
 
     elif [ "$ACTION_DEL" == "1" ]; then
         @go.log FATAL "$ACTION_SRC Deletion not yet implemented"

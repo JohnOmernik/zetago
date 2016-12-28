@@ -99,7 +99,7 @@ function _group() {
             fi
         fi
         @go.log INFO "Adding user $USER_NAME to group $GROUP_NAME in role $GROUP_ROLE"
-        adduser2group "$USER_NAME" "$GROUP_NAME" "$ROLE"
+        adduser2group "$USER_NAME" "$GROUP_NAME" "$GROUP_ROLE"
     elif [ "$ACTION_DEL" == "1" ]; then
         @go.log FATAL "$ACTION_SRC Deletion not yet implemented"
     elif [ "$ACTION_QUERY" == "1" ]; then

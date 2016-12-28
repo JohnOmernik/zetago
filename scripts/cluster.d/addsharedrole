@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+# adds the shared role to Zeta Schemas
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+
+reqshared "dockerregv2 zetaca openldap"
+
+function _addsharedrole() {
+    @go.log INFO "Adding shared role to Zeta"
+    ./zeta users roleschema -a -r="shared" -u
+}
+_addsharedrole "$@"

@@ -9,6 +9,7 @@ sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
 
+reqshared "dockerregv2 zetaca openldap"
 
 function _updateallldaphosts() {
 
