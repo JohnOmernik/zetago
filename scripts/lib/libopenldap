@@ -35,6 +35,26 @@ function addgroup() {
 
 }
 
+function adduser2group(){
+
+    USER_NAME=$1
+    GROUP_NAME=$2
+    ROLE=$3
+
+    if [ "$ROLE" == "" ]; then
+        @go.log WARN "No Role specified in adduser2group function trying default of shared"
+        ROLE="shared"
+    fi
+    DN="cn=$GROUP_NAME,ou=groups,ou=zeta$ROLE,$LDAP_BASE"
+
+    LDIF_DATA="dn: $DN"$'\n'
+    LDIF_DATA="${LDIF_DATA}changetype: modify"$'\n'
+    LDIF_DATA="${LDIF_DATA}add: memberuid"$'\n'
+    LDIF_DATA="${LDIF_DATA}memberuid: $USER_NAME"$'\n'
+
+    runldapcommand "$LDIF_DATA" "MODIFY"
+}
+
 
 function adduser() {
 

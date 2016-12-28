@@ -49,6 +49,7 @@ function _cluster() {
     echo "./zeta cluster shareddocker  - Install a Shared Docker registry on the cluster"
     echo "./zeta cluster sharedldap - Install a shared OpenLDAP server on the cluster"
     echo "./zeta cluster allldaphosts - Update all hosts in prep.conf to use OpenLDAP"
+    echo "./zeta cluster sharedldapadm - Install a shared Ldap Admin Server on the cluster"
     echo ""
     echo "Helper Scripts:"
     echo "./zeta cluster hostldapupdate - Update a single host to use OpenLDAP"
