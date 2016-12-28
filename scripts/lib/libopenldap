@@ -35,25 +35,28 @@ function addgroup() {
 
 }
 
+
+
 function addindexcache(){
     IDX=$1
     IDX_TYPE=$2
 
-    if [ "$IDX" == "olcDbIDLcacheSize" ]; then
+    LDIF_DATA=""
+
+    if [ "$IDX" == "UPDATECACHE" ]; then
         # Updating Cache Size of olcDbIDLcachesize
-        LDIF_DATA="dn: olcDatabase={1}hdb,cn=config"$'\n'
+        LDIF_DATA="${LDIF_DATA}dn: olcDatabase={1}hdb,cn=config"$'\n'
         LDIF_DATA="${LDIF_DATA}changetype:modify"$'\n'
         LDIF_DATA="${LDIF_DATA}add: olcDbIDLcacheSize"$'\n'
         LDIF_DATA="${LDIF_DATA}olcDbIDLcacheSize: ${IDX_TYPE}"$'\n'
-    elif [ "$IDX" == "olcDbCachesize" ]; then
-        # Update Cache Size of olcDbCachesize
-        LDIF_DATA="dn: olcDatabase={1}hdb,cn=config"$'\n'
+        LDIF_DATA="${LDIF_DATA}"$'\n'
+        LDIF_DATA="${LDIF_DATA}dn: olcDatabase={1}hdb,cn=config"$'\n'
         LDIF_DATA="${LDIF_DATA}changetype:modify"$'\n'
         LDIF_DATA="${LDIF_DATA}add: olcDbCachesize"$'\n'
         LDIF_DATA="${LDIF_DATA}olcDbCachesize: ${IDX_TYPE}"$'\n'
     else
         # Adding Index
-        LDIF_DATA="dn: olcDatabase={1}hdb,cn=config"$'\n'
+        LDIF_DATA="${LDIF_DATA}dn: olcDatabase={1}hdb,cn=config"$'\n'
         LDIF_DATA="${LDIF_DATA}changetype:modify"$'\n'
         LDIF_DATA="${LDIF_DATA}add: olcDbIndex"$'\n'
         LDIF_DATA="${LDIF_DATA}olcDbIndex: ${IDX} ${IDX_TYPE}"$'\n'

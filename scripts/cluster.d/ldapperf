@@ -117,8 +117,7 @@ function _openldapperf() {
         if [ -f "$LDAP_CACHE_FILE" ]; then
             @go.log WARN "Caches already added to this install - skipping"
         else
-            addindexcache "olcDbCachesize" "1000000"
-            addindexcache "olcDbIDLcacheSize" "1000000"
+            addindexcache "UPDATECACHE" "1000000"
             touch $LDAP_CACHE_FILE
         fi
 
@@ -127,8 +126,7 @@ function _openldapperf() {
         addindexcache "$INDEX_NAME" "$INDEX_TYPE"
     elif [ "$ACTION_CACHE" == "1" ]; then
         @go.log WARN "Attempting to update Cache size to : $CACHE_SIZE"
-        addindexcache "olcDbCachesize" "$CACHE_SIZE"
-        addindexcache "olcDbIDLcacheSize" "$CACHE_SIZE"
+        addindexcache "UPDATECACHE" "$CACHE_SIZE"
     else
         @go.log FATAL "No command specified to ldap perf scripts"
     fi
