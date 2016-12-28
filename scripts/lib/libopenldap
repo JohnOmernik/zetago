@@ -261,7 +261,7 @@ EOL
     elif [ "$LDIF_COMMAND" == "HASHPASS" ]; then
         chmod 600 ${LDIF_FILE}
         echo -n "$LDIF_CONTENTS" > ${LDIF_FILE}
-        RUN_CMD="slappasswd -T /tmp/ldof/tmpldif.ldif"
+        RUN_CMD="slappasswd -T /tmp/ldif/tmpldif.ldif"
     else
         RUN_CMD="echo \"oops - command not found\""
     fi
