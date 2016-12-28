@@ -15,21 +15,16 @@ function _marathon_scale() {
     MARATHON_URL=$3
     WAIT=$4
 
-
     MARATHON_DEP="http://$MARATHON_HOST/v2/deployments"
-
-    @go.log INFO "Scale Request: ID: $MARID - $MARATHON_URL - $NUM_INST"
     OUT=$(curl -s -H "Content-type: application/json" -X PUT ${MARATHON_URL}/${MARID} -d'{"instances":'"${NUM_INST}"'}')
-    @go.log INFO "$OUT"
-
     DEP_ID=$(echo $OUT|grep -P -o "deploymentId\":\"[^\"]+\""|cut -f2 -d":"|sed "s/\"//g")
 
     if [ "$WAIT" == "1" ]; then
         @go.log INFO "Waiting for scale request on ID $MARID to finish deployment with ID $DEP_ID"
-
+        echo ""
         DEPLOY=$(curl -s -H "Content-type: application/json" -X GET ${MARATHON_DEP}|grep "$DEP_ID")
         while [ "$DEPLOY" != "" ]; do
-            @go.log INFO "Waiting in a loop for Deployment: $DEP_ID to finish"
+            echo "Waiting in a loop for Deployment: $DEP_ID to finish"
             sleep 2
             DEPLOY=$(curl -s -H "Content-type: application/json" -X GET ${MARATHON_DEP}|grep "$DEP_ID")
         done
