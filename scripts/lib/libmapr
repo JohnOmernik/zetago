@@ -11,6 +11,8 @@ function maprapi(){
 
     WEBHOST="$HOST:8443"
 
+    mkdir -p ./tmp
+
     TFILE="./tmp/netrc.tmp"
 
     touch $TFILE

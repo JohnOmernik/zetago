@@ -27,7 +27,7 @@ function _installldap() {
 
     if [ ! -d "/mapr/$CLUSTERNAME/zeta/shared/zetaca" ]; then
         @go.log WARN "zetaca not yet moved to shared location"
-        read -e -p "Should we invoke ./zeta cluster zetaca final to move zeta to final location?" -i "Y" MOVECA
+        read -e -p "Should we invoke ./zeta cluster zetaca final to move zeta to final location? " -i "Y" MOVECA
         if [ "$MOVECA" != "Y" ]; then
             @go.log FATAL "Cannot proceed with openldap install until CA is moved to final locaiton with ./zeta cluster zetaca final"
         fi
