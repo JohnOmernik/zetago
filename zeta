@@ -15,6 +15,7 @@ export MAPR_CONF="./conf/mapr.conf"
 export CLUSTER_CONF="./conf/cluster.conf"
 export CLUSTER_ZETACA_CONF="./conf/cluster_zetaca.conf"
 export CLUSTER_BASE_CONF="./conf/cluster_base.conf"
+export PACKAGE_CONF="./conf/package.conf"
 EOF
 fi
 . $BASE_CONF
