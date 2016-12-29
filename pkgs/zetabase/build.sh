@@ -11,7 +11,7 @@ if [ "$BUILD" == "Y" ]; then
     dockerprox "DOCKER_LINE"
 
     # Since BUILD is now "Y" The vers file actually makes the dockerfile
-    . ${APP_PKG_LOC}/${APP_VERS_FILE}
+    . ${APP_PKG_BASE}/${APP_VERS_FILE}
 
     sudo docker build -t $APP_IMG .
     sudo docker push $APP_IMG
