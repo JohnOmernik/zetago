@@ -19,6 +19,10 @@ function _marathon_submit() {
     DEP_ID=$(echo $OUT|grep -P -o "deployments\":.*"|grep -P -o "\{[^\}]+\}"|sed "s/\"//g"|sed "s/id://g"|sed "s/{//g"|sed "s/}//g")
 
 
+    echo ""
+    echo "$OUT"
+    echo ""
+    echo ""
     if [ "$WAIT" == "1" ]; then
         @go.log INFO "Waiting for submit request on for file $MARFILE to finish deployment with ID $DEP_ID"
         echo ""
@@ -29,7 +33,7 @@ function _marathon_submit() {
             DEPLOY=$(curl -s -H "Content-type: application/json" -X GET ${MARATHON_DEP}|grep "$DEP_ID")
         done
         echo ""
-        @go.log INFO "Scale Deployement with ID $DEP_ID complete"
+        @go.log INFO "Submit Deployement with ID $DEP_ID complete"
     else
         @go.log INFO "Submit Deployment for $MARFILE sent - Not waiting to finish deployment"
     fi
