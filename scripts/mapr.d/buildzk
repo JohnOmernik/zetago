@@ -154,7 +154,7 @@ RUN DEBIAN_FRONTEND=noninteractive pam-auth-update && sed -i "s/compat/compat ld
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --allow-unauthenticated mapr-core mapr-core-internal mapr-hadoop-core mapr-hbase mapr-mapreduce1 mapr-mapreduce2  && rm -rf /var/lib/apt/lists/* && apt-get clean
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --allow-unauthenticated mapr-zookeeper mapr-zk-internal  && rm -rf /var/lib/apt/lists/* && apt-get clean
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --allow-unauthenticated mapr-zookeeper mapr-zk-internal${DOCKER_PATCH}  && rm -rf /var/lib/apt/lists/* && apt-get clean
 
 ADD runzkdocker.sh /opt/mapr/
 
