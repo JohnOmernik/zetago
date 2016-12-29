@@ -134,8 +134,11 @@ $DOCKER_LINE6
 
 RUN adduser --disabled-login --gecos '' --uid=2500 ${IUSER}
 RUN adduser --disabled-login --gecos '' --uid=2000 mapr
+
 RUN echo "$MAPR_CRED"|chpasswd
 RUN echo "$ZETA_CRED"|chpasswd
+
+RUN usermod -a -G root mapr && usermod -a -G root ${IUSER} && usermod -a -G adm mapr && usermod -a -G adm ${IUSER} && usermod -a -G disk mapr && usermod -a -G disk ${IUSER}
 
 RUN echo "deb $MAPR_MAIN_URL mapr optional" > /etc/apt/sources.list.d/mapr.list
 
@@ -145,11 +148,13 @@ RUN echo "Name: activate mkhomedir" > /usr/share/pam-configs/my_mkhomedir && ech
 
 RUN echo "base $LDAP_BASE" > /etc/ldap.conf && echo "uri $LDAP_URL" >> /etc/ldap.conf && echo "binddn $LDAP_RO_USER" >> /etc/ldap.conf && echo "bindpw $LDAP_RO_PASS" >> /etc/ldap.conf && echo "ldap_version 3" >> /etc/ldap.conf && echo "pam_password md5" >> /etc/ldap.conf && echo "bind_policy soft" >> /etc/ldap.conf
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --allow-unauthenticated mapr-zookeeper mapr-zk-internal libpam-ldap nscd openjdk-8-jre wget perl netcat syslinux-utils${DOCKER_PATCH} && rm -rf /var/lib/apt/lists/* && apt-get clean
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --allow-unauthenticated libpam-ldap nscd openjdk-8-jre wget perl netcat syslinux-utils nfs-common && rm -rf /var/lib/apt/lists/* && apt-get clean
 
 RUN DEBIAN_FRONTEND=noninteractive pam-auth-update && sed -i "s/compat/compat ldap/g" /etc/nsswitch.conf && /etc/init.d/nscd restart
 
-RUN usermod -a -G root mapr && usermod -a -G root ${IUSER} && usermod -a -G adm mapr && usermod -a -G adm ${IUSER} && usermod -a -G disk mapr && usermod -a -G disk ${IUSER}
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --allow-unauthenticated mapr-core mapr-core-internal mapr-hadoop-core mapr-hbase mapr-mapreduce1 mapr-mapreduce2  && rm -rf /var/lib/apt/lists/* && apt-get clean
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --allow-unauthenticated mapr-zookeeper mapr-zk-internal  && rm -rf /var/lib/apt/lists/* && apt-get clean
 
 ADD runzkdocker.sh /opt/mapr/
 
@@ -158,7 +163,6 @@ RUN chown -R mapr:mapr /opt/mapr/zookeeper && chown mapr:root /opt/mapr/runzkdoc
 CMD ["/bin/bash"]
 
 EOL
-
     cd $BUILD_TMP
     sudo docker build -t ${DOCKER_REG_URL}/zkdocker:$MAPR_DOCKER_TAG .
     cd ~/zetago
