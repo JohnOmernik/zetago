@@ -25,8 +25,7 @@ if [ "$JPAM" == "" ]; then
         PULLJPAM="Y"
     fi
     if [ "$PULLJPAM" == "Y" ]; then
-        IMG_LINE=$(sudo docker images|grep "\/maprdocker")
-        IMG=$(echo $IMG_LINE|grep -o -P "maprdocker[^ ]+")
+        IMG=$(sudo docker images --format "{{.Repository}}:{{.Tag}}"|grep \/maprdocker)
         CID=$(sudo docker run -d $IMG /bin/bash)
         sudo docker cp $CID:/opt/mapr/lib/libjpam.so $APP_ROOT/libjpam
     else
