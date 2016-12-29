@@ -94,7 +94,7 @@ cat > $MARFILE << EOF
 }
 EOF
 
-    ./zeta cluster marathon submit "$MARFILE" "$MARATHON_SUBMIT"
+    ./zeta cluster marathon submit "$MARFILE" "$MARATHON_SUBMIT" 1
     echo ""
     @go.log INFO "Shared LDAP Admin Server installed"
 

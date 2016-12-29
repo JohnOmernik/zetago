@@ -87,8 +87,8 @@ cat > ${MARATHON_FILE} << EOF
 }
 EOF
 
-
-./zeta cluster marathon submit "$MARATHON_FILE" "$MARATHON_SUBMIT"
+@go.log INFO "Submitting MapR Docker Reg to Marathon"
+./zeta cluster marathon submit "$MARATHON_FILE" "$MARATHON_SUBMIT" 1
 
 
 @go.log INFO "MapR Docker Registry Running at maprdocker-mapr-shared.marathon.slave.mesos"
