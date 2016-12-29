@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APP_IMG_NAME="maprbase"
+APP_IMG_NAME="zetabasemapr"
 APP_IMG_TAG="1.0"
 APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
 
