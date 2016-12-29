@@ -103,6 +103,12 @@ echo "We can make this easier if all the nodes that are agents have the same lis
 read -e -p "Are the disks the same for all agent nodes? " -i "Y" SAME_AGENTS
 TEST_INITIAL=""
 if [ "$SAME_AGENTS" == "Y" ]; then
+    echo ""
+    echo "Since you mentioned all agents have the same disks, I will display /proc/partitions on this node for you, then enter the disk string that matches all nodes"
+    echo ""
+    cat /proc/partitions
+    echo ""
+    echo ""
     read -e -p "Enter just the disks for each node delimitted by commas: " JUST_DISKS
     for N in $AGENT_NODES; do
         H=$(ssh $N "hostname -f")

@@ -43,6 +43,7 @@ function _prep_status() {
         TESTVAL=""
         TESTVAL=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "hostname")
         if [ "$TESTVAL" != "" ]; then
+            KERNEL_VER="unknown"
             HOSTUP="true"
             SYS_TYPE=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "/home/${IUSER}/system_type.sh")
             TESTVAL=""
@@ -56,6 +57,7 @@ function _prep_status() {
                 else
                     DOCKER="false"
                 fi
+                KERNEL_VER=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "uname -a|cut -d\" \" -f3")
             else
                 SUDOPRIV="false"
                 DOCKER="false"
@@ -65,7 +67,7 @@ function _prep_status() {
             SUDOPRIV="false"
             DOCKER="false"
         fi
-        @go.log INFO "Prep Status for $HOST - SYS_TYPE: $SYS_TYPE -  UP: $HOSTUP - SUDO: $SUDOPRIV - DOCKER: $DOCKER"
+        @go.log INFO "Prep Status for $HOST - SYS_TYPE: $SYS_TYPE -  UP: $HOSTUP - SUDO: $SUDOPRIV - KERNEL: $KERNEL_VER - DOCKER: $DOCKER"
     done
 }
 

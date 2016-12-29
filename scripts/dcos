@@ -35,7 +35,6 @@ function _dcos() {
     echo "./zeta dcos bootstrap         # Create DCOS config and bootstrap on bootstrap node"
     echo "./zeta dcos install -n=NODE1  # Install DCOS on NODE1 given dcos.conf"
     echo "./zeta dcos install -a        # Install DCOS on all nodes listed in dcos.conf"
-    echo "./zeta dcos install -a -u     # Install DCOS on all nodes listed in dcos.conf and do so unattended"
     echo ""
     echo "./zeta dcos -l                # Lock or unlock dcos.conf file"
     echo ""
