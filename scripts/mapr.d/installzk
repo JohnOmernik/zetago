@@ -197,7 +197,10 @@ for ZK in $ZK_STRING; do
   }
 }
 EOFZK
-    ./zeta cluster marathon submit "$MFILE" "$MARATHON_SUBMIT"
+    echo ""
+    @go.log INFO "Submitting ZK Node to Marathon and waiting for it to start"
+    echo ""
+    ./zeta cluster marathon submit "$MFILE" "$MARATHON_SUBMIT" 1
     echo ""
 done
 echo ""

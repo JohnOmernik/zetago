@@ -10,12 +10,30 @@ function _marathon_submit() {
 
     MARFILE=$1
     MARATHON_URL=$2
+    WAIT=$3
 
-    @go.log INFO "Sending $MARFILE $MARATHON_URL"
-    echo ""
-    curl -X POST $MARATHON_URL -d @${MARFILE} -H "Content-type: application/json"
-    echo ""
-    echo ""
+    MARATHON_DEP="http://$MARATHON_HOST/v2/deployments"
+
+    OUT=$(curl -s -X POST $MARATHON_URL -d @${MARFILE} -H "Content-type: application/json")
+
+    DEP_ID=$(echo $OUT|grep -P -o "deployments\":.*"|grep -P -o "\{[^\}]+\}"|sed "s/\"//g"|sed "s/id://g"|sed "s/{//g"|sed "s/}//g")
+
+
+    if [ "$WAIT" == "1" ]; then
+        @go.log INFO "Waiting for submit request on for file $MARFILE to finish deployment with ID $DEP_ID"
+        echo ""
+        DEPLOY=$(curl -s -H "Content-type: application/json" -X GET ${MARATHON_DEP}|grep "$DEP_ID")
+        while [ "$DEPLOY" != "" ]; do
+            echo "Waiting in a loop for Deployment: $DEP_ID to finish"
+            sleep 2
+            DEPLOY=$(curl -s -H "Content-type: application/json" -X GET ${MARATHON_DEP}|grep "$DEP_ID")
+        done
+        echo ""
+        @go.log INFO "Scale Deployement with ID $DEP_ID complete"
+    else
+        @go.log INFO "Submit Deployment for $MARFILE sent - Not waiting to finish deployment"
+    fi
+
 }
 
 _marathon_submit "$@"
