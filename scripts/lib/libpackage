@@ -83,7 +83,7 @@ function reqdockerimg() {
     REQ_IMGS="$1"
 
 
-    for IMG in $REW_IMGS: do
+    for IMG in $REQ_IMGS; do
         ICHK=$(sudo docker images|grep "${IMG}")
         if [ "$ICHK" == "" ]; then
             @go.log WARN "Required Image $IMG not found on host - Attempt to build with ./zeta package build $IMG ?"
@@ -91,7 +91,7 @@ function reqdockerimg() {
             if [ "$DCK" != "Y" ]; then
                 @go.log FATAL "Cannont continue installed of $APP_NAME without image $IMG"
             fi
-            ./zeta pacakge build $IMG 
+            ./zeta pacakge build $IMG
         fi
     done
 
