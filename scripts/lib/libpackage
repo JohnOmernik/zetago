@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+# Functions used in package management in Zeta
+#
+
+
+
+#
+# function checkdocker
+#
+# Check to ensure Docker tools are installed where the zetago instance is running so images can be built - If not fail with a FATAL
+#
+function checkdocker(){
+    DOCKER_CHK=$(sudo docker info)
+    if [ "$DOCKER_CHK" == "" ]; then
+        @go.log FATAL "The ability to run docker client commands doesn't exist on this node, can't build this package"
+    fi
+}
+
+#
+# function for docker image
+#
+# Arguments
+# the Image name to check for
+# the variable to return  the result in
+#
+function check4dockerimage(){
+
+    CHKIMG=$1
+    RESULT=$2
+
+    IMG_CHK=$(sudo docker images|grep "$CHKIMG")
+    if [ "$IMG_CHK" != "" ]; then
+        @go.log WARN "$CHKIMG Found on this system"
+        read -e -p "Rebuild $CHKIMG? " -i "N" MYRESULT
+    else
+        MYRESULT="Y"
+    fi
+
+    eval $RESULT="'$MYRESULT'"
+
+}
+
+#
+# function dockerprox
+#
+# Arguments:
+# The Variable to put the docker proxy stuff in
+#
+function dockerprox() {
+
+    RESULT=$1
+    TMPOUT=""
+    if [ "$ZETA_DOCKER_PROXY" != "" ]; then
+        TMPOUT="${TMPOUT}ENV http_proxy=$ZETA_DOCKER_PROXY"$'\n'
+        TMPOUT="${TMPOUT}ENV HTTP_PROXY=$ZETA_DOCKER_PROXY"$'\n'
+        TMPOUT="${TMPOUT}ENV https_proxy=$ZETA_DOCKER_PROXY"$'\n'
+        TMPOUT="${TMPOUT}ENV HTTPS_PROXY=$ZETA_DOCKER_PROXY"$'\n'
+        TMPOUT="${TMPOUT}ENV no_proxy=$DOCKER_NOPROXY"$'\n'
+        TMPOUT="${TMPOUT}ENV NO_PROXY=$DOCKER_NOPROXY"$'\n'
+    else
+        TMPOUT=""
+    fi
+    eval $RESULT="'$TMPOUT'"
+
+}

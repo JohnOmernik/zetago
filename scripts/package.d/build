@@ -2,6 +2,10 @@
 #
 # Build a package for use with Zeta
 #
+# Arguments:
+# -u                # Unattended Installation
+# -s                # Search Additional Locations PRIOR to core package location (Default is to search and use core package location first)
+# %PACKAGENAME%     # The name of the package you wish to build
 #
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
@@ -9,13 +13,17 @@ sourceconf "$MAPR_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$PACKAGE_CONF"
 
 reqshared "dockerregv2 zetaca openldap"
 
+. "$_GO_USE_MODULES" 'libpackage'
+
+
 function _packagebuild() {
-
+    MYDIR=$(pwd)
     UNATTEND="0"
-
+    SEARCH_ADD_FIRST="0"
   . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
 
     ACTION_SRC="user"
@@ -25,26 +33,84 @@ function _packagebuild() {
             -u)
             UNATTEND="1"
             ;;
+            -s)
+            SEARCH_ADD_FIRST="1"
+            ;;
             "-v="*)
-            VERS_FILE="${i#*=}"
+            APP_VERS_FILE="${i#*=}"
             ;;
             *)
-            PKG_NAME="$i"
+            APP_NAME="$i"
             # unknown option
             ;;
         esac
     done
 
-    if [ "$PKG_NAME" == "" ]; then
+    if [ "$APP_NAME" == "" ]; then
         @go.log FATAL "You must specify a Package name"
     fi
 
+
+    BUILD_TMP="./tmpbuilder"
+
     echo "Unattended: $UNATTEND"
-    echo "Vers File: $VERS_FILE"
-    echo "Package: $PKG_NAME"
+    echo "Vers File: $APP_VERS_FILE"
+    echo "Package: $APP_NAME"
+    APP_PKG_BASE=""
 
+    if [ ! -d "${CORE_PKG_LOC}/${APP_NAME}" ] || [ "$SEARCH_ADD_FIRST" == "1" ]; then
+        @go.log WARN "Package: $APP_NAME not found in core package location or search additional location first selceted, checking additional package locations"
+        for LOC in $ADD_PKG_LOC; do
+            if [ -d "${LOC}/${APP_NAME}" ]; then
+                echo "Package $APP_NAME found in ${LOC}"
+                read -e -p "User ${APP_NAME} Package found in ${LOC}? " -i "N" USELOC
+                if [ "$USELOC" == "Y" ]; then
+                    APP_PKG_BASE="${LOC}/${APP_NAME}"
+                    break
+                    @go.log "Using package $APP_NAME in $LOC"
+                fi
+            fi
+        done
+        if [ "$APP_PKG_BASE" == "" ]; then
+            if [ -d "${CORE_PKG_LOC}/{$APP_NAME}" ]; then
+                echo "Package $APP_NAME not found in Additional package location but it was found in the core package location, should we use the core package location?"
+                read -e -p "User Core Package Location version of $APP_NAME? " -i "Y" USECORE
+                if [ "$USECORE" == "Y" ]; then
+                    APP_PKG_BASE="${CORE_PKG_LOC}/${APP_NAME}"
+                fi
+            fi
+        fi
+    else
+        @go.log INFO "Using Package $APP_NAME in Core Package Location"
+        APP_PKG_BASE="${CORE_PKG_LOC}/${APP_NAME}"
+    fi
+    if [ "$APP_PKG_BASE" == "" ]; then
+        @go.log FATAL "Package base for $APP_NAME could not be found - exiting"
+    fi
 
+    @go.log INFO "Sourcing Defaults file for $APP_NAME"
+    . ${APP_PKG_BASE}/defaults
 
+    if [ "$APP_VERS_FILE" == "" ]; then
+        if [ "$UNATTEND" == "1" ] && [ -f "${APP_PKG_BASE}/${DEF_APP_VERS}" ]; then
+            APP_VERS_FILE="${DEF_APP_VERS}"
+        fi
+    fi
+
+    if [ "$APP_VERS_FILE" == "" ] || [ ! -f "${APP_PKG_BASE}/${APP_VERS_FILE}" ]; then
+        echo "Please select a vers file for $APP_NAME:"
+        echo ""
+        ls -1 ${APP_PKG_BASE}/*.vers
+        echo ""
+        read -e -p "Please select Vers File for $APP_NAME: " -i "$DEF_APP_VERS" APP_VERS_FILE
+        if [ ! -f "${APP_PKG_BASE}/${APP_VERS_FILE}" ]; then
+            @go.log FATAL "Must select a valid vers file to continue to build packages"
+        fi
+    fi
+    BUILD="N"
+    . ${APP_PKG_BASE}/${APP_VERS_FILE}
+
+    . ${APP_PKG_BASE}/build.sh
 
 
 
