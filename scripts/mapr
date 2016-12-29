@@ -10,15 +10,11 @@ sourceconf "$DCOS_CONF"
 function _mapr() {
 
     LOCK="0"
-    UNLOCK="0"
 
     for i in "$@"
     do
     case $i in
-        -u|--unlockconf)
-        UNLOCK="1"
-        ;;
-        -l|--lockconf)
+        -l)
         LOCK="1"
         ;;
         *)
@@ -27,12 +23,7 @@ function _mapr() {
     esac
     done
 
-    if [ "$UNLOCK" == "1" ] && [ "$LOCK" == "1" ]; then
-        @go.log FATAL "Both Lock (-l) and Unlock (-u) cannot be specified at the same time"
-    fi
-
     initconf "$MAPR_CONF"
-
     initconf "$CLUSTER_CONF"
 
     echo ""
@@ -54,12 +45,12 @@ function _mapr() {
     echo "./zeta mapr fuseinstall - Install MapR FUSE Client on a single node"
     echo "./zeta mapr fuseremove - Remove MapR FUSE Client from a single node"
     echo "./zeta mapr installmaprnode - Install mapr to a single node"
-    echo "./zeta mapr -l|--lockconf Lock mapr.conf file"
-    echo "./zeta mapr -u|--unlockconf Unlock mapr.conf file"
+    echo ""
+    echo "./zeta mapr -l lock or unlock  mapr.conf file"
     echo ""
 
 
-    if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then
+    if [ "$LOCK" == "1" ]; then
        lockconf "$MAPR_CONF"
     fi
 

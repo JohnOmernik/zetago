@@ -36,6 +36,7 @@ cat > $PACKAGE_CONF << EOP
 CORE_PKG_LOC="$CORE_PKG_LOC"
 SHARED_LOC="$SHARED_LOC"
 ADD_PKG_LOC="$ADD_PKG_LOC"
+PACKAGE_LOCKED="1"
 EOP
 
 @go.log INFO "Package Management conf created at $PACKAGE_CONF"

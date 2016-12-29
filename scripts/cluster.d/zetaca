@@ -11,26 +11,18 @@ sourceconf "$CLUSTER_CONF"
 function _zetaca() {
 
     LOCK="0"
-    UNLOCK="0"
 
     for i in "$@"
     do
-    case $i in
-        -u|--unlockconf)
-        UNLOCK="1"
-        ;;
-        -l|--lockconf)
-        LOCK="1"
-        ;;
-        *)
+        case $i in
+            -l)
+            LOCK="1"
+            ;;
+            *)
             # unknown option
-        ;;
-    esac
+            ;;
+        esac
     done
-
-    if [ "$UNLOCK" == "1" ] && [ "$LOCK" == "1" ]; then
-        @go.log FATAL "Both Lock (-l) and Unlock (-u) cannot be specified at the same time"
-    fi
 
     initconf "$CLUSTER_ZETACA_CONF"
 
@@ -49,12 +41,11 @@ function _zetaca() {
     echo "./zeta cluster zetaca final - After Zeta base is installed, move zetaca from tmp local location to clustered location (only need to run once)"
     echo ""
     echo "Config Management:"
-    echo "./zeta cluster zetaca -l|--lockconf - Lock cluster.conf file"
-    echo "./zeta cluster zetaca -u|--unlockconf - Unlock cluster.conf file"
+    echo "./zeta cluster zetaca -l - lock or unlock cluster_zetaca.conf file"
     echo ""
 
 
-    if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then
+    if [ "$LOCK" == "1" ]; then
        lockconf "$CLUSTER_ZETACA_CONF"
     fi
 

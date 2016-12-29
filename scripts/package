@@ -17,11 +17,37 @@ reqshared "dockerregv2 zetaca openldap"
 
 
 function _package() {
+   LOCK="0"
 
+    for i in "$@"
+    do
+    case $i in
+        -l)
+        LOCK="1"
+        ;;
+        *)
+            # unknown option
+        ;;
+    esac
+    done
 
+    initconf "$PACKAGE_CONF"
 
+    echo ""
+    echo "********************************"
+    echo "Package Installation Scripts for Zeta"
+    echo "********************************"
+    echo ""
+    echo "Commands to use with package:"
+    echo ""
+    echo "./zeta package                #"
+    echo ""
+    echo "./zeta package -l                # Lock or unlock package.conf file"
+    echo ""
 
-
+    if [ "$LOCK" == "1" ]; then
+       lockconf "$PACKAGE_CONF"
+    fi
 
 
 }
