@@ -1,25 +1,46 @@
 #!/bin/bash
 #
-# Install DCOS DCOS
+# Install DCOS on Nodes in Zeta Cluster
+#
+# Arguments:
+# -a  Install on all nodes given dcos and prep conf files
+# -n=%NODE% Install on a specifc node. It will check to see if this node is a master or agent. If it's not a master, it will install the DCOS agent by default
+
 # Usage:
-# ./zeta dcos install node1,node2,node3 # Install DCOS on the specified node given the config files. Multiple nodes can be specified with comman. 
-# ./zeta dcos install --all # Install DCOS on all nodes in config files starting with the master nodes and then waiting until the cluster up, moving on to the rest. 
+# ./zeta dcos install node1 # Install DCOS on the specified node given the config files. Multiple nodes can be specified with comman.
+# ./zeta dcos install -a # Install DCOS on all nodes in config files starting with the master nodes and then waiting until the cluster up, moving on to the rest.
 #
 
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 
+IP_DETECT="./conf/ip-detect"
+
 # Install function either takes --all or a Comma delimitted list of nodes to install on
 
 function _dcos_install() {
+    ALL="0"
 
-    IP_DETECT="./conf/ip-detect"
+    for i in "$@"
+       do
+        case $i in
+            -a)
+            ALL="1"
+            ;;
+            "-n="*)
+            HOST="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
 
     ARGVAL="$1"
-    if [ "$ARGVAL" == "--all" ]; then
+    if [ "$ALL" == "1" ]; then
         RUN_NODES="$INTERNAL_NODES"
     else
-        RUN_NODES=$(echo $ARGVAL|tr "," " ")
+        RUN_NODES="$HOST"
     fi
 
     BSTEST=$(curl -s http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT})

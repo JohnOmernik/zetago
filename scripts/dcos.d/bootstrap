@@ -1,7 +1,9 @@
 #!/bin/bash
 #
 # Bootstrap DCOS
+# Connect to the boostrap node and push the config, download the docker images, dcos install, and start bootstrap server for installing DCOS
 #
+# No Arguments
 
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
