@@ -32,7 +32,12 @@ function check4dockerimage(){
     IMG_CHK=$(sudo docker images|grep "$CHKIMG")
     if [ "$IMG_CHK" != "" ]; then
         @go.log WARN "$CHKIMG Found on this system"
-        read -e -p "Rebuild $CHKIMG? " -i "N" MYRESULT
+        if [ "$REBUILD" != "1" ]; then
+            read -e -p "Rebuild $CHKIMG? " -i "N" MYRESULT
+        else
+            MYRESULT="Y"
+            @go.log WARN "Automatically rebuilding due to -u and -r flags both being passed"
+        fi
     else
         MYRESULT="Y"
     fi

@@ -5,6 +5,7 @@
 # Arguments:
 # -u                # Unattended Installation
 # -s                # Search Additional Locations PRIOR to core package location (Default is to search and use core package location first)
+# -r                # Rebuild image automatically if -u is passed and the image already exists
 # %PACKAGENAME%     # The name of the package you wish to build
 #
 sourceconf "$PREP_CONF"
@@ -23,7 +24,9 @@ reqshared "dockerregv2 zetaca openldap"
 function _packagebuild() {
     MYDIR=$(pwd)
     UNATTEND="0"
+    REBUILD="0"
     SEARCH_ADD_FIRST="0"
+
   . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
 
     ACTION_SRC="user"
@@ -32,6 +35,9 @@ function _packagebuild() {
         case $i in
             -u)
             UNATTEND="1"
+            ;;
+            -r)
+            REBUILD="1"
             ;;
             -s)
             SEARCH_ADD_FIRST="1"
