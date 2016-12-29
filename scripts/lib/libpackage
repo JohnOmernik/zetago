@@ -18,7 +18,34 @@ function checkdocker(){
 }
 
 #
-# function for docker image
+# function check4package
+#
+# Arguments:
+# The package to check for in $APP_PKG_DIR
+#
+function check4package() {
+
+    CHKPKG=$1
+    RESULT=$2
+    @go.log INFO "Looking for $CHKPKG in $APP_PKG_DIR"
+    if [ -f "$APP_PKG_DIR/$CHKPKG" ]; then
+        @go.log WARN "$CHKPKG found in $APP_PKG_DIR"
+        if [ "$REBUILD" != "1" ]; then
+            read -e -p "Rebuild $CHKPKG? " -i "N" MYRESULT
+        else
+            MYRESULT="Y"
+            @go.log WARN "Automatically rebuilding due to -u and -r flags being passed"
+        fi
+    else
+        MYRESULT="Y"
+    fi
+    eval $RESULT="'$MYRESULT'"
+
+}
+
+
+#
+# function check4dockerimage
 #
 # Arguments
 # the Image name to check for

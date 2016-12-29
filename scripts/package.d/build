@@ -114,6 +114,12 @@ function _packagebuild() {
         fi
     fi
     BUILD="N"
+
+    APP_ROOT="/mapr/$CLUSTERNAME/zeta/shared/$APP_NAME"
+    APP_PKG_DIR="$APP_ROOT/packages"
+    mkdir -p $APP_ROOT
+    mkdir -p $APP_PKG_DIR
+
     . ${APP_PKG_BASE}/${APP_VERS_FILE}
 
     . ${APP_PKG_BASE}/build.sh
