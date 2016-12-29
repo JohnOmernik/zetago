@@ -40,7 +40,7 @@ function _packagebuild() {
     fi
 
     echo "Unattended: $UNATTEND"
-    echo "Vers File: $VER_FILE"
+    echo "Vers File: $VERS_FILE"
     echo "Package: $PKG_NAME"
 
 
