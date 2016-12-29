@@ -33,7 +33,8 @@ function _prep_status() {
         MYHOSTS="$NODES"
     else
         MYHOSTS="$HOST"
-    end if
+    fi
+
     if [ "$MYHOSTS" == "" ]; then
         @go.log FATAL "Must provide a host to connect and update status on via -n= or specify -a for all nodes"
     fi
