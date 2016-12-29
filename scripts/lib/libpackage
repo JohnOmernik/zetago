@@ -28,7 +28,7 @@ function check4dockerimage(){
 
     CHKIMG=$1
     RESULT=$2
-
+    @go.log INFO "Looking for $CHKIMG"
     IMG_CHK=$(sudo docker images|grep "$CHKIMG")
     if [ "$IMG_CHK" != "" ]; then
         @go.log WARN "$CHKIMG Found on this system"
