@@ -40,6 +40,7 @@ if [ "$APP_ID" == "" ]; then
     read -e -p "What is the id you wish to use for the instance of $APP_NAME? " APP_ID
 fi
 
+APP_HOME="/mapr/$CLUSTERNAME/$APP_DIR/$APP_ROLE/$APP_NAME/$APP_ID"
 
 if [ -d "$APP_HOME" ]; then
     @go.log FATAL "Cannot install instance of $APP_NAME at $APP_HOME because an instance already exits there"
