@@ -16,18 +16,43 @@ reqshared "dockerregv2 zetaca openldap"
 
 function _packagestatus() {
 
-    PKGS=$(ls -d ./pkgs/*/)
+    for i in "$@"
+        do
+        case $i in
+            *)
+            APP_NAME="$i"
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ "$APP_NAME" != "" ]; then
+        PKGS="$APP_NAME"
+        echo "Checking Status of Package: $APP_NAME"
+    else
+        echo "Checking all Packages in ./pkgs"
+        PKGS=$(ls -d ./pkgs/*/)
+    fi
+
 
     echo "Packages currently included and their status:"
     echo ""
+
+    printf "%-30s | %-30s | %-30s" "Package" "In ./pkgs" "Install Status"
     for DIR in $PKGS; do
         PKG=$(echo $DIR|sed "s@\./pkgs/@@g"|sed "s@/@@g")
+        PKGBASE="false"
+        if [ -d "./pkgs/$PKG" ]; then
+            PKGBASE="true"
+        fi
         if [ -d "/mapr/$CLUSTERNAME/zeta/shared/$PKG" ]; then
             INST="true"
         else
             INST="false"
         fi
-        echo "$PKG         $INST"
+
+        printf "%-30s | %-30s | %-30s" "$PKG" "$PKGBASE" "$INST"
+
     done
 
 

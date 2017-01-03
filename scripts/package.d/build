@@ -29,7 +29,6 @@ function _packagebuild() {
 
   . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
 
-    ACTION_SRC="user"
     for i in "$@"
         do
         case $i in
