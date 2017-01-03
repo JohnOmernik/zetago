@@ -31,7 +31,6 @@ echo ""
 
 APP_CERT_LOC="${APP_HOME}/certs"
 
-mkdir -p ${APP_HOME}
 mkdir -p ${APP_HOME}/logs
 mkdir -p ${APP_HOME}/logs/drillbits
 mkdir -p ${APP_HOME}/logs/sqlline

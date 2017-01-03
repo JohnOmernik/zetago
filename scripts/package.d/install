@@ -77,6 +77,8 @@ function _packageinstall() {
     # Get the information for installation
     . "$_GO_USE_MODULES" 'libinstall'
 
+    mkdir -p ${APP_HOME}
+
     # Run the install
     . ${APP_PKG_BASE}/install.sh
 
