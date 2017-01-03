@@ -1,0 +1,4 @@
+#!/bin/bash
+
+DEF_APP_VERS="usershell-1.0.1.vers"
+REC_DIR="zeta"

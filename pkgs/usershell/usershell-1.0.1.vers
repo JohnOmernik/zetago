@@ -41,7 +41,7 @@ APP_IMG_TAG="$APP_VER"
 APP_IMG_NAME="usershell"
 APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
 
-REQ_APP_IMG_NAME="buildbase"
+REQ_APP_IMG_NAME="buildbase_mapr"
 
 
 if [ "$BUILD" == "Y" ]; then
