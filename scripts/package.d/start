@@ -61,6 +61,7 @@ function _packagestart() {
             @go.log WARN "Task $APP_MAR_ID already exists on cluster and is in a TASK_RUNNING state. Will not attempt to start"
         else
             START="1"
+        fi
     else
         SUBMIT="1"
     fi
