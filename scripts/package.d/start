@@ -35,55 +35,25 @@ function _packagestart() {
     for i in "$@"
         do
         case $i in
-            -u)
-            UNATTEND="1"
-            ;;
-            -d)
-            VERBOSE_DISPLAY="1"
-            ;;
-            -s)
-            SEARCH_ADD_FIRST="1"
-            ;;
-            "-v="*)
-            APP_VERS_FILE="${i#*=}"
+            "-c="*)
+            CONF_FILE="${i#*=}"
             ;;
             *)
-            APP_NAME="$i"
             # unknown option
             ;;
         esac
     done
 
-    if [ "$APP_NAME" == "" ]; then
-        @go.log FATAL "You must specify a Package name"
+    if [ ! -f "$CONF_FILE" ]; then
+        @go.log FATAL "You must specify a path to a conf file"
     fi
 
-    APP_PKG_BASE=""
-    APP_VERS_FILE=""
+    . $CONF_FILE
 
-    # Determine the package base
-    getpackagebase "$APP_NAME" "$SEARCH_ADD_FIRST" "APP_PKG_BASE"
-
-    @go.log INFO "Sourcing Defaults file for $APP_NAME"
-    . ${APP_PKG_BASE}/defaults
-
-    # Get the version file to install
-    getversfile "$APP_VERS_FILE" "$UNATTEND" "$DEF_APP_VERS" "$APP_PKG_BASE" "$APP_NAME" "APP_VERS_FILE"
-
-    . ${APP_PKG_BASE}/${APP_VERS_FILE}
-    # Check to ensure the version file we are installing is built
-    checkversbuild "$APP_NAME" "$APP_PKG_BASE" "$APP_VERS_FILE" "$UNATTEND" "$SEARCH_ADD_FIRST"
-
-    # Get the information for installation
-    . "$_GO_USE_MODULES" 'libinstall'
-
-    # Run the install
-    . ${APP_PKG_BASE}/install.sh
-
-
+    CUR_STATUS=$(./zeta cluster marathon getingo 
 
 
 }
 
 
-_packagebuild "$@"
+_packagestart "$@"

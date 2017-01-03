@@ -304,7 +304,7 @@ chmod +x ${APP_HOME}/zetadrill
 
 cat > ${APP_MAR_FILE} << EOF4
 {
-"id": "${APP_ROLE}/${APP_ID}",
+"id": "${APP_MAR_ID}",
 "cmd": "./${APP_VER}/bin/drillbit.sh run",
 "cpus": ${APP_CPU},
 "mem": ${APP_MEM},
@@ -327,25 +327,6 @@ cat > ${APP_MAR_FILE} << EOF4
 "constraints": [["hostname", "UNIQUE"]]
 }
 EOF4
-
-
-
-APP_CONFIG="${APP_HOME}/${APP_ID}.conf"
-cat > $APP_CONFIG << EOC
-#!/bin/bash
-# Application Instance Config for $APP_NAME instance: $APP_ID
-#
-APP_ROLE="${APP_ROLE}"
-APP_DIR="${APP_DIR}"
-APP_NAME="${APP_NAME}"
-APP_ID="${APP_ID}"
-APP_VERS_FILE="${APP_VERS_FILE}"
-APP_HOME="${APP_HOME}"
-APP_MAR_FILE="$APP_MAR_FILE"
-APP_CONFIG="$APP_CONFIG"
-APP_ENV_FILE="$APP_ENV_FILE"
-EOC
-
 
 
 ##########
