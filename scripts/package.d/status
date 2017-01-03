@@ -38,7 +38,7 @@ function _packagestatus() {
     echo "Packages currently included and their status:"
     echo ""
 
-    printf "%-30s | %-30s | %-30s\n" "Package" "In ./pkgs" "Install Status"
+    printf "%-30s %-30s %-30s\n" "Package" "In ./pkgs" "Install Status"
     echo "------------------------------------------------------------------------------------------"
     for DIR in $PKGS; do
         PKG=$(echo $DIR|sed "s@\./pkgs/@@g"|sed "s@/@@g")
@@ -52,7 +52,7 @@ function _packagestatus() {
             INST="false"
         fi
 
-        printf "%-30s | %-30s | %-30s\n" "$PKG" "$PKGBASE" "$INST"
+        printf "%-30s %-30s %-30s\n" "$PKG" "$PKGBASE" "$INST"
 
     done
 
