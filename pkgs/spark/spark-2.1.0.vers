@@ -3,6 +3,9 @@
 APP_URL_FILE="spark-2.1.0-bin-without-hadoop.tgz"
 APP_URL_BASE="http://apache.claz.org/spark/spark-2.1.0/"
 
+
+APP_TGZ="$APP_URL_FILE"
+
 APP_URL="${APP_URL_BASE}${APP_URL_FILE}"
 
 APP_VER="2.1.0"

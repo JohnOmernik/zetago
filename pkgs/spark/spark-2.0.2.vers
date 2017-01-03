@@ -2,7 +2,7 @@
 
 APP_URL_FILE="spark-2.0.2-bin-without-hadoop.tgz"
 APP_URL_BASE="http://apache.cs.utah.edu/spark/spark-2.0.2/"
-
+APP_TGZ="$APP_URL_FILE"
 APP_URL="${APP_URL_BASE}${APP_URL_FILE}"
 
 APP_VER="2.0.2"
