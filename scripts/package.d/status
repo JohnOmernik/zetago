@@ -51,7 +51,7 @@ function _packagestatus() {
             INST="false"
         fi
 
-        printf "%-30s | %-30s | %-30s" "$PKG" "$PKGBASE" "$INST\n"
+        printf "%-30s | %-30s | %-30s\n" "$PKG" "$PKGBASE" "$INST"
 
     done
 
