@@ -5,6 +5,7 @@
 
 
 
+
 #
 # function checkdocker
 #
@@ -16,6 +17,171 @@ function checkdocker(){
         @go.log FATAL "The ability to run docker client commands doesn't exist on this node, can't build this package"
     fi
 }
+
+#
+#  function checkversbuild
+#
+# Check to see if the selected version file has already been built. If not, offer to build (or build if UNATTEND is 1). If the version isn't built, fail the install
+#
+# Arguments:
+# $1 - App Name
+# $2 - App Package Base
+# $3 - Selected App Vers file
+# $4 - Unattended install flag
+
+function checkversbuild () {
+
+    APP=$1
+    PKG_BASE=$2
+    VERS=$3
+    UN=$4
+    SEARCH=$5
+
+    BUILDVERS="0"
+    . ${PKG_BASE}/$VERS
+
+    if [ "$APP_TGZ" != "" ]; then
+        ROOT="/mapr/$CLUSTERNAME/zeta/shared/$APP"
+        ROOT_PKG="${ROOT}/packages"
+        if [ ! -f "${ROOT_PKG}/$APP_TGZ" ]; then
+            if [ "$UN" == "1" ]; then
+                BUILDVERS="1"
+            else
+                read -e -p "APP_TGZ package specfied in supplied vers file ($VERS) doesn't exist. Should we rebuild? " -i "Y" BUILDVERS
+            fi
+            if [ "$BUILDVERS" == "0" ]; then
+                @go.log FATAL "Can't installed the request package for $APP because $VERS is not build and user won't build it"
+            fi
+        fi
+    fi
+    if [ "$APP_IMG_NAME" != "" ]; then
+        DCKCHK=$(sudo docker images|grep $APP_IMG_NAME)
+        if [ "$DCKCHK" == "" ]; then
+            @go.log WARN "$APP_IMG_NAME not detected on node, attempting to pull"
+            sudo docker pull $APP_IMG
+        fi
+        DCKCHK=$(sudo docker images|grep $APP_IMG_NAME)
+        if [ "$DCKCHK" == "" ]; then
+            if [ "$UN" == "1" ]; then
+                BUILDVERS="1"
+            else
+                read -e -p "APP_IMG_NAME package specfied in supplied vers file ($VERS) doesn't exist. Should we rebuild? " -i "Y" BUILDVERS
+            fi
+            if [ "$BUILDVERS" == "0" ]; then
+                @go.log FATAL "Can't installed the request package for $APP because $VERS is not build and user won't build it"
+            fi
+        fi
+    fi
+    if [ "$BUILDVERS" == "1" ]; then
+        if [ "$SEARCH" == "1" ]; then
+            SA=" -s"
+        else
+            SA=""
+        fi
+        ./zeta package build -u -v=$VERS ${APP}${SA}
+    fi
+
+}
+
+#
+# function getversfile
+#
+# Determine the vers file either through what is passed in or via defaults depending on UNATTENDED flag
+#
+# Arguments
+# $1 - The vers file passed in to check
+# $2 - Unattended
+# $3 - Default Vers File
+# $4 - Package base dir
+# $5 - App Name
+# $6 - Return result
+
+function getversfile() {
+
+    VERS=$1
+    UN=$2
+    DEF=$3
+    PKG_BASE=$4
+    APP=$5
+    RESULT=$6
+
+    if [ "$VERS" == "" ]; then
+        if [ "$UN" == "1" ] && [ -f "${PKG_BASE}/${DEF}" ]; then
+            VERS="${DEF}"
+        fi
+    fi
+
+    if [ "$VERS" == "" ] || [ ! -f "${PKG_BASE}/${VERS}" ]; then
+        echo "Please select a vers file for $APP:"
+        echo ""
+        ls -1 ${PKG_BASE}/*.vers
+        echo ""
+        read -e -p "Please select Vers File for $APP: " -i "$DEF" VERS
+        if [ ! -f "${PKG_BASE}/${VERS}" ]; then
+            @go.log FATAL "${PKG_BASE}/${VERS} Not Found - Must select a valid vers file to continue to build packages"
+        fi
+    fi
+    eval $RESULT="'$VERS'"
+
+
+}
+
+
+
+#
+# function getpackagebase
+#
+# Using the core pkg location as well as additional package locations, try to determine where the base is for the requested package
+#
+# Arguments:
+# $1 - APP_NAME
+# $2 - Search the additional locations first
+# $3 -  Result Var
+#
+function getpackagebase() {
+
+    APP_NAME=$1
+    SEARCH_ADD_FIRST=$2
+    RESULT=$3
+    MYRESULT=""
+
+    if [ ! -d "${CORE_PKG_LOC}/${APP_NAME}" ] || [ "$SEARCH_ADD_FIRST" == "1" ]; then
+        @go.log WARN "Package: $APP_NAME not found in core package location or search additional location first selceted, checking additional package locations"
+        for LOC in $ADD_PKG_LOC; do
+            if [ -d "${LOC}/${APP_NAME}" ]; then
+                echo "Package $APP_NAME found in ${LOC}"
+                read -e -p "User ${APP_NAME} Package found in ${LOC}? " -i "N" USELOC
+                if [ "$USELOC" == "Y" ]; then
+                    MYRESULT="${LOC}/${APP_NAME}"
+                    break
+                    @go.log "Using package $APP_NAME in $LOC"
+                fi
+            fi
+        done
+        if [ "$MYRESULT" == "" ]; then
+            if [ -d "${CORE_PKG_LOC}/{$APP_NAME}" ]; then
+                echo "Package $APP_NAME not found in Additional package location but it was found in the core package location, should we use the core package location?"
+                read -e -p "User Core Package Location version of $APP_NAME? " -i "Y" USECORE
+                if [ "$USECORE" == "Y" ]; then
+                    MYRESULT="${CORE_PKG_LOC}/${APP_NAME}"
+                fi
+            fi
+        fi
+    else
+        @go.log INFO "Using Package $APP_NAME in Core Package Location"
+        MYRESULT="${CORE_PKG_LOC}/${APP_NAME}"
+    fi
+    if [ "$MYRESULT" == "" ]; then
+        @go.log FATAL "Package base for $APP_NAME could not be found - exiting"
+    fi
+
+     eval $RESULT="'$MYRESULT'"
+
+
+}
+
+
+
 
 #
 # function check4package

@@ -1,0 +1,145 @@
+#!/bin/bash
+#
+# libinstall
+# A library that is called by the install script to ensure all variables for install are loaded and validated. 
+#
+
+@go.log INFO  "Instance install of $APP_NAME requested on $CLUSTERNAME"
+
+# APP_ROLE
+if [ "$APP_ROLE" == "" ]; then
+    echo ""
+    read -e -p "Which role do you wish to install $APP_NAME into on $CLUSTERNAME? " APP_ROLE
+fi
+if [ ! -d "/mapr/$CLUSTERNAME/zeta/kstore/env/env${APP_ROLE}" ]; then
+    @go.log FATAL "The role $APP_ROLE does not appear to be installed in this cluster - exiting"
+fi
+
+# APP_DIR
+if [ "$APP_DIR" == "" ]; then
+    echo ""
+    echo "The recommended install location for $APP_NAME is $REC_DIR"
+    echo ""
+    read -e -p "Which install location do you wish to use for $APP_NAME? " -i "$REC_DIR" APP_DIR
+fi
+if [ ! -d "/mapr/$CLUSTERNAME/$APP_DIR" ]; then
+    @go.log FATAL "The install directory selected for $APP_NAME does not exist at /mapr/$CLUSTERNAME/"
+fi
+
+if [ ! -d "/mapr/$CLUSTERNAME/$APP_DIR/$APP_ROLE" ]; then
+   @go.log FATAL "The App role directory under $APP_DIR doesn't exist"
+fi
+
+# APP_ID
+if [ "$APP_ID" == "" ]; then
+    echo ""
+    echo "What is the App ID you wish to use for $APP_NAME"
+    echo ""
+    echo "The application ID must be unique within a role for a given application"
+    echo ""
+    read -e -p "What is the id you wish to use for the instance of $APP_NAME? " APP_ID
+fi
+
+
+if [ -d "$APP_HOME" ]; then
+    @go.log FATAL "Cannot install instance of $APP_NAME at $APP_HOME because an instance already exits there"
+fi
+
+APP_MAR_ID="${APP_ROLE}/${APP_ID}"
+
+if [ "$UNATTEND" == "1" ]; then
+    @go.log INFO "Unattended install selected using APP_HOME of $APP_HOME and Marathon ID of $APP_MAR_ID"
+else
+    echo ""
+    echo "Based on your selections, the install location will be '$APP_NAME/$APP_ID' under '$APP_DIR/$APP_ROLE'"
+    echo "i.e."
+    echo "$APP_HOME"
+    echo ""
+    echo "If you wish to nest your app in an application group, both in the directory structure and in marathon, you have that option now:"
+    echo ""
+    echo "For example, if you have a mariadb server you are installing with an APP_ID of myappmariadb, in the prod role installed to the zeta directory, the default location would be:"
+    echo ""
+    echo "/mapr/$CLUSTERNAME/zeta/prod/mariadb/myappmariadb"
+    echo ""
+    echo "And the Marathon ID would be prod/myappmariadb"
+    echo ""
+    echo "However, in this case you want the Maria DB APP to be nested under and application named myapp in prod, under the apps directory:"
+    echo ""
+    echo "/mapr/$CLUSTERNAME/apps/prod/myapp/myappmariadb"
+    echo ""
+    echo "Marathon location: prod/myaapp/myappmaridb"
+    echo ""
+    echo "You can do this by manually specifying a location and marathon id"
+    echo ""
+    echo "APP_MAR_ID: myapp/myappmariadb"
+    echo "Use Applicaiton Name: False" 
+    echo ""
+    echo "Do you wish renter the APP_ID at this time? The Current Selections are:"
+    echo ""
+    echo "APP_ID: $APP_ID"
+    echo "APP_HOME: $APP_HOME"
+    echo "Marathon ID: $APP_MAR_ID"
+    echo ""
+
+    read -e -p  "Do you wish to accept the results above? Type N to manually specify APP Home and Marathon ID: " -i "Y" ACCEPTDEF
+    if [ "$ACCEPTDEF" != "Y" ]; then 
+        echo ""
+        echo "The current APP_HOME is $APP_HOME"
+        read -e -p "New APP_HOME: " -i "$APP_HOME" APP_HOME
+        echo ""
+        if [ -d "$APP_HOME" ]; then
+            @go.log FATAL "Cannot install instance of $APP_NAME at $APP_HOME because an instance already exits there"
+        fi
+
+        CHECKROLE=$(echo $APP_HOME|grep $APP_ROLE)
+        if [ "$CHECKROLE" == "" ]; then
+            @go.log FATAL "You've choosen the role $APP_ROLE, yet you are trying to install to a APP_HOME location that doesn't serve that role. This is not allowed for permission reasons"
+        fi
+        echo ""
+        echo "Please specify the Marathon ID used. This should start with the role, so say your role is prod, it would start: prod/myapp/myappinstanceid  for nesting"
+        read -e -p "New Marathon APP_ID: " -i $"APP_MAR_ID" APP_MAR_ID
+        echo ""
+        echo "The new Values are:"
+        echo "APP_HOME: $APP_HOME"
+        echo "APP_MAR_ID: $APP_MAR_ID"
+        read -e -p "Do you wish to accept these? " -i "N" ACCEPTNEW
+        if [ "$ACCEPTNEW" != "Y" ]; then
+            @go.log FATAL "Install information could not be determined, exiting"
+        fi
+    fi
+fi
+
+APP_MAR_FILE="$APP_HOME/marathon.json"
+APP_ROOT="/mapr/${CLUSTERNAME}/zeta/shared/${APP_NAME}"
+APP_PKG_DIR="${APP_ROOT}/packages"
+APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
+echo ""
+echo ""
+echo "===================================="
+echo "APP HOME: $APP_HOME"
+echo "Marathon ID: $APP_MAR_ID"
+if [ "$VERBOSE_DISPLAY" == "1" ]; then
+    echo "APP_NAME: $APP_NAME"
+    echo "APP_VERS_FILE: $APP_VERS_FILE"
+    echo "APP_ROLE: $APP_ROLE"
+    echo "APP_DIR: $APP_DIR"
+    echo "APP_ID: $APP_ID"
+    echo "APP_PKG_BASE: $APP_PKG_BASE"
+    echo "APP_MAR_FILE: $APP_MAR_FILE"
+    echo "APP_ROOT: $APP_ROOT"
+    echo "APP_PKG_DIR: $APP_PKG_DIR"
+    echo "APP_ENV_FILE: $APP_ENV_FILE"
+fi
+echo ""
+echo "===================================="
+
+if [ "$UNATTEND" != "1" ]; then
+    read -e -p "Does this look correct (anything other than Y to exit): " -i "Y" CORRECT
+    if [ "$CORRECT" != "Y" ]; then
+        @go.log FATAL "User exited due to incorrect info"
+    fi
+fi
+
+
+
+
