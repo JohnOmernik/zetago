@@ -11,7 +11,7 @@ if [ "$APP_ROLE" == "" ]; then
     echo ""
     read -e -p "Which role do you wish to install $APP_NAME into on $CLUSTERNAME? " APP_ROLE
 fi
-if [ ! -d "/mapr/$CLUSTERNAME/zeta/kstore/env/env${APP_ROLE}" ]; then
+if [ ! -d "/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}" ]; then
     @go.log FATAL "The role $APP_ROLE does not appear to be installed in this cluster - exiting"
 fi
 
