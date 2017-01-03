@@ -5,12 +5,14 @@ APP_URL_BASE="http://apache.cs.utah.edu/spark/spark-2.0.2/"
 APP_TGZ="$APP_URL_FILE"
 APP_URL="${APP_URL_BASE}${APP_URL_FILE}"
 
-APP_VER="2.0.2"
-APP_IMG_NAME="spark"
 REQ_APP_IMG_NAME="zetabase_mapr"
 
+APP_VER="spark-2.0.2"
+APP_IMG_TAG="2.0.2"
+APP_IMG_NAME="spark"
 
-APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_VER}"
+
+APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
 if [ "$BUILD" == "Y" ]; then
 
 cat > ./Dockerfile << EOL
