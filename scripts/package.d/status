@@ -39,6 +39,7 @@ function _packagestatus() {
     echo ""
 
     printf "%-30s | %-30s | %-30s\n" "Package" "In ./pkgs" "Install Status"
+    echo "------------------------------------------------------------------------------------------"
     for DIR in $PKGS; do
         PKG=$(echo $DIR|sed "s@\./pkgs/@@g"|sed "s@/@@g")
         PKGBASE="false"
