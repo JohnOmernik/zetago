@@ -218,12 +218,11 @@ if [ "$STARTME" == "Y" ]; then
     fi
     if [ "$SUBMIT" == "1" ]; then
         ./zeta cluster marathon submit $APP_MAR_FILE $MARATHON_SUBMIT 1
-            @go.log INFO "Submitting $APP_ID as it hasn't been submitted yet"
-        fi
-        if [ "$START" == "1" ]; then
-            @go.log INFO "Starting $APP_ID and scaling to $APP_CNT instances per conf file"
-            ./zeta cluster marathon scale $APP_MAR_ID $1 $MARATHON_SUBMIT 1
-        fi
+        @go.log INFO "Submitting $APP_ID as it hasn't been submitted yet"
+    fi
+    if [ "$START" == "1" ]; then
+        @go.log INFO "Starting $APP_ID and scaling to $APP_CNT instances per conf file"
+        ./zeta cluster marathon scale $APP_MAR_ID $1 $MARATHON_SUBMIT 1
     fi
 fi
 
