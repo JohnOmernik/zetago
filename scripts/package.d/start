@@ -35,10 +35,8 @@ function _packagestart() {
     for i in "$@"
         do
         case $i in
-            "-c="*)
-            CONF_FILE="${i#*=}"
-            ;;
             *)
+            CONF_FILE="$i"
             # unknown option
             ;;
         esac
