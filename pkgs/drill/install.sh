@@ -323,7 +323,7 @@ cat > ${APP_MAR_FILE} << EOF4
 },
 "ports":[],
 "user": "mapr",
-"uris": ["file://${APP_BASE}"],
+"uris": ["file://${APP_PKG_DIR}/${APP_TGZ}"],
 "constraints": [["hostname", "UNIQUE"]]
 }
 EOF4
