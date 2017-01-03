@@ -86,4 +86,4 @@ function _packageinstall() {
 }
 
 
-_packagebuild "$@"
+_packageinstall "$@"
