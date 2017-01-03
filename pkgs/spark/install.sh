@@ -33,6 +33,9 @@ chmod +x $APP_HOME/run.sh
 
 # These are Calculated for a MapR install
 MAPR_HOME="/opt/mapr"
+HDIR=$(ls -1 $MAPR_HOME/hadoop/|grep "hadoop-2")
+HADOOP_HOME="$MAPR_HOME/hadoop/$HDIR"
+
 
 @go.log INFO "Creating spark-env.sh"
 cat > ${APP_HOME}/${APP_VER_DIR}/conf/spark-env.sh << EOE
@@ -43,12 +46,10 @@ export LD_LIBRARY_PATH=/opt/mesosphere/lib
 export JAVA_HOME=/opt/mesosphere/active/java/usr/java
 
 export MAPR_HOME="$MAPR_HOME"
-HDIR=\$(ls -1 \$MAPR_HOME/hadoop/|grep "hadoop-2")
-
-export HADOOP_HOME="\$MAPR_HOME/hadoop/\$HDIR"
+export HADOOP_HOME="$HADOOP_HOME"
 
 export HADOOP_CONF_DIR=\${HADOOP_HOME}/etc/hadoop
-MAPR_HADOOP_CLASSPATH=\`\${HADOOP_HOME}/bin/hadoop classpath\`:\`ls $MAPR_HOME/lib/slf4j-log*\`:
+MAPR_HADOOP_CLASSPATH=\`\${HADOOP_HOME}/bin/hadoop classpath\`:\`ls \$MAPR_HOME/lib/slf4j-log*\`:
 MAPR_HADOOP_JNI_PATH=\`\${HADOOP_HOME}/bin/hadoop jnipath\`
 export SPARK_LIBRARY_PATH=\$MAPR_HADOOP_JNI_PATH
 MAPR_SPARK_CLASSPATH="\$MAPR_HADOOP_CLASSPATH"
@@ -83,7 +84,7 @@ spark.mesos.executor.docker.image $APP_IMG
 
 spark.home  /spark
 
-spark.mesos.executor.docker.volumes ${APP_HOME}/${APP_VER}:/spark:ro,/opt/mapr:/opt/mapr:ro,/opt/mesosphere:/opt/mesosphere:ro
+spark.mesos.executor.docker.volumes ${APP_HOME}/${APP_VER_DIR}:/spark:ro,/opt/mapr:/opt/mapr:ro,/opt/mesosphere:/opt/mesosphere:ro
 
 EOC
 
