@@ -3,6 +3,7 @@
 APP_URL_FILE="spark-2.0.0-bin-without-hadoop.tgz"
 APP_URL_BASE="http://mirror.cc.columbia.edu/pub/software/apache/spark/spark-2.0.0/"
 APP_TGZ="$APP_URL_FILE"
+APP_VER_DIR=$(echo "$APP_TGZ"|sed "s/\.tgz//g")
 APP_URL="${APP_URL_BASE}${APP_URL_FILE}"
 
 

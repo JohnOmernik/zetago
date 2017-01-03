@@ -12,7 +12,7 @@ cat > $APP_HOME/run.sh << EOL
 
 IMG="$APP_IMG"
 
-SPARK="-v=${APP_HOME}/${APP_VER}:/spark:ro"
+SPARK="-v=${APP_HOME}/${APP_VER_DIR}:/spark:ro"
 
 MAPR="-v=/opt/mapr:/opt/mapr:ro"
 MESOSLIB="-v=/opt/mesosphere:/opt/mesosphere:ro"
@@ -35,7 +35,7 @@ chmod +x $APP_HOME/run.sh
 MAPR_HOME="/opt/mapr"
 
 @go.log INFO "Creating spark-env.sh"
-cat > ${APP_HOME}/${APP_VER}/conf/spark-env.sh << EOE
+cat > ${APP_HOME}/${APP_VER_DIR}/conf/spark-env.sh << EOE
 #!/usr/bin/env bash
 export JAVA_LIBRARY_PATH=/opt/mesosphere/lib
 export MESOS_NATIVE_JAVA_LIBRARY=/opt/mesosphere/lib/libmesos.so
@@ -68,7 +68,7 @@ read -e -p "Please enter the amount of Memory for the Spark Executor: " -i "4096
 
 
 @go.log INFO "Creating spark-defaults.conf"
-cat > ${APP_HOME}/${APP_VER}/conf/spark-defaults.conf << EOC
+cat > ${APP_HOME}/${APP_VER_DIR}/conf/spark-defaults.conf << EOC
 spark.master                       mesos://leader.mesos:5050
 
 spark.serializer                 org.apache.spark.serializer.KryoSerializer
