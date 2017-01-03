@@ -3,3 +3,17 @@
 # Displays Install Status of Packages 
 #
 
+function _packagestatus() {
+
+    PKGS=$(ls ./pkgs)
+    echo "Packages currently included and their status:"
+    echo ""
+    for PKG in $PKGS; do
+        echo "$PKG"
+    done
+
+
+}
+
+
+_packagestatus "$@"
