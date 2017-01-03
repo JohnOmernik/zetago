@@ -147,7 +147,7 @@ function _user() {
 
         if [ ! -d "/mapr/$CLUSTERNAME/user/$USER_NAME" ]; then
             @go.log INFO "$USER_NAME Home Directory not found: Creating"
-            maprapi "/volume/create?name=user.${USER_NAME}&path=/user/${USER_NAME}&rootdirperms=770&user=${USER_NAME}:fc,a,dump,restore,m,d%20${IUSER}:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=${USER_NAME}"
+            maprapi "/volume/create?name=user.${USER_NAME}&path=/user/${USER_NAME}&rootdirperms=770&user=${USER_NAME}:fc,a,dump,restore,m,d%20${IUSER}:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=${USER_NAME}" "10"
             echo ""
             T=""
             while [ "$T" == "" ]; do
