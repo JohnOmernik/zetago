@@ -136,7 +136,7 @@ EOS
         fi
     fi
     if [ -d "$SPARK_PKG_HOME" ]; then
-        SPARK_HOME_SHORT=$(ls -1 ${SPARK_PKG_HOME}|grep -v "run\.sh")
+        SPARK_HOME_SHORT=$(ls -1 ${SPARK_PKG_HOME}|grep -v "run\.sh"|grep -v "${APP_ID}\.conf")
         SPARK_HOME="${SPARK_PKG_HOME}/$SPARK_HOME_SHORT"
 
         echo "Using $SPARK_HOME for spark home"
@@ -225,4 +225,8 @@ if [ "$STARTME" == "Y" ]; then
         ./zeta cluster marathon scale $APP_MAR_ID $1 $MARATHON_SUBMIT 1
     fi
 fi
+
+@go.log INFO "Instance of $APP_NAME for $APP_USER can be reached at: ssh -p${APP_PORT} $APP_USER@${APP_USER}usershell-${APP_ID}-${APP_ROLE}.${ZETA_MARATHON_HOST}"
+
+
 

@@ -22,3 +22,12 @@ APP_MEM="$APP_MEM"
 APP_CPU="$APP_CPU"
 APP_IMG="$APP_IMG"
 EOL1
+
+echo ""
+echo ""
+echo "The umbrella instance for usershell is now installed"
+echo "To install and start individual shells for users run: "
+echo ""
+echo "$ ./zeta package start ${APP_HOME}/${APP_ID}.conf"
+echo ""
+echo ""
