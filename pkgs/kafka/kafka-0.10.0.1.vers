@@ -45,10 +45,12 @@ EOL
     sudo docker kill $CID
     sudo docker rm $CID
     sudo docker rmi -f $TMP_IMG
+    sudo chown -R $IUSER:$IUSER ./kafka-mesos
+    cd kafka-mesos
+    JAR=$(ls *.jar|sed "s/\.jar//")
+    TGZ=$(ls *.tgz|sed "s/\.tgz//")
 
-    cd ..
-    JAR=$(ls $BUILD_TMP/kafka-mesos/*.jar|sed "s/\.jar//"|sed "s@$BUILD_TMP\/kafka-mesos\/@@")
-    TGZ=$(ls $BUILD_TMP/kafka-mesos/*.tgz|sed "s/\.tgz//"|sed "s@$BUILD_TMP\/kafka-mesos\/@@")
+    cd $MYDIR
     cd $BUILD_TMP
 
     PKG_TGZ="${JAR}-${TGZ}.tgz"
@@ -59,5 +61,8 @@ EOL
         read -e -p "Replace package? " -i "N" REPLACE_TGZ
     else
         REPLACE_TGZ="Y"
+    fi
+    if [ "$REPLACE_TGZ" == "Y" ]; then
+        mv ${PKG_TGZ} ${APP_PKG_DIR}/
     fi
 fi

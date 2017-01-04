@@ -13,7 +13,7 @@ if [ "$BUILD" == "Y" ]; then
     cd $BUILD_TMP
     . ${MYDIR}/${APP_PKG_BASE}/${APP_VERS_FILE}
     cd $MYDIR
-    rm -rf $BUILD_TMP
+    sudo rm -rf $BUILD_TMP
 else
     @go.log WARN "Not rebuilding $APP_NAME - $APP_VERS_FILE"
 fi
