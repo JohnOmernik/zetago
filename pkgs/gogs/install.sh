@@ -116,7 +116,7 @@ cat > $APP_MAR_FILE << EOL
       "network": "BRIDGE",
       "portMappings": [
         { "containerPort": 22, "hostPort": ${APP_SSH_PORT}, "servicePort": 0, "protocol": "tcp"},
-        { "containerPort": 3000, "hostPort": ${APP_HTTPS_PORT}, "servicePort": 0, "protocol": "tcp"}
+        { "containerPort": ${APP_HTTPS_PORT}, "hostPort": ${APP_HTTPS_PORT}, "servicePort": 0, "protocol": "tcp"}
       ]
     },
     "volumes": [
