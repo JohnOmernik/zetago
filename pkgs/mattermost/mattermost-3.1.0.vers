@@ -1,0 +1,90 @@
+#!/bin/bash
+
+APP_VER="3.1.0"
+APP_IMG_TAG="$APP_VER"
+
+APP_IMG_DB_NAME="mattermost_db"
+APP_IMG_APP_NAME="mattermost_app"
+APP_IMG_WEB_NAME="mattermost_web"
+
+APP_IMG_DB="${ZETA_DOCKER_REG_URL}/${APP_IMG_DB_NAME}:${APP_IMG_TAG}"
+APP_IMG_APP="${ZETA_DOCKER_REG_URL}/${APP_IMG_APP_NAME}:${APP_IMG_TAG}"
+APP_IMG_WEB="${ZETA_DOCKER_REG_URL}/${APP_IMG_WEB_NAME}:${APP_IMG_TAG}"
+
+APP_GIT_BASE="https://github.com/mattermost"
+APP_GIT_REPO="mattermost-docker"
+
+
+if [ "$BUILD_DB" == "Y" ] || [ "$BUILD_APP" == "Y" ] || [ "$BUILD_WEB" == "Y" ]; then
+
+    # We do the building in the vers file because we have three images to build. 
+
+    # Preload our DOCKER_LINE(s)
+    if [ "$ZETA_DOCKER_PROXY" != "" ]; then
+        DOCKER_LINE1="ENV http_proxy=$ZETA_DOCKER_PROXY"
+        DOCKER_LINE2="ENV HTTP_PROXY=$ZETA_DOCKER_PROXY"
+        DOCKER_LINE3="ENV https_proxy=$ZETA_DOCKER_PROXY"
+        DOCKER_LINE4="ENV HTTPS_PROXY=$ZETA_DOCKER_PROXY"
+        DOCKER_LINE5="ENV NO_PROXY=$DOCKER_NOPROXY"
+        DOCKER_LINE6="ENV no_proxy=$DOCKER_NOPROXY"
+    fi
+    @go.log INFO "Cloning $APP_GIT_REPO"
+
+    git clone $APP_GIT_BASE/$APP_GIT_REPO
+    cd $APP_GIT_REPO
+
+    if [ "$BUILD_DB" == "Y" ]; then
+        @go.log INFO "Building DB for Mattermost"
+        cd db
+        # Patching Dockerfile for the proxy
+        if [ "$ZETA_DOCKER_PROXY" != "" ]; then
+            sed -i "/FROM /a $DOCKER_LINE1" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE2" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE3" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE4" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE5" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE6" Dockerfile
+        fi
+
+        sudo docker build -t $APP_IMG_DB .
+        sudo docker push $APP_IMG_DB
+        cd ..
+    fi
+
+    if [ "$BUILD_APP" == "Y" ]; then
+        @go.log INFO "Building App for Mattermost"
+        cd app
+        # Patching Dockerfile for the proxy
+        if [ "$ZETA_DOCKER_PROXY" != "" ]; then
+            sed -i "/FROM /a $DOCKER_LINE1" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE2" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE3" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE4" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE5" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE6" Dockerfile
+        fi
+
+        sudo docker build -t $APP_IMG_APP .
+        sudo docker push $APP_IMG_APP
+        cd ..
+    fi
+    if [ "$BUILD_WEB" == "Y" ]; then
+        @go.log INFO "Building Web for Mattermost"
+        cd web
+    # Patching Dockerfile for the proxy
+        if [ "$ZETA_DOCKER_PROXY" != "" ]; then
+            sed -i "/FROM /a $DOCKER_LINE1" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE2" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE3" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE4" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE5" Dockerfile
+            sed -i "/FROM /a $DOCKER_LINE6" Dockerfile
+        fi
+
+        sudo docker build -t $APP_IMG_WEB .
+        sudo docker push $APP_IMG_WEB
+        cd ..
+    fi
+
+
+fi
