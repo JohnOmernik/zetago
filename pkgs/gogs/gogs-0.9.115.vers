@@ -1,0 +1,38 @@
+#!/bin/bash
+
+APP_VER="v0.9.115"
+
+APP_GIT_BASE="https://github.com/gogits"
+APP_GIT_REPO="gogs"
+
+
+APP_IMG_NAME="gogs"
+APP_IMG_TAG="$APP_VER"
+
+APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
+
+
+if [ "$BUILD" == "Y" ]; then
+
+    git clone ${APP_GIT_BASE}/${APP_GIT_REPO}
+    cd $APP_GIT_REPO
+
+    sed -i "s/adduser /adduser -u 2500 /" ./docker/build.sh
+
+    if [ "$ZETA_DOCKER_PROXY" != "" ]; then
+        DOCKER_LINE1="ENV http_proxy=$ZETA_DOCKER_PROXY"
+        DOCKER_LINE2="ENV HTTP_PROXY=$ZETA_DOCKER_PROXY"
+        DOCKER_LINE3="ENV https_proxy=$ZETA_DOCKER_PROXY"
+        DOCKER_LINE4="ENV HTTPS_PROXY=$ZETA_DOCKER_PROXY"
+        DOCKER_LINE5="ENV NO_PROXY=$DOCKER_NOPROXY"
+        DOCKER_LINE6="ENV no_proxy=$DOCKER_NOPROXY"
+        sed -i "/FROM /a $DOCKER_LINE1" Dockerfile
+        sed -i "/FROM /a $DOCKER_LINE2" Dockerfile
+        sed -i "/FROM /a $DOCKER_LINE3" Dockerfile
+        sed -i "/FROM /a $DOCKER_LINE4" Dockerfile
+        sed -i "/FROM /a $DOCKER_LINE5" Dockerfile
+        sed -i "/FROM /a $DOCKER_LINE6" Dockerfile
+    fi
+
+
+fi
