@@ -69,6 +69,9 @@ read -e -p "Please enter the amount of Memory for the Spark Executor: " -i "4096
 
 
 @go.log INFO "Creating spark-defaults.conf"
+MAPRCP=$(ls -1 ${MAPR_HOME}/lib/maprfs-*|grep -v diagnostic|tr "\n" ":")
+YARNCP=$(ls $HADOOP_HOME/share/hadoop/yarn/hadoop-yarn-common-*)
+
 cat > ${APP_HOME}/${APP_VER_DIR}/conf/spark-defaults.conf << EOC
 spark.master                       mesos://leader.mesos:5050
 
@@ -78,7 +81,7 @@ spark.executor.memory            $APP_SPARK_EXECUTOR_MEM
 
 spark.sql.hive.metastore.sharedPrefixes com.mysql.jdbc,org.postgresql,com.microsoft.sqlserver,oracle.jdbc,com.mapr.fs.shim.LibraryLoader,com.mapr.security.JNISecurity,com.mapr.fs.jni
 
-spark.executor.extraClassPath   `ls $HADOOP_HOME/share/hadoop/yarn/hadoop-yarn-common-*`:`ls -1 ${MAPR_HOME}/lib/maprfs-*|grep -v diagnostic`
+spark.executor.extraClassPath   ${YARNCP}:${MAPRCP}
 
 spark.mesos.executor.docker.image $APP_IMG
 

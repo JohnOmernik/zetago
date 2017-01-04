@@ -335,7 +335,7 @@ echo ""
 echo "$APP_NAME instance ${APP_ID} installed at ${APP_HOME} and ready to go"
 echo "To start please run: "
 echo ""
-echo "> ${APP_HOME}/start_instance.sh"
+echo "$ ./zeta package start ${APP_HOME}/$APP_ID.conf"
 echo ""
 
 
