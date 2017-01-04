@@ -42,7 +42,7 @@ function _updateallldaphosts() {
         echo "Do you wish to stop the openldap, zetaca,  and docker registry service before update?"
         echo "This is highly recommended so that when the fuse service is restarted after LDAP installation, things stay happy"
         echo ""
-        read -e p "Restart openldap, zetaca, and  docker registry? " -i "Y" RES
+        read -e -p "Restart openldap, zetaca, and  docker registry? " -i "Y" RES
         if [ "$RES" == "Y" ]; then
             @go.log INFO "Restarting zetaca, docker registry, and openldap  for install of node info"
             ./zeta cluster marathon scale "shared/zetaca" 0 "$MARATHON_SUBMIT" 1

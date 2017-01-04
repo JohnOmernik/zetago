@@ -21,10 +21,12 @@ echo "For example, if this was AWS, and we were using ubuntu based nodes, I'd an
 echo "If I were using ubuntu and centos I'd provide 'ubuntu centos' for the Intial users"
 echo ""
 read -e -p "Initial user list to connect to zeta nodes: " -i "ubuntu centos ec2-user" INIT_USERS
+
+CURUSER=$(whoami)
 echo ""
-echo "We now need the key for the initial connection, this is typically location in /home/$INIT_USER/.ssh/id_rsa, but doesn't have to be. Please specify that here"
+echo "We now need the key for the initial connection, this is typically location in /home/$CURUSER/.ssh/id_rsa, but doesn't have to be. Please specify that here"
 echo ""
-read -e -p "Private key for initial user on zeta nodes: " -i "/home/$INIT_USER/.ssh/id_rsa" INIT_KEY_LOC
+read -e -p "Private key for initial user on zeta nodes: " -i "/home/$CURUSER/.ssh/id_rsa" INIT_KEY_LOC
 echo ""
 GEN_KEY="Y"
 OUT_KEY="./conf/iuser.key"
@@ -36,8 +38,8 @@ echo "These values will be saved in the conf for use as well"
 echo ""
 ZETAADM_UID="2500"
 MAPR_UID="2000"
-
 IUSER="zetaadm" # The Main User for Zeta
+
 echo "-----------------------------------"
 echo "The UID for the IUSER user will be $ZETAADM_UID and the UID for the mapr user will be $MAPR_UID"
 echo "These values are stored in the conf"
