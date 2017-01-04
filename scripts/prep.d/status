@@ -1,25 +1,49 @@
 #!/bin/bash
 #
-# Determines prep status of a given node or all nodes via --all
+# Determines prep status of a given node or all nodes via -a
+#
+# Arguments:
+# -n="%NODE% Get status of a specific node
+# -a Get status of all nodes in prep.conf
 #
 
 sourceconf "$PREP_CONF"
 
 function _prep_status() {
-    INVAL=$1
-    if [ "$INVAL" == "" ]; then
-        @go.log FATAL "Must provide a host to connect and update"
-    fi
 
-    if [ "$INVAL" == "--all" ]; then
+    ALL="0"
+
+    for i in "$@"
+        do
+        case $i in
+            -a)
+            ALL="1"
+            ;;
+            "-n="*)
+            HOST="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+    if [ "$ALL" == "1" ]; then
         MYHOSTS="$NODES"
     else
-        MYHOSTS="$INVAL"
+        MYHOSTS="$HOST"
     fi
+
+    if [ "$MYHOSTS" == "" ]; then
+        @go.log FATAL "Must provide a host to connect and update status on via -n= or specify -a for all nodes"
+    fi
+
     for HOST in $MYHOSTS; do
         TESTVAL=""
         TESTVAL=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "hostname")
         if [ "$TESTVAL" != "" ]; then
+            KERNEL_VER="unknown"
             HOSTUP="true"
             SYS_TYPE=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "/home/${IUSER}/system_type.sh")
             TESTVAL=""
@@ -33,6 +57,7 @@ function _prep_status() {
                 else
                     DOCKER="false"
                 fi
+                KERNEL_VER=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "uname -a|cut -d\" \" -f3")
             else
                 SUDOPRIV="false"
                 DOCKER="false"
@@ -42,7 +67,7 @@ function _prep_status() {
             SUDOPRIV="false"
             DOCKER="false"
         fi
-        @go.log INFO "Prep Status for $HOST - SYS_TYPE: $SYS_TYPE -  UP: $HOSTUP - SUDO: $SUDOPRIV - DOCKER: $DOCKER"
+        @go.log INFO "Prep Status for $HOST - SYS_TYPE: $SYS_TYPE -  UP: $HOSTUP - SUDO: $SUDOPRIV - KERNEL: $KERNEL_VER - DOCKER: $DOCKER"
     done
 }
 

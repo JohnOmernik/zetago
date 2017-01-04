@@ -1,0 +1,64 @@
+#!/bin/bash
+#
+# Displays Install Status of Packages 
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$PACKAGE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+. "$_GO_USE_MODULES" 'libpackage'
+
+function _packagestatus() {
+
+    for i in "$@"
+        do
+        case $i in
+            *)
+            APP_NAME="$i"
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ "$APP_NAME" != "" ]; then
+        PKGS="$APP_NAME"
+        echo "Checking Status of Package: $APP_NAME"
+    else
+        echo "Checking all Packages in ./pkgs"
+        PKGS=$(ls -d ./pkgs/*/)
+    fi
+
+
+    echo "Packages currently included and their status:"
+    echo ""
+
+    printf "%-30s %-30s %-30s\n" "Package" "In ./pkgs" "Install Status"
+    echo "------------------------------------------------------------------------------------------"
+    for DIR in $PKGS; do
+        PKG=$(echo $DIR|sed "s@\./pkgs/@@g"|sed "s@/@@g")
+        PKGBASE="false"
+        if [ -d "./pkgs/$PKG" ]; then
+            PKGBASE="true"
+        fi
+        if [ -d "/mapr/$CLUSTERNAME/zeta/shared/$PKG" ]; then
+            INST="true"
+        else
+            INST="false"
+        fi
+
+        printf "%-30s %-30s %-30s\n" "$PKG" "$PKGBASE" "$INST"
+
+    done
+
+    echo ""
+    echo ""
+}
+
+
+_packagestatus "$@"

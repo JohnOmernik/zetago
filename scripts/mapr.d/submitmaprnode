@@ -19,6 +19,7 @@ if [ "$MEUSER" != "${IUSER}" ]; then
 fi
 
 NODE=$1
+WAIT=$2
 
 CLDB_HOST=$(echo $CLDBS|grep $NODE)
 
@@ -38,5 +39,8 @@ fi
 
 @go.log INFO "Starting MapR Instance on $NODE using $MARATHON_FILE"
 
-./zeta cluster marathon submit $MARATHON_FILE $MARATHON_SUBMIT
-
+if [ "$WAIT" == "1" ]; then
+    ./zeta cluster marathon submit $MARATHON_FILE $MARATHON_SUBMIT 1
+else
+    ./zeta cluster marathon submit $MARATHON_FILE $MARATHON_SUBMIT
+fi

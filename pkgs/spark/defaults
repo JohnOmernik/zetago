@@ -1,0 +1,4 @@
+#!/bin/bash
+
+DEF_APP_VERS="spark-2.1.0.vers"
+REC_DIR="zeta"

@@ -36,10 +36,33 @@ function _updateallldaphosts() {
     fi
 
     if [ "$IUPDATE" == "Y" ] || [ "$UNATTEND" == "1" ]; then
+
         @go.log INFO "Updating all INTERNAL_NODES"
+
+        echo "Do you wish to stop the openldap, zetaca,  and docker registry service before update?"
+        echo "This is highly recommended so that when the fuse service is restarted after LDAP installation, things stay happy"
+        echo ""
+        read -e -p "Restart openldap, zetaca, and  docker registry? " -i "Y" RES
+        if [ "$RES" == "Y" ]; then
+            @go.log INFO "Restarting zetaca, docker registry, and openldap  for install of node info"
+            ./zeta cluster marathon scale "shared/zetaca" 0 "$MARATHON_SUBMIT" 1
+            ./zeta cluster marathon scale "shared/openldap" 0 "$MARATHON_SUBMIT" 1
+            ./zeta cluster marathon scale "shared/dockerregv2" 0 "$MARATHON_SUBMIT" 1
+        else
+            @go.log WARN "Shared Services not restarted, this could inhibit the fuse restart from working, causing unknown issues"
+        fi
         for NODE in $INTERNAL_NODES; do
             ./zeta cluster hostldapupdate -h="$NODE" -u
         done
+        if [ "$RES" == "Y" ]; then
+            @go.log INFO "Restarting zetaca, docker registry, and openldap  for install of node info"
+            ./zeta cluster marathon scale "shared/dockerregv2" 1 "$MARATHON_SUBMIT" 1
+            ./zeta cluster marathon scale "shared/zetaca" 1 "$MARATHON_SUBMIT" 1
+            ./zeta cluster marathon scale "shared/openldap" 1 "$MARATHON_SUBMIT" 1
+        else
+            @go.log WARN "Shared Services not restarted, this could inhibit the fuse restart from working, causing unknown issues"
+        fi
+
     else
         @go.log FATAL "Not updating LDAP on INTERNAL_NODES"
     fi

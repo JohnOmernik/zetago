@@ -9,15 +9,11 @@ sourceconf "$PREP_CONF"
 function _dcos() {
 
     LOCK="0"
-    UNLOCK="0"
 
     for i in "$@"
     do
     case $i in
-        -u|--unlockconf)
-        UNLOCK="1"
-        ;;
-        -l|--lockconf)
+        -l)
         LOCK="1"
         ;;
         *)
@@ -25,10 +21,6 @@ function _dcos() {
         ;;
     esac
     done
-
-    if [ "$UNLOCK" == "1" ] && [ "$LOCK" == "1" ]; then
-        @go.log FATAL "Both Lock (-l) and Unlock (-u) cannot be specified at the same time"
-    fi
 
     initconf "$DCOS_CONF"
 
@@ -40,15 +32,15 @@ function _dcos() {
     echo ""
     echo "Commands to use with dcos:"
     echo ""
-    echo "./zeta dcos bootstrap - Create DCOS config and bootstrap on bootstrap node"
-    echo "./zeta dcos install %NODE - Install DCOS on %NODE given dcos.conf"
-    echo "./zeta dcos install --all - Install DCOS on all nodes listed in dcos.conf"
-    echo "./zeta dcos -l|--lockconf Lock dcos.conf file"
-    echo "./zeta dcos -u|--unlockconf Unlock dcos.conf file"
+    echo "./zeta dcos bootstrap         # Create DCOS config and bootstrap on bootstrap node"
+    echo "./zeta dcos install -n=NODE1  # Install DCOS on NODE1 given dcos.conf"
+    echo "./zeta dcos install -a        # Install DCOS on all nodes listed in dcos.conf"
+    echo ""
+    echo "./zeta dcos -l                # Lock or unlock dcos.conf file"
     echo ""
 
 
-    if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then
+    if [ "$LOCK" == "1" ]; then
        lockconf "$DCOS_CONF"
     fi
 

@@ -1,0 +1,112 @@
+#!/bin/bash
+#
+# install a package for use with Zeta
+#
+# Arguments:
+# -u                # Unattended Installation
+# -s                # Search Additional Locations PRIOR to core package location (Default is to search and use core package location first)
+# -r                # Rebuild image automatically if -u is passed and the image already exists
+# %PACKAGENAME%     # The name of the package you wish to build
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$PACKAGE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+. "$_GO_USE_MODULES" 'libpackage'
+
+
+function _packageinstall() {
+
+    MYDIR=$(pwd)
+
+    UNATTEND="0"
+    SEARCH_ADD_FIRST="0"
+    VERBOSE_DISPLAY="0"
+
+  . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+
+    ACTION_SRC="user"
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            -d)
+            VERBOSE_DISPLAY="1"
+            ;;
+            -s)
+            SEARCH_ADD_FIRST="1"
+            ;;
+            "-v="*)
+            APP_VERS_FILE="${i#*=}"
+            ;;
+            *)
+            APP_NAME="$i"
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ "$APP_NAME" == "" ]; then
+        @go.log FATAL "You must specify a Package name"
+    fi
+
+    APP_PKG_BASE=""
+    APP_VERS_FILE=""
+
+    # Determine the package base
+    getpackagebase "$APP_NAME" "$SEARCH_ADD_FIRST" "APP_PKG_BASE"
+
+    @go.log INFO "Sourcing Defaults file for $APP_NAME"
+    . ${APP_PKG_BASE}/defaults
+
+    # Get the version file to install
+    getversfile "$APP_VERS_FILE" "$UNATTEND" "$DEF_APP_VERS" "$APP_PKG_BASE" "$APP_NAME" "APP_VERS_FILE"
+
+    . ${APP_PKG_BASE}/${APP_VERS_FILE}
+    # Check to ensure the version file we are installing is built
+    checkversbuild "$APP_NAME" "$APP_PKG_BASE" "$APP_VERS_FILE" "$UNATTEND" "$SEARCH_ADD_FIRST"
+
+    # Get the information for installation
+    . "$_GO_USE_MODULES" 'libinstall'
+
+    mkdir -p ${APP_HOME}
+
+    # Run the install
+    . ${APP_PKG_BASE}/install.sh
+
+
+    APP_CONFIG="${APP_HOME}/${APP_ID}.conf"
+
+cat > $APP_CONFIG << EOC
+#!/bin/bash
+# Application Instance Config for $APP_NAME instance: $APP_ID
+#
+APP_ROLE="${APP_ROLE}"
+APP_DIR="${APP_DIR}"
+APP_NAME="${APP_NAME}"
+APP_ID="${APP_ID}"
+APP_CNT="${APP_CNT}"
+APP_MAR_ID="${APP_MAR_ID}"
+APP_VERS_FILE="${APP_VERS_FILE}"
+APP_HOME="${APP_HOME}"
+APP_MAR_FILE="$APP_MAR_FILE"
+APP_CONFIG="$APP_CONFIG"
+APP_ENV_FILE="$APP_ENV_FILE"
+EOC
+
+
+
+
+
+}
+
+
+_packageinstall "$@"

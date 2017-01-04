@@ -1,0 +1,23 @@
+#!/bin/bash
+
+APP_IMG_NAME="buildbase_mapr"
+APP_IMG_TAG="latest"
+APP_VER="1.0"
+APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
+
+if [ "$BUILD" == "Y" ]; then
+
+cat > ./Dockerfile << EOL
+
+FROM ${ZETA_DOCKER_REG_URL}/zetabase_mapr
+
+RUN apt-get install -y git nano cpio rpm2cpio unzip && apt-get clean && apt-get autoremove -y
+
+RUN mkdir -p /app
+WORKDIR /app
+CMD ["/bin/bash"]
+
+EOL
+
+fi
+

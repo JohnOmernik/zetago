@@ -1,0 +1,65 @@
+#!/bin/bash
+#
+# ./zeta package
+#
+# Helps to maintain packages in a zeta environment
+#
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+
+function _package() {
+   LOCK="0"
+
+    for i in "$@"
+    do
+    case $i in
+        -l)
+        LOCK="1"
+        ;;
+        *)
+            # unknown option
+        ;;
+    esac
+    done
+
+    initconf "$PACKAGE_CONF"
+
+    echo ""
+    echo "********************************"
+    echo "Package Installation Scripts for Zeta"
+    echo "********************************"
+    echo ""
+    echo "Commands to use with package:"
+    echo ""
+    echo "./zeta package                          # This command"
+    echo "./zeta package status                   # Lists all packages in ./pkgs and their status in the cluster"
+    echo "./zeta package status %PKG%             # Checks to see if %PKG% is in ./pkgs and if so, what the status is in the cluster"
+    echo "./zeta package build %PKG%              # Run the build scripts for the package %PKG%"
+    echo "./zeta package install %PKG%            # Install an instance of package %PKG%"
+    echo "./zeta package start %PATHTOCONF%       # Start the instance with conf located at %PATHTOCONF% (example: /mapr/mycluster/zeta/prod/drill/drillprod/drillprod.conf"
+    echo "./zeta package stop %PATHTOCONF%        # Stop the instance with conf located at %PATHTOCONF% (example: /mapr/mycluster/zeta/prod/drill/drillprod/drillprod.conf"
+    echo "./zeta package uninstall %PATHTOCONF%   # Uninstall the package with conf at %PATHTOCONF% use -d to delete all data"
+    echo ""
+    echo "./zeta package -l                # Lock or unlock package.conf file"
+    echo ""
+
+    if [ "$LOCK" == "1" ]; then
+       lockconf "$PACKAGE_CONF"
+    fi
+
+
+}
+
+_package "$@"
+
+
+

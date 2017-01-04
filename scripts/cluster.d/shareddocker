@@ -103,7 +103,7 @@ cat > $MARFILE << EOF
   }
 }
 EOF
-    ./zeta cluster marathon submit "${MARFILE}" "${MARATHON_SUBMIT}"
+    ./zeta cluster marathon submit "${MARFILE}" "${MARATHON_SUBMIT}" 1
 
     @go.log INFO "Shared Docker Registry installed"
 

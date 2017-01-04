@@ -1,30 +1,23 @@
 #!/bin/bash
 #
-# prep works to take list of nodes (looking in ./conf/prep.conf" in a variable called NODES or accepting a CSV list of nodes as an argument toget them ready fo DCOS and Zeta
+# The prep scripts look to install users and certain required system packages on new nodes for Zeta Architecture
 #
 # Child Commands
 # prep genkey - Generate a SSH key for use between nodes. This is particularly handy in AWS but could be made to work on prem too
 #
-
 #
 # Check for the the conf and offer to create one
 # Arguments:
-#     -u|--unlock      Unlock the config so it prompts each time if you want to use the config
 #     -l|--lock        Lock the config so it no longer prompts if you want to use the existing config
 #
-
 
 function _prep() {
 
     LOCK="0"
-    UNLOCK="0"
 
     for i in "$@"
     do
     case $i in
-        -u|--unlockconf)
-        UNLOCK="1"
-        ;;
         -l|--lockconf)
         LOCK="1"
         ;;
@@ -34,26 +27,28 @@ function _prep() {
     esac
     done
 
-    if [ "$UNLOCK" == "1" ] && [ "$LOCK" == "1" ]; then
-        @go.log FATAL "Both Lock (-l) and Unlock (-u) cannot be specified at the same time"
-    fi
-
     initconf "$PREP_CONF"
 
     echo "Commands to use with prep:"
     echo ""
-    echo "./zeta prep userprep %NODE - Prep user on a specific node"
-    echo "./zeta prep systemprep %NODE - Prep system on a specific node"
-    echo "./zeta prep install NODE1,NODE2 - Run both the userprep and systemprep on NODE1 and NODE2"
-    echo "./zeta prep install --all - Prep User and system on all nodes but do so one at a time"
-    echo "./zeta prep install --all -p - Prep all nodes in prep.conf in parallel"
+    echo "./zeta prep userprep -n=NODE     # Prep user on a specific node"
+    echo "./zeta prep systemprep -n=NODE   # Prep system on a specific node"
+    echo "./zeta prep install -n=NODE1     # Run both the userprep and systemprep on NODE1"
+    echo "./zeta prep install -a           # Prep User and system on all nodes but do so one at a time"
+    echo "./zeta prep install -a -u        # Prep all nodes in prep.conf in parallel"
+    echo ""
+    echo ""
+    echo "To lock or unlock the prep config:"
+    echo "./zeta prep -l"
+    echo ""
     echo ""
     echo "To log into the initial node, please use:"
     echo ""
     echo "ssh -i $OUT_KEY ${IUSER}@$INIT_NODE"
     echo ""
 
-    if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then
+
+    if [ "$LOCK" == "1" ]; then
        lockconf "$PREP_CONF"
     fi
 

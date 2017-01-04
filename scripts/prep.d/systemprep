@@ -1,10 +1,13 @@
 #!/bin/bash
 #
-# Create users on Zeta nodes for initial install
+# Update system packages on Zeta nodes for initial install
+#
+# Arguments
+# -n=%HOSTNAME% - The host to run the system prep on
+# -u - Run attended (don't wait to complete)
 #
 
 sourceconf "$PREP_CONF"
-
 SCRIPTS="./bin/ubuntu_prep.sh ./bin/centos_prep1.sh ./bin/centos_prep2.sh"
 
 FOUND="1"
@@ -13,7 +16,9 @@ for SCRIPT in $SCRIPTS; do
         FOUND="0"
     fi
 done
+
 if [ "$FOUND" == "0" ]; then
+    @go.log INFO "System Scripts not found, creating in ./bin"
     ./zeta prep createsystemprep
 fi
 
@@ -23,11 +28,25 @@ if [ ! -f "$OUT_KEY" ]; then
 fi
 
 function _systemprep() {
-    HOST=$1
-    ATONCE=$2
+
+    UNATTEND="0"
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            "-n="*)
+            HOST="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
 
     if [ "$HOST" == "" ]; then
-        @go.log FATAL "Must provide a host to connect and update"
+        @go.log FATAL "Must provide a host to connect and update using -n="
     fi
 
     @go.log INFO "Connecing to and updating host $HOST"
@@ -38,7 +57,7 @@ function _systemprep() {
     @go.log INFO "System Type: $SYS_TYPE - Running Appropriate Scripts"
     if [ "$SYS_TYPE" == "ubuntu" ]; then
         scp -i ${OUT_KEY} ./bin/ubuntu_prep.sh ${IUSER}@${HOST}:/home/${IUSER}/ubuntu_prep.sh
-        if [ "$ATONCE" == "-p" ]; then
+        if [ "$UNATTEND" == "1" ]; then
             ssh -i ${OUT_KEY} ${IUSER}@${HOST} "sudo sh -c 'mv /home/${IUSER}/ubuntu_prep.sh /root/scripts/; nohup /root/scripts/ubuntu_prep.sh > /dev/null 2>&1 &'"
         else
             ssh -i ${OUT_KEY} ${IUSER}@${HOST} "sudo mv /home/${IUSER}/ubuntu_prep.sh /root/scripts/ && sudo /root/scripts/ubuntu_prep.sh"
@@ -46,7 +65,7 @@ function _systemprep() {
     elif [ "$SYS_TYPE" == "rh_centos" ]; then
         scp -i ${OUT_KEY} ./bin/centos_prep1.sh ${IUSER}@${HOST}:/home/${IUSER}/centos_prep1.sh
         scp -i ${OUT_KEY} ./bin/centos_prep2.sh ${IUSER}@${HOST}:/home/${IUSER}/centos_prep2.sh
-        if [ "$ATONCE" == "-p" ]; then
+        if [ "$UNATTEND" == "1" ]; then
             ssh -i ${OUT_KEY} ${IUSER}@${HOST} "sudo sh -c 'mv /home/${IUSER}/centos_prep1.sh /root/scripts/; mv /home/${IUSER}/centos_prep2.sh /root/scripts/; nohup /root/scripts/centos_prep1.sh > /dev/null 2>&1 &'"
         else
             ssh -i ${OUT_KEY} ${IUSER}@${HOST} "sudo mv /home/${IUSER}/centos_prep1.sh /root/scripts/ && sudo mv /home/${IUSER}/centos_prep2.sh /root/scripts/ && sudo /root/scripts/centos_prep1.sh"

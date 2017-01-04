@@ -26,10 +26,12 @@ function _zetaca_install() {
     ./zeta cluster zetaca build
     ./zeta cluster zetaca cascripts
     ./zeta cluster zetaca certcreation
-    ./zeta cluster marathon submit "$ZETACA_HOME/marathon.json" "$MARATHON_SUBMIT"
+    @go.log INFO "Zeta CA App Submitted to Marathon: Waiting for deployment to finish before moving on"
 
-    @go.log INFO "Zeta CA App Submitted to Marathon: Waiting 30 seconds for App Start"
-    sleep 30
+    ./zeta cluster marathon submit "$ZETACA_HOME/marathon.json" "$MARATHON_SUBMIT" 1
+
+
+    sleep 2
     echo ""
     echo "It's highly recommended you update nodes with the Zeta CA Master certificate"
     echo "You can do that for each node by running:"

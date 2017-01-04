@@ -1,0 +1,88 @@
+#!/bin/bash
+#
+# Build a package for use with Zeta
+#
+# Arguments:
+# -u                # Unattended Installation
+# -s                # Search Additional Locations PRIOR to core package location (Default is to search and use core package location first)
+# -r                # Rebuild image automatically if -u is passed and the image already exists
+# %PACKAGENAME%     # The name of the package you wish to build
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$PACKAGE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+. "$_GO_USE_MODULES" 'libpackage'
+
+
+function _packagebuild() {
+    MYDIR=$(pwd)
+    UNATTEND="0"
+    REBUILD="0"
+    SEARCH_ADD_FIRST="0"
+
+  . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            -r)
+            REBUILD="1"
+            ;;
+            -s)
+            SEARCH_ADD_FIRST="1"
+            ;;
+            "-v="*)
+            APP_VERS_FILE="${i#*=}"
+            ;;
+            *)
+            APP_NAME="$i"
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ "$APP_NAME" == "" ]; then
+        @go.log FATAL "You must specify a Package name"
+    fi
+
+    BUILD_TMP="./tmpbuilder"
+
+    APP_PKG_BASE=""
+
+    # Determine the package base
+    getpackagebase "$APP_NAME" "$SEARCH_ADD_FIRST" "APP_PKG_BASE"
+
+    # Source Defaults
+    @go.log INFO "Sourcing Defaults file for $APP_NAME"
+    . ${APP_PKG_BASE}/defaults
+
+    # Get the version file to build
+    getversfile "$APP_VERS_FILE" "$UNATTEND" "$DEF_APP_VERS" "$APP_PKG_BASE" "$APP_NAME" "APP_VERS_FILE"
+
+    # Pre fil variables and create the base Zeta install location
+    BUILD="N"
+    APP_ROOT="/mapr/$CLUSTERNAME/zeta/shared/$APP_NAME"
+    APP_PKG_DIR="$APP_ROOT/packages"
+    mkdir -p $APP_ROOT
+    mkdir -p $APP_PKG_DIR
+
+    # Source the Version file
+    . ${APP_PKG_BASE}/${APP_VERS_FILE}
+
+    # Source the build script
+    . ${APP_PKG_BASE}/build.sh
+
+}
+
+
+_packagebuild "$@"

@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+# Create conf file for  package management
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+# Main packages that ship with zetago
+CORE_PKG_LOC="./pkgs"
+
+# Core base install
+SHARED_LOC="/mapr/$CLUSTERNAME/zeta/shared"
+
+# Additional Package Repo locations (This can be multiple directories separated by commas)
+ADD_PKG_LOC=""
+
+
+echo ""
+echo "Core Package Location: $CORE_PKG_LOC"
+echo ""
+echo "Shared Install Location: $SHARED_LOC"
+echo ""
+echo "Additional PKG Roots (Comma separated) (Can be added later): $ADD_PKG_LOC"
+echo ""
+
+cat > $PACKAGE_CONF << EOP
+#!/bin/bash
+
+CORE_PKG_LOC="$CORE_PKG_LOC"
+SHARED_LOC="$SHARED_LOC"
+ADD_PKG_LOC="$ADD_PKG_LOC"
+PACKAGE_LOCKED="1"
+EOP
+
+@go.log INFO "Package Management conf created at $PACKAGE_CONF"
+

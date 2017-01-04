@@ -1,0 +1,7 @@
+#!/bin/bash
+
+APP_VER="drill-1.8.0"
+APP_TGZ="${APP_VER}.tgz"
+APP_URL_ROOT="http://package.mapr.com/releases/ecosystem-5.x/redhat/"
+APP_URL_FILE="mapr-drill-1.8.0.201609121517-1.noarch.rpm"
+APP_URL="${APP_URL_ROOT}${APP_URL_FILE}"

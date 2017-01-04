@@ -11,15 +11,11 @@ sourceconf "$MAPR_CONF"
 function _cluster() {
 
     LOCK="0"
-    UNLOCK="0"
 
     for i in "$@"
     do
     case $i in
-        -u|--unlockconf)
-        UNLOCK="1"
-        ;;
-        -l|--lockconf)
+        -l)
         LOCK="1"
         ;;
         *)
@@ -27,10 +23,6 @@ function _cluster() {
         ;;
     esac
     done
-
-    if [ "$UNLOCK" == "1" ] && [ "$LOCK" == "1" ]; then
-        @go.log FATAL "Both Lock (-l) and Unlock (-u) cannot be specified at the same time"
-    fi
 
     initconf "$CLUSTER_CONF"
 
@@ -50,20 +42,19 @@ function _cluster() {
     echo "./zeta cluster sharedldap - Install a shared OpenLDAP server on the cluster"
     echo "./zeta cluster allldaphosts - Update all hosts in prep.conf to use OpenLDAP"
     echo "./zeta cluster addsharedrole - Runs the role add script for the shared role"
-    echo "./zeta cluster sharedldapadm - Install a shared Ldap Admin Server on the cluster"
-    echo "./zeta cluster ldapperf - Update Ldap Server for increased performance run with -a flag"
+    echo "./zeta cluster sharedldapadmin - Install a shared Ldap Admin Server on the cluster"
+    echo "./zeta cluster ldapperf -a -u - Update Ldap Server for increased performance run with -a flag"
     echo ""
     echo "Helper Scripts:"
     echo "./zeta cluster hostldapupdate - Update a single host to use OpenLDAP"
     echo "./zeta cluster addzetarole - Create role users, directories, and shared files for a single role with -r="
     echo ""
     echo "Config Management:"
-    echo "./zeta cluster -l|--lockconf Lock cluster.conf file"
-    echo "./zeta cluster -u|--unlockconf Unlock cluster.conf file"
+    echo "./zeta cluster -l  #lock or unlockcluster.conf file"
     echo ""
 
 
-    if [ "$UNLOCK" == "1" ] || [ "$LOCK" == "1" ]; then
+    if [ "$LOCK" == "1" ]; then
        lockconf "$CLUSTER_CONF"
     fi
 

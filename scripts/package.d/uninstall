@@ -1,0 +1,104 @@
+#!/bin/bash
+#
+# uninstall a package for use with Zeta
+#
+# Arguments:
+# -u                # Unattended Unnstallation
+# %CONF_FILE%     # The path and location of the conf file for the instance you want to uninstall
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$PACKAGE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+. "$_GO_USE_MODULES" 'libpackage'
+
+
+function _packageuninstall() {
+
+    MYDIR=$(pwd)
+
+    UNATTEND="0"
+
+  . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+
+    ACTION_SRC="user"
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            -d)
+            DESTROY="1"
+            ;;
+            *)
+            CONF_FILE="$i"
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ ! -f "$CONF_FILE" ]; then
+        @go.log FATAL "You must specify a installed package conf file location"
+    fi
+
+    . $CONF_FILE
+
+
+    if [ "$UNATTEND" == "1" ]; then
+        CONFIRM="Y"
+    else
+        echo ""
+        echo "You have requested to uninstall the instance $APP_ID in role $APP_ROLE of the applicaiton $APP_NAME"
+        echo "Uninstall stops the app, removes it from Marathon, and removes the ENV files for the application but leaves data/conf available"
+        echo ""
+        if [ "$DESTROY" == "1" ]; then
+            echo ""
+            echo "********************************"
+            echo ""
+            echo "You have also selected to destroy and delete all data for this app in addition to uninstalling from the ENV variables and marathon" 
+            echo ""
+            echo "This is irreversible"
+            echo ""
+            echo "********************************"
+            echo ""
+        fi
+
+        read -e -p "Are you sure you wish to go on with this action? " -i "N" CONFIRM
+    fi
+
+    if [ "$CONFIRM" == "Y" ]; then
+        @go.log WARN "Proceeding with uninstall of $APP_ID"
+
+        @go.log INFO "Stopping $APP_ID"
+        if [ "$APP_MAR_ID" != "" ]; then
+            ./zeta package stop $CONF_FILE
+        fi
+        @go.log INFO "Removing ENV file at $APP_ENV_FILE"
+        if [ -f "$APP_ENV_FILE" ]; then
+            rm $APP_ENV_FILE
+        fi
+        @go.log INFO "Destroying $APP_MAR_ID in marathon"
+        if [ "$APP_MAR_ID" != "" ]; then
+            ./zeta cluster marathon destroy $APP_MAR_ID $MARATHON_SUBMIT 1
+        fi
+        @go.log WARN "$APP_NAME instance $APP_ID unininstalled"
+        if [ "$DESTROY" == "1" ]; then
+            @go.log WARN "Also removing all data for app"
+            @go.log WARN "If volumes exist, we need to handle those"
+            sudo rm -rf $APP_HOME
+        fi
+    else
+        @go.log WARN "User canceled uninstall"
+    fi
+
+}
+
+
+_packageuninstall "$@"

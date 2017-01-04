@@ -127,13 +127,12 @@ EOL4
 
 
     MARID="shared/zetaca"
-    ./zeta cluster marathon destroy "$MARID" "$MARATHON_SUBMIT"
+    @go.log INFO "Removing old instance and waiting for it to close"
+    ./zeta cluster marathon destroy "$MARID" "$MARATHON_SUBMIT" 1
+    sleep 1
 
-    echo "Waiting 30 seconds for the Application to close"
-    sleep 30
-
-    echo "Submitting new Zeta CA"
-    ./zeta cluster marathon submit "${MAR_FILE}" "$MARATHON_SUBMIT"
+    @go.log INFO "Submitting new Zeta CA instance and waiting for it to start"
+    ./zeta cluster marathon submit "${MAR_FILE}" "$MARATHON_SUBMIT" 1
     echo ""
     sleep 1
     echo "CA Moved!"

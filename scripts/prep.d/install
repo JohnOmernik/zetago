@@ -1,31 +1,37 @@
 #!/bin/bash
 #
 # Node prep install - Actually run both the user install and the system prep for Zeta
-# Usage:
-# ./zeta prep install node1,node2,node3 # Run install scripts on specific nodes 
-# ./zeta prep install --all # Run node prep on all nodes in prep.conf, but do so one at a time
-# ./zeta prep instlal --all -p # Run node prep on all nodes, but do so in parallel. 
 #
-
+# Arguments:
+# -n=%NODE% Run the User and System install scripts on a specifc node (good for adding nodes at a later time)
+# -a Run the User and System install scripts on all nodes in the prep.conf
+# -u Run the scripts in unattended mode (don't wait for each host to complete before moving on)
+#
+# Usage examples:
+# ./zeta prep install -n=%NODE% # Run install scripts on specific nodes
+# ./zeta prep install -a # Run node prep on all nodes in prep.conf, but do so one at a time
+# ./zeta prep instlal -a -u # Run node prep on all nodes, but do in parallel and unattended.
+#
 sourceconf "$PREP_CONF"
-
 
 function _prepinstall() {
 
     ALL="0"
-    PARALLEL="0"
+    UNATTEND="0"
 
     for i in "$@"
     do
     case $i in
-        -a|--all)
+        -a)
         ALL="1"
         ;;
-        -p|--parallel)
-        PARALLEL="1"
+        -u)
+        UNATTEND="1"
+        ;;
+        "-n="*)
+        HOST="${i#*=}"
         ;;
         *)
-        TNODES="$i"
         ;;
     esac
     done
@@ -33,15 +39,15 @@ function _prepinstall() {
     if [ "$ALL" == "1" ]; then
         RUN_NODES="$NODES"
     else
-        RUN_NODES=$(echo $TNODES|tr "," " ")
+        RUN_NODES="$HOST"
     fi
 
     for NODE in $RUN_NODES; do
-        ./zeta prep userprep $NODE
-        if [ "$PARALLEL" == "1" ]; then
-            ./zeta prep systemprep $NODE -p
+        ./zeta prep userprep -n="$NODE"
+        if [ "$UNATTEND" == "1" ]; then
+            ./zeta prep systemprep -n="$NODE" -u
         else
-            ./zeta prep systemprep $NODE
+            ./zeta prep systemprep -n="$NODE"
         fi
     done
 }

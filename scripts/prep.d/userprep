@@ -6,20 +6,40 @@
 sourceconf "$PREP_CONF"
 
 SCRIPTSRC="./conf/userupdate.sh"
+if [ ! -f "$SCRIPTSRC" ]; then
+   @go.log INFO "User prep scripts not found, creating in .conf for security"
+   ./zeta prep createuserprep
+fi
 
 if [ ! -f "$OUT_KEY" ]; then
     @go.log INFO "Prep conf exists, however, keys have not been generated, doing so now"
     ./zeta prep genkey
 fi
+
 PUB_KEY=$(cat $OUT_KEY_PUB)
 
 function _userprep() {
-    HOST=$1
+
+    for i in "$@"
+        do
+        case $i in
+            "-n="*)
+            HOST="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+    if [ "$HOST" == "" ]; then
+        @go.log FATAL "Host must not be blank, please specify with -n=%HOSTNAME%"
+    fi
+
+
     REM_SCRIPT="/tmp/userupdate.sh"
 
-    if [ ! -f "$SCRIPTSRC" ]; then
-        ./zeta prep createuserprep
-    fi
     @go.log INFO "Connecing to and updating host $HOST"
     for USR in $INIT_USERS; do
         OUTTEST=$(ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${USR}@${HOST} hostname)

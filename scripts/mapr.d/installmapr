@@ -59,7 +59,7 @@ for CLDB in $CLDBS; do
     else
         STARTED="$STARTED $CLDB_HOST"
     fi
-    ./zeta mapr submitmaprnode $CLDB_HOST
+    ./zeta mapr submitmaprnode $CLDB_HOST 1
 done
 echo ""
 echo ""

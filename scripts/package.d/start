@@ -1,0 +1,87 @@
+#!/bin/bash
+#
+# Start an already installed package
+#
+# Arguments:
+# -u                # Unattended Installation
+# -s                # Search Additional Locations PRIOR to core package location (Default is to search and use core package location first)
+# -r                # Rebuild image automatically if -u is passed and the image already exists
+# %PACKAGENAME%     # The name of the package you wish to build
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$PACKAGE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+. "$_GO_USE_MODULES" 'libpackage'
+
+
+function _packagestart() {
+
+    MYDIR=$(pwd)
+
+    UNATTEND="0"
+
+  . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+
+    ACTION_SRC="user"
+    for i in "$@"
+        do
+        case $i in
+            *)
+            CONF_FILE="$i"
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ ! -f "$CONF_FILE" ]; then
+        @go.log FATAL "You must specify a path to a conf file"
+    fi
+    . $CONF_FILE
+
+    # Determine the package base
+    getpackagebase "$APP_NAME" "0" "APP_PKG_BASE"
+
+
+    if [ -f "$APP_PKG_BASE/start.sh" ]; then
+        @go.log INFO "Using Package start.sh information"
+        . $APP_PKG_BASE/start.sh
+    else
+        @go.log INFO "Using default start instance"
+
+        CUR_STATUS=$(./zeta cluster marathon getinfo $APP_MAR_ID $MARATHON_SUBMIT)
+
+        EXISTS=$(echo $CUR_STATUS|grep "does not exist")
+
+        SUBMIT="0"
+        START="0"
+
+        if [ "$EXISTS" == "" ]; then
+            RUNNING=$(echo $CUR_STATUS|grep "TASK_RUNNING")
+            if [ "$RUNNING" != "" ]; then
+                @go.log WARN "Task $APP_MAR_ID already exists on cluster and is in a TASK_RUNNING state. Will not attempt to start"
+            else
+                START="1"
+            fi
+        else
+            SUBMIT="1"
+        fi
+        if [ "$SUBMIT" == "1" ]; then
+            ./zeta cluster marathon submit $APP_MAR_FILE $MARATHON_SUBMIT 1
+            @go.log INFO "Submitting $APP_ID as it hasn't been submitted yet"
+        fi
+        if [ "$START" == "1" ]; then
+            @go.log INFO "Starting $APP_ID and scaling to $APP_CNT instances per conf file"
+            ./zeta cluster marathon scale $APP_MAR_ID $APP_CNT $MARATHON_SUBMIT 1
+        fi
+    fi
+}
+
+
+_packagestart "$@"
