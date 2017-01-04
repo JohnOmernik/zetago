@@ -284,7 +284,7 @@ function reqdockerimg() {
             if [ "$DCK" != "Y" ]; then
                 @go.log FATAL "Cannont continue installed of $APP_NAME without image $IMG"
             fi
-            ./zeta pacakge build $IMG
+            ./zeta package build $IMG
         fi
     done
 
