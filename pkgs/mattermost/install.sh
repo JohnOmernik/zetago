@@ -145,7 +145,7 @@ EOD
 
 cat > $APP_MAR_APP_FILE << EOA
 {
-  "id": "${APP_MAR_APP_ID",
+  "id": "${APP_MAR_APP_ID}",
   "cmd": "/mattermost/config/run.sh",
   "cpus": ${APP_APP_CPU},
   "mem": ${APP_APP_MEM},
@@ -176,52 +176,6 @@ cat > $APP_MAR_APP_FILE << EOA
   }
 }
 EOA
-
-
-
-
-
-
-cat > $APP_MAR_FILE << EOL
-{
-  "id": "${APP_MAR_ID}",
-  "cpus": $APP_CPU,
-  "mem": $APP_MEM,
-  "instances": 1,
-  "labels": {
-   "CONTAINERIZER":"Docker"
-  },
-  "container": {
-    "type": "DOCKER",
-    "docker": {
-      "image": "${APP_IMG}",
-      "network": "BRIDGE",
-      "portMappings": [
-        { "containerPort": 3306, "hostPort": ${APP_PORT}, "servicePort": 0, "protocol": "tcp"}
-      ]
-    },
-  "volumes": [
-      {
-        "containerPath": "/var/lib/mysql",
-        "hostPath": "${APP_DATA_DIR}",
-        "mode": "RW"
-      },
-      {
-        "containerPath": "/lock",
-        "hostPath": "${APP_LOCK_DIR}",
-        "mode": "RW"
-      },
-      {
-        "containerPath": "/creds",
-        "hostPath": "${APP_CRED_DIR}",
-        "mode": "RW"
-      }
-    ]
-  }
-}
-
-EOL
-
 
 cat > $APP_MAR_WEB_FILE << EOW
 {
