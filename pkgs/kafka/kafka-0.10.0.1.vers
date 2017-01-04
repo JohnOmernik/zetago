@@ -1,0 +1,63 @@
+#!/bin/bash
+
+APP_VER="2.10-0.10.0.1"
+
+APP_URL_ROOT="https://archive.apache.org/dist/kafka/0.10.0.1/"
+APP_URL_FILE="kafka_2.10-0.10.0.1.tgz"
+
+APP_URL="${APP_URL_ROOT}${APP_URL_FILE}"
+
+REQ_APP_IMG_NAME="buildbase_mapr"
+
+APP_GIT_URL="https://github.com"
+APP_GIT_USER="mesos"
+APP_GIT_REPO="kafka"
+
+
+if [ "$BUILD" == "Y" ]; then
+
+    TMP_IMG="zeta/kafkabuild"
+
+    if [ "$ZETA_DOCKER_PROXY" != "" ]; then
+        P_HOST=$(echo $ZETA_DOCKER_PROXY|cut -f2 -d":"|sed "s@//@@")
+        P_PORT=$(echo $ZETA_DOCKER_PROXY|cut -f3 -d":")
+        #echo "Proxy Host: $P_HOST"
+        #echo "Proxy Port: $P_PORT"
+        DOCKERLINE="ENV JAVA_OPTS -Dhttp.proxyHost=$P_HOST -Dhttp.proxyPort=$P_PORT -Dhttps.proxyHost=$P_HOST -Dhttps.proxyPort=$P_PORT"
+    else
+        DOCKERLINE=""
+    fi
+cat > ./Dockerfile << EOL
+
+FROM ${ZETA_DOCKER_REG_URL}/${REQ_APP_IMG_NAME}
+$DOCKERLINE
+RUN git clone ${APP_GIT_URL}/${APP_GIT_USER}/$APP_GIT_REPO
+RUN cd ${APP_GIT_REPO} && echo "\$JAVA_OPTS" && ./gradlew jar -x test && cd ..
+RUN mkdir -p kafka-mesos && cp ./$APP_GIT_REPO/kafka-mesos-*.jar ./kafka-mesos/ && cp ./$APP_GIT_REPO/kafka-mesos.sh ./kafka-mesos/
+RUN wget $APP_URL && mv $APP_URL_FILE ./kafka-mesos/
+CMD ["/bin/sleep 10"]
+EOL
+
+
+    sudo docker build -t $TMP_IMG .
+    CID=$(sudo docker run -d $TMP_IMG sleep 10)
+    sudo docker cp $CID:/app/kafka-mesos ./
+    sudo docker kill $CID
+    sudo docker rm $CID
+    sudo docker rmi -f $TMP_IMG
+
+    cd ..
+    JAR=$(ls $BUILD_TMP/kafka-mesos/*.jar|sed "s/\.jar//"|sed "s@$BUILD_TMP\/kafka-mesos\/@@")
+    TGZ=$(ls $BUILD_TMP/kafka-mesos/*.tgz|sed "s/\.tgz//"|sed "s@$BUILD_TMP\/kafka-mesos\/@@")
+    cd $BUILD_TMP
+
+    PKG_TGZ="${JAR}-${TGZ}.tgz"
+    tar zcf ${PKG_TGZ} ./kafka-mesos
+    if [ -f "$APP_PKG_DIR/$PKG_TGZ" ]; then
+        echo "The currently built TGZ ${PKG_TGZ} already exists in $APP_PKG_DIR"
+        echo "Do you wish to replace the existing one in the package directory with the recently built version?"
+        read -e -p "Replace package? " -i "N" REPLACE_TGZ
+    else
+        REPLACE_TGZ="Y"
+    fi
+fi

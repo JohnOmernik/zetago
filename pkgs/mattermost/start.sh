@@ -35,6 +35,11 @@ else
     fi
 fi
 
+echo ""
+echo "Waiting 5 seconds"
+sleep 5
+echo ""
+
 
 @go.log INFO "Checking for presense of Mattermost APP Server"
 CUR_APP_STATUS=$(./zeta cluster marathon getinfo $APP_MAR_APP_ID $MARATHON_SUBMIT)
@@ -53,6 +58,11 @@ else
         ./zeta cluster marathon scale $APP_MAR_APP_ID 1 $MARATHON_SUBMIT 1
     fi
 fi
+
+echo ""
+echo "Waiting 5 seconds"
+sleep 5
+echo ""
 
 @go.log INFO "Checking for presense of Mattermost APP Server"
 

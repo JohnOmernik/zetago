@@ -48,9 +48,6 @@ if [ "$CONFIRM" == "Y" ]; then
     ./zeta cluster marathon destroy $APP_MAR_APP_ID $MARATHON_SUBMIT 1
     @go.log INFO "Destroying $APP_MAR_DB_ID in marathon"
     ./zeta cluster marathon destroy $APP_MAR_DB_ID $MARATHON_SUBMIT 1
-    @go.log INFO "Destroying ${APP_ROLE}/${APP_ID} in marathon"
-    ./zeta cluster marathon destroy ${APP_ROLE}/${APP_ID} $MARATHON_SUBMIT 1
-    @go.log WARN "$APP_NAME instance $APP_ID unininstalled"
     if [ "$DESTROY" == "1" ]; then
        @go.log WARN "Also removing all data for app"
        @go.log WARN "If volumes exist, we need to handle those"

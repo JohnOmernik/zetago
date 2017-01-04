@@ -1,0 +1,4 @@
+#!/bin/bash
+
+DEF_APP_VERS="kafka-0.10.0.1.vers"
+REC_DIR="zeta"
