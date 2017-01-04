@@ -1,6 +1,8 @@
 #!/bin/bash
 
-APP_VER="2.10-0.10.0.1"
+APP_VER="0.10.0.1"
+
+APP_TGZ="kafa-mesos-${APP_VER}.tgz"
 
 APP_URL_ROOT="https://archive.apache.org/dist/kafka/0.10.0.1/"
 APP_URL_FILE="kafka_2.10-0.10.0.1.tgz"
@@ -52,17 +54,7 @@ EOL
 
     cd $MYDIR
     cd $BUILD_TMP
+    tar zcf ${APP_TGZ} ./kafka-mesos
 
-    PKG_TGZ="${JAR}-${TGZ}.tgz"
-    tar zcf ${PKG_TGZ} ./kafka-mesos
-    if [ -f "$APP_PKG_DIR/$PKG_TGZ" ]; then
-        echo "The currently built TGZ ${PKG_TGZ} already exists in $APP_PKG_DIR"
-        echo "Do you wish to replace the existing one in the package directory with the recently built version?"
-        read -e -p "Replace package? " -i "N" REPLACE_TGZ
-    else
-        REPLACE_TGZ="Y"
-    fi
-    if [ "$REPLACE_TGZ" == "Y" ]; then
-        mv ${PKG_TGZ} ${APP_PKG_DIR}/
-    fi
+    mv ${APP_TGZ} ${APP_PKG_DIR}/
 fi
