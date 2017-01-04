@@ -77,11 +77,17 @@ function _packageuninstall() {
         @go.log WARN "Proceeding with uninstall of $APP_ID"
 
         @go.log INFO "Stopping $APP_ID"
-        ./zeta package stop $CONF_FILE
+        if [ "$APP_MAR_ID" != "" ]; then
+            ./zeta package stop $CONF_FILE
+        fi
         @go.log INFO "Removing ENV file at $APP_ENV_FILE"
-        rm $APP_ENV_FILE
+        if [ -f "$APP_ENV_FILE" ]; then
+            rm $APP_ENV_FILE
+        fi
         @go.log INFO "Destroying $APP_MAR_ID in marathon"
-        ./zeta cluster marathon destroy $APP_MAR_ID $MARATHON_SUBMIT 1
+        if [ "$APP_MAR_ID" != "" ]; then
+            ./zeta cluster marathon destroy $APP_MAR_ID $MARATHON_SUBMIT 1
+        fi
         @go.log WARN "$APP_NAME instance $APP_ID unininstalled"
         if [ "$DESTROY" == "1" ]; then
             @go.log WARN "Also removing all data for app"
