@@ -14,6 +14,7 @@ if [ "$EXISTS" == "" ]; then
             @go.log FATAL "Can't find broker.conf at $BROKER_CONF exiting"
         fi
         . $BROKER_CONF
+        cd $APP_HOME/kafka-mesos
         for X in $(seq 1 $BROKER_COUNT); do
             @go.log INFO "Attempting to Stop Broker $X"
             ./kafka-mesos.sh broker start $X
