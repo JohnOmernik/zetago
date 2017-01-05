@@ -75,7 +75,7 @@ cat > $APP_MAR_FILE << EOL
   "instances": 1,
   "cpus": ${APP_CPU},
   "mem": ${APP_MEM},
-  "cmd": "export PATH=\`pwd\`/jre/bin:\$PATH && cd kafka-mesos && ./kafka-mesos.sh scheduler kafka-mesos.properties",
+  "cmd": "export PATH=\`pwd\`/jre/bin:\$PATH && cd kafka-mesos && ./kafka-mesos.sh scheduler ../kafka-mesos.properties",
   "user": "${APP_USER}",
   "labels": {
    "CONTAINERIZER":"Mesos"
@@ -86,7 +86,7 @@ cat > $APP_MAR_FILE << EOL
     "LD_LIBRARY_PATH": "/opt/mesosphere/lib",
     "JAVA_HOME": "jre"
   },
-  "uris": ["file://${APP_HOME}/${APP_TGZ}", "file://${APP_HOME}/kafka-mesos/${JAVA_TGZ}"]
+  "uris": ["file://${APP_HOME}/${APP_TGZ}", "file://${APP_HOME}/kafka-mesos/${JAVA_TGZ}" , "file://${APP_HOME}/kafka-mesos/kafka-mesos.properties"]
 }
 EOL
 
@@ -107,7 +107,7 @@ else
 fi
 echo ""
 if [ "$STRT" == "Y" ]; then
-    ./zeta package start ${APP_HOME}/${APP_ID}.conf
+    ./zeta package start "${APP_HOME}/${APP_ID}.conf"
 fi
 
 
