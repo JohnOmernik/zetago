@@ -4,8 +4,7 @@ checkdocker
 
 check4package "$APP_TGZ" BUILD
 
-reqdockerimg "buildbase_mapr"
-
+reqdockerimg "${REQ_APP_IMG_NAME}"
 
 # Drill Specific Directories in the shared staging location
 mkdir -p ${APP_ROOT}/extrajars
