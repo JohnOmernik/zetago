@@ -11,6 +11,9 @@ read -e -p "Please enter the CPU shares to use with the kafka-mesos scheduler: "
 echo ""
 read -e -p "Please enter the Marathon Memory limit to use with kafka-mesos scheduler: " -i "768" APP_MEM
 echo ""
+read -e -p "What user should run the API Scheduler? (Recommended: zetasvc$APP_ROLE): " -i "zetasvc$APP_ROLE" APP_USER
+echo ""
+##########
 
 
 
@@ -18,12 +21,52 @@ APP_MAR_FILE="${APP_HOME}/marathon.json"
 APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 
 
+JAVA_TGZ="mesos-java.tgz"
+cd ${APP_HOME}
+cp ${APP_PKG_DIR}/${APP_TGZ} ./
+tar zxf $APP_TGZ
 
+
+APP_DOMAIN="marathon.slave.mesos"
+
+cat > ${APP_HOME}/kafka-mesos/kafka-mesos.properties << EOF
+# Scheduler options defaults. See ./kafka-mesos.sh help scheduler for more details
+debug=false
+
+framework-name=${APP_ID}
+
+master=leader.mesos:5050
+
+user=$APP_USER
+
+storage=zk:/kafka-mesos
+
+jre=${JAVA_TGZ}
+# Need the /kafkaprod as the chroot for zk
+zk=${ZETA_ZKS}/${APP_ID}
+
+# Need different port for each framework
+api=http://${APP_ID}-${APP_ROLE}.${APP_DOMAIN}:${APP_PORT}
+
+#principal=${ROLE_PRIN}
+
+#secret=${ROLE_PASS}
+
+EOF
+
+
+#echo "Untarring Kafka Mesos Package"
+#echo ""
+#APP_TGZ="${APP_ID}-runnable.tgz"
+#tar zcf ./$APP_TGZ kafka-mesos/
+#rm ${APP_BASE_FILE}
 
 
 cat > $APP_ENV_FILE << EOL1
 #!/bin/bash
-export ZETA_${APP_NAME}_${APP_ID}_PORT="${APP_PORT}"
+export ZETA_${APP_ID}_ENV="${APP_ID}"
+export ZETA_${APP_ID}_ZK="${ZETA_ZKS}/${APP_ID}"
+export ZETA_${APP_ID}_API_PORT="${APP_PORT}"
 EOL1
 
 cat > $APP_MAR_FILE << EOL

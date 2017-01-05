@@ -2,7 +2,7 @@
 
 APP_VER="0.10.0.1"
 
-APP_TGZ="kafa-mesos-${APP_VER}.tgz"
+APP_TGZ="kafka-mesos-${APP_VER}.tgz"
 
 APP_URL_ROOT="https://archive.apache.org/dist/kafka/0.10.0.1/"
 APP_URL_FILE="kafka_2.10-0.10.0.1.tgz"
