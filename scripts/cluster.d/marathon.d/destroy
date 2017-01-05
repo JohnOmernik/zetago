@@ -19,22 +19,25 @@ function _marathon_delete() {
     OUT=$(curl -s -X DELETE ${MARATHON_URL}/${MARID} -H "Content-type: application/json")
 
     DEP_ID=$(echo $OUT|grep -P -o "deploymentId\":\"[^\"]+\""|cut -f2 -d":"|sed "s/\"//g")
+    if [ "$DEP_ID" != "" ]; then
 
-    if [ "$WAIT" == "1" ]; then
-        @go.log INFO "Waiting for app destroy request on ID $MARID to finish deployment with ID $DEP_ID"
+        if [ "$WAIT" == "1" ]; then
+            @go.log INFO "Waiting for app destroy request on ID $MARID to finish deployment with ID $DEP_ID"
 
-        DEPLOY=$(curl -s -H "Content-type: application/json" -X GET ${MARATHON_DEP}|grep "$DEP_ID")
-        while [ "$DEPLOY" != "" ]; do
-            @go.log INFO "Waiting in a loop for Deployment: $DEP_ID to finish"
-            sleep 2
             DEPLOY=$(curl -s -H "Content-type: application/json" -X GET ${MARATHON_DEP}|grep "$DEP_ID")
-        done
-        echo ""
-        @go.log INFO "Destroy application Deployement with ID $DEP_ID complete"
+            while [ "$DEPLOY" != "" ]; do
+                @go.log INFO "Waiting in a loop for Deployment: $DEP_ID to finish"
+                sleep 2
+                DEPLOY=$(curl -s -H "Content-type: application/json" -X GET ${MARATHON_DEP}|grep "$DEP_ID")
+            done
+            echo ""
+            @go.log INFO "Destroy application Deployement with ID $DEP_ID complete"
+        else
+            @go.log INFO "Destroy application $MARID request submitted - Not waiting to finish deployment"
+        fi
     else
-        @go.log INFO "Destroy application $MARID request submitted - Not waiting to finish deployment"
+        @go.log WARN "No Deployment ID returned, the destroy may not have worked..."
     fi
-
 }
 
 _marathon_delete "$@"
