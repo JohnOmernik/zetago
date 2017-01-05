@@ -11,7 +11,8 @@ read -e -p "Please enter the CPU shares to use with the kafka-mesos scheduler: "
 echo ""
 read -e -p "Please enter the Marathon Memory limit to use with kafka-mesos scheduler: " -i "768" APP_MEM
 echo ""
-read -e -p "What user should run the API Scheduler? (Recommended: zetasvc$APP_ROLE): " -i "zetasvc$APP_ROLE" APP_USER
+echo "Running Kafka as zetasvc$APP_ROLE"
+APP_USER="zetasvc$APP_ROLE"
 echo ""
 echo "Setting this to use 1 instance"
 APP_CNT="1"
