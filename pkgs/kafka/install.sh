@@ -100,5 +100,14 @@ echo "To start please run: "
 echo ""
 echo "$ ./zeta package start ${APP_HOME}/$APP_ID.conf"
 echo ""
+if [ "$UNATTEND" == "1" ]; then
+    STRT="Y"
+else
+    read -e -p "Do you wish to start the API Now?" -i "Y" STRT
+fi
+echo ""
+if [ "$STRT" == "Y" ]; then
+    ./zeta package start ${APP_HOME}/${APP_ID}.conf
+fi
 
 
