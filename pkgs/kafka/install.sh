@@ -103,15 +103,5 @@ echo "To start please run: "
 echo ""
 echo "$ $SCMD"
 echo ""
-if [ "$UNATTEND" == "1" ]; then
-    STRT="Y"
-else
-    read -e -p "Do you wish to start the API Now? " -i "Y" STRT
-fi
-
-echo ""
-if [ "$STRT" == "Y" ]; then
-    $SCMD
-fi
 
 
