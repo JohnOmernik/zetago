@@ -28,7 +28,8 @@ if [ "$START" == "1" ]; then
     @go.log INFO "Starting $APP_ID and scaling to $APP_CNT"
     ./zeta cluster marathon scale $APP_MAR_ID $APP_CNT $MARATHON_SUBMIT 1
 fi
-sleep 5
+echo "Waiting 30 seconds for Scheduler to start"
+sleep 30
 
 # Fix Java
 . /etc/environment
