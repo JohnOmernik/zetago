@@ -25,8 +25,8 @@ if [ "$SUBMIT" == "1" ]; then
     @go.log INFO "Submitting $APP_ID as it hasn't been submitted yet"
 fi
 if [ "$START" == "1" ]; then
-    @go.log INFO "Starting $APP_ID and scaling to $APP_CNT instances per conf file"
-    ./zeta cluster marathon scale $APP_MAR_ID $APP_CNT $MARATHON_SUBMIT 1
+    @go.log INFO "Starting $APP_ID and scaling to 1"
+    ./zeta cluster marathon scale $APP_MAR_ID 1 $MARATHON_SUBMIT 1
 fi
 # Fix Java
 . /etc/environment

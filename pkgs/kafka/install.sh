@@ -13,6 +13,8 @@ read -e -p "Please enter the Marathon Memory limit to use with kafka-mesos sched
 echo ""
 read -e -p "What user should run the API Scheduler? (Recommended: zetasvc$APP_ROLE): " -i "zetasvc$APP_ROLE" APP_USER
 echo ""
+echo "Setting this to use 1 instance"
+APP_CNT="1"
 ##########
 
 
@@ -72,7 +74,7 @@ EOL1
 cat > $APP_MAR_FILE << EOL
 {
   "id": "${APP_MAR_ID}",
-  "instances": 1,
+  "instances": $APP_CNT,
   "cpus": ${APP_CPU},
   "mem": ${APP_MEM},
   "cmd": "export PATH=\`pwd\`/jre/bin:\$PATH && cd kafka-mesos && ./kafka-mesos.sh scheduler ../kafka-mesos.properties",
@@ -89,7 +91,6 @@ cat > $APP_MAR_FILE << EOL
   "uris": ["file://${APP_HOME}/${APP_TGZ}", "file://${APP_HOME}/kafka-mesos/${JAVA_TGZ}" , "file://${APP_HOME}/kafka-mesos/kafka-mesos.properties"]
 }
 EOL
-APP_CONF_FILE="${APP_HOME}/$APP_ID.conf"
 
 SCMD="./zeta package start $APP_CONF_FILE"
 
