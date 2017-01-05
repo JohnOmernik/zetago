@@ -91,6 +91,8 @@ cat > $APP_MAR_FILE << EOL
 EOL
 APP_CONF_FILE="${APP_HOME}/$APP_ID.conf"
 
+SCMD="./zeta package start $APP_CONF_FILE"
+
 cd $MYDIR
 ##########
 # Provide instructions for next steps
@@ -99,7 +101,7 @@ echo ""
 echo "$APP_NAME instance ${APP_ID} installed at ${APP_HOME} and ready to go"
 echo "To start please run: "
 echo ""
-echo "$ ./zeta package start ${APP_CONF_FILE}"
+echo "$ $SCMD"
 echo ""
 if [ "$UNATTEND" == "1" ]; then
     STRT="Y"
@@ -109,7 +111,7 @@ fi
 
 echo ""
 if [ "$STRT" == "Y" ]; then
-    ./zeta package start ${APP_CONF_FILE}
+    $SCMD
 fi
 
 
