@@ -17,10 +17,11 @@ if [ "$EXISTS" == "" ]; then
         cd $APP_HOME/kafka-mesos
         for X in $(seq 1 $BROKER_COUNT); do
             @go.log INFO "Attempting to Stop Broker $X"
-            ./kafka-mesos.sh broker start $X
+            ./kafka-mesos.sh broker stop $X
         done
         sleep 2
         @go.log INFO "Scaling $APP_ID to 0 instances via $APP_MAR_ID"
+        cd $MYDIR
         ./zeta cluster marathon scale $APP_MAR_ID 0 $MARATHON_SUBMIT 1
     else
         @go.log WARN "App $APP_ID is submitted to Marathon, but doesn't appear to be in a TASK_RUNNING state: Not Stopping - $CUR_STATUS"
