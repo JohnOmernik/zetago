@@ -32,7 +32,9 @@ fi
 . /etc/environment
 PATH=$PATH:$JAVA_HOME/bin
 
-BROKERS=$($APP_HOME/kafka-mesos/kafka-mesos.sh broker list)
+KAFKA_MESOS="cd $APP_HOME/kafka-mesos && ./kafka-mesos.sh"
+
+BROKERS=$($KAFKA_MESOS broker list)
 
 if [ "$BROKERS" == "no brokers" ]; then
     @go.log INFO "No brokers - Add some - $BROKERS"
