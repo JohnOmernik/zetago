@@ -89,6 +89,7 @@ cat > $APP_MAR_FILE << EOL
   "uris": ["file://${APP_HOME}/${APP_TGZ}", "file://${APP_HOME}/kafka-mesos/${JAVA_TGZ}" , "file://${APP_HOME}/kafka-mesos/kafka-mesos.properties"]
 }
 EOL
+APP_CONF_FILE="${APP_HOME}/$APP_ID.conf"
 
 cd $MYDIR
 ##########
@@ -98,16 +99,17 @@ echo ""
 echo "$APP_NAME instance ${APP_ID} installed at ${APP_HOME} and ready to go"
 echo "To start please run: "
 echo ""
-echo "$ ./zeta package start ${APP_HOME}/$APP_ID.conf"
+echo "$ ./zeta package start ${APP_CONF_FILE}"
 echo ""
 if [ "$UNATTEND" == "1" ]; then
     STRT="Y"
 else
     read -e -p "Do you wish to start the API Now? " -i "Y" STRT
 fi
+
 echo ""
 if [ "$STRT" == "Y" ]; then
-    ./zeta package start "${APP_HOME}/${APP_ID}.conf"
+    ./zeta package start "${APP_CONF_FILE}"
 fi
 
 
