@@ -2,7 +2,6 @@
 
 checkdocker
 check4dockerimage "${APP_IMG_NAME}" BUILD
-reqdockerimg "${REQ_APP_IMG_NAME}"
 
 if [ "$BUILD" == "Y" ]; then
     rm -rf $BUILD_TMP

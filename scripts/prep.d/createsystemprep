@@ -2,23 +2,44 @@
 #
 # Creates the scripts needed to update and upgrade the nodes to get ready for a DCOS/Zeta install
 #
-# Arguments: Optional Version of the vers file to use in created update scripts. i.e. if you create scripts from ubuntu_prep-1.0.0.vers pass 1.0.0 to this script 
-#            IF no version is passed, it will prompt the user for a version
+# Arguments:
+# -u        - Unattended Installation (Use Default vers of 1.0.0 if no vers passed intead of asking user)
+# -v=$VERS  - Pass a vers version into the script -v=1.0.0 for example - This is optional
 #
 #
 
 
 function createscripts() {
 
-    VERS_VER=$1
+    UNATTEND="0"
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            "-v="*)
+            VERS_VER="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
     if [ "$VERS_VER" == "" ]; then
-        echo "We need version files for the update scripts - Please pick a version number to use:"
-        echo ""
-        ls ./vers/nodeprep
-        echo ""
-        echo "Do not enter a filename, just the version to use e.g. 1.0.0"
-        echo ""
-        read -e -p "Enter version for nodeprep: " -i "1.0.0" VERS_VER
+        if [ "$UNATTEND" == "0" ]; then
+           echo "We need version files for the update scripts - Please pick a version number to use:"
+            echo ""
+            ls ./vers/nodeprep
+            echo ""
+            echo "Do not enter a filename, just the version to use e.g. 1.0.0"
+            echo ""
+            read -e -p "Enter version for nodeprep: " -i "1.0.0" VERS_VER
+        else
+            @go.log WARN "Unattended systemprep create requested, using VERS 1.0.0"
+            VERS_VER="1.0.0"
+        fi
     fi
 
     if [ ! -f "./vers/nodeprep/ubuntu_prep-${VERS_VER}.vers" ] || [ ! -f "./vers/nodeprep/centos_prep-${VERS_VER}.vers" ]; then

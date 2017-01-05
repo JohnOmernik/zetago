@@ -8,24 +8,9 @@
 #
 
 sourceconf "$PREP_CONF"
-SCRIPTS="./bin/ubuntu_prep.sh ./bin/centos_prep1.sh ./bin/centos_prep2.sh"
 
-FOUND="1"
-for SCRIPT in $SCRIPTS; do
-    if [ ! -f "$SCRIPT" ]; then
-        FOUND="0"
-    fi
-done
 
-if [ "$FOUND" == "0" ]; then
-    @go.log INFO "System Scripts not found, creating in ./bin"
-    ./zeta prep createsystemprep
-fi
 
-if [ ! -f "$OUT_KEY" ]; then
-    @go.log INFO "Prep conf exists, however, keys have not been generated, doing so now"
-    ./zeta prep genkey
-fi
 
 function _systemprep() {
 
@@ -44,6 +29,28 @@ function _systemprep() {
             ;;
         esac
     done
+
+    SCRIPTS="./bin/ubuntu_prep.sh ./bin/centos_prep1.sh ./bin/centos_prep2.sh"
+
+    FOUND="1"
+    for SCRIPT in $SCRIPTS; do
+        if [ ! -f "$SCRIPT" ]; then
+            FOUND="0"
+        fi
+    done
+    if [ "$FOUND" == "0" ]; then
+        @go.log INFO "System Scripts not found, creating in ./bin"
+        if [ "$UNATTEND" == "1" ]; then
+            ./zeta prep createsystemprep -u
+        else
+            ./zeta prep createsystemprep
+        fi
+
+    fi
+    if [ ! -f "$OUT_KEY" ]; then
+        @go.log INFO "Prep conf exists, however, keys have not been generated, doing so now"
+        ./zeta prep genkey
+    fi
 
     if [ "$HOST" == "" ]; then
         @go.log FATAL "Must provide a host to connect and update using -n="
