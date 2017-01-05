@@ -35,7 +35,7 @@ PATH=$PATH:$JAVA_HOME/bin
 BROKERS=$($APP_HOME/kafka-mesos/kafka-mesos.sh broker list)
 
 if [ "$BROKERS" == "no brokers" ]; then
-    @go.log INFO "No brokers - Add some"
+    @go.log INFO "No brokers - Add some - $BROKERS"
 else
-    @go.log INFO "Brokers found"
+    @go.log INFO "Brokers found - $BROKERS"
 fi
