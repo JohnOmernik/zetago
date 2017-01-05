@@ -109,7 +109,7 @@ fi
 
 echo ""
 if [ "$STRT" == "Y" ]; then
-    ./zeta package start "${APP_CONF_FILE}"
+    ./zeta package start ${APP_CONF_FILE}
 fi
 
 
