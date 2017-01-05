@@ -90,7 +90,7 @@ cat > $APP_MAR_FILE << EOL
 }
 EOL
 
-
+cd $MYDIR
 ##########
 # Provide instructions for next steps
 echo ""
@@ -103,7 +103,7 @@ echo ""
 if [ "$UNATTEND" == "1" ]; then
     STRT="Y"
 else
-    read -e -p "Do you wish to start the API Now?" -i "Y" STRT
+    read -e -p "Do you wish to start the API Now? " -i "Y" STRT
 fi
 echo ""
 if [ "$STRT" == "Y" ]; then
