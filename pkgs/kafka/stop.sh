@@ -9,7 +9,7 @@
 if [ "$EXISTS" == "" ]; then
     RUNNING=$(echo $CUR_STATUS|grep "TASK_RUNNING")
     if [ "$RUNNING" != "" ]; then
-        BROKER_CONF="$APP_HOME/broker.conf"
+        BROKER_CONF="$APP_HOME/brokers.conf"
         if [ ! -f "$BROKER_CONF" ]; then
             @go.log FATAL "Can't find broker.conf at $BROKER_CONF exiting"
         fi
