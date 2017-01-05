@@ -52,6 +52,12 @@ EOL
     JAR=$(ls *.jar|sed "s/\.jar//")
     TGZ=$(ls *.tgz|sed "s/\.tgz//")
 
+    JAVA_HOME="/opt/mesosphere/active/java/usr/java"
+    JAVA_TGZ="mesos-java.tgz"
+    cd $JAVA_HOME
+    @go.log INFO "Tarring Java Home for inclusion in Kafka Mesos TGZ"
+    tar zcf ${MYDIR}/$BUILD_TMP/kafka-mesos/$JAVA_TGZ ./jre
+
     cd $MYDIR
     cd $BUILD_TMP
     tar zcf ${APP_TGZ} ./kafka-mesos
