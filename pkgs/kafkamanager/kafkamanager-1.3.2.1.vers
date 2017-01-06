@@ -43,7 +43,7 @@ $DOCKER_LINE6
 
 RUN apt-get install -y openjdk-8-jdk unzip && apt-get clean && apt-get autoremove -y
 
-RUN git clone $APP_GIT && cd ${APP_GIT_REPO} &&  git fetch origin pull/282/head:local282 && git checkout local282 &&  ./sbt clean dist && cp ./target/universal/*.zip /app/ && rm  -rf ./kafka-manager && export APP_ZIP=\$(ls /app/) && unzip \$APP_ZIP &&export APP_VER=\$(echo \$APP_ZIP|sed "s/\.zip//") rm ./\$APP_ZIP && mv \$APP_VER $APP_VER_DIR
+RUN git clone $APP_GIT && cd ${APP_GIT_REPO} &&  git fetch origin pull/282/head:local282 && git checkout local282 &&  ./sbt clean dist && cp ./target/universal/*.zip /app/ && rm  -rf ./kafka-manager && export APP_ZIP=\$(ls /app/) && unzip \$APP_ZIP && export APP_VER=\$(echo \$APP_ZIP|sed "s/\.zip//") && rm ./\$APP_ZIP && mv \$APP_VER $APP_VER_DIR
 
 CMD ["/bin/bash"]
 EOF
