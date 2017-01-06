@@ -96,8 +96,14 @@ function _updatenodesca() {
         fi
     done
     if [ "$RUN_INIT" == "Y" ]; then
-        @go.log INFO "Running on Zeta CA Node: This will cause docker to restart"
-        ssh $ZETACA_IP "sudo rm -f /usr/local/share/ca-certificates/zetaroot.crt && sudo update-ca-certificates -f && sudo curl -o /usr/local/share/ca-certificates/zetaroot.crt http://zetaca-shared.marathon.slave.mesos:10443/cacert && sudo update-ca-certificates && cat /etc/ssl/certs/zetaroot.pem|sudo tee -a /opt/mesosphere/active/python-requests/lib/python3.5/site-packages/requests/cacert.pem && sudo service docker restart"
+        @go.log INFO "Running on Zeta CA Node: We update the certs, then we stop Zeta CA prior to docker restart"
+        ssh $ZETACA_IP "sudo rm -f /usr/local/share/ca-certificates/zetaroot.crt && sudo update-ca-certificates -f && sudo curl -o /usr/local/share/ca-certificates/zetaroot.crt http://zetaca-shared.marathon.slave.mesos:10443/cacert && sudo update-ca-certificates && cat /etc/ssl/certs/zetaroot.pem|sudo tee -a /opt/mesosphere/active/python-requests/lib/python3.5/site-packages/requests/cacert.pem"
+        @go.log INFO "Stopping Zeta CA"
+        ./zeta cluster marathon scale "shared/zetaca" 0 "$MARATHON_SUBMIT" 1
+        @go.log INFO "Restarting docker on $ZETACA_IP"
+        ssh $ZETACA_IP "sudo service docker restart"
+        @go.log INFO "Starting Zeta CA Again"
+        ./zeta cluster marathon scale "shared/zetaca" 1 "$MARATHON_SUBMIT" 1
     fi
     @go.log INFO "Zeta CA Node update complete"
 

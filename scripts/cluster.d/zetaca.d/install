@@ -46,7 +46,7 @@ function _zetaca_install() {
     echo ""
     if [ "$UPDATENODES" == "Y" ]; then
         @go.log INFO "Updating CA Certs on all nodes"
-        ./zeta cluster zetaca updatenode --all -u
+        ./zeta cluster zetaca updatenode -a -u
     else
         @go.log INFO "Not updating Certificates on nodes"
     fi
