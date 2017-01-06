@@ -30,8 +30,15 @@ function _zetaca_install() {
 
     ./zeta cluster marathon submit "$ZETACA_HOME/marathon.json" "$MARATHON_SUBMIT" 1
 
-
     sleep 2
+    CAOUT=""
+    CAOUT=$(curl -s ${ZETA_CA_CERT})
+    while [ "$CAOUT" == "" ]; do
+        @go.log INFO "Waiting for ZetaCA to respond to requests on 5 seconds loop"
+        sleep 5
+        CAOUT=$(curl -s ${ZETA_CA_CERT})
+    done
+
     echo ""
     echo "It's highly recommended you update nodes with the Zeta CA Master certificate"
     echo "You can do that for each node by running:"
@@ -46,7 +53,7 @@ function _zetaca_install() {
     echo ""
     if [ "$UPDATENODES" == "Y" ]; then
         @go.log INFO "Updating CA Certs on all nodes"
-        ./zeta cluster zetaca updatenode --all -u
+        ./zeta cluster zetaca updatenode -a -u
     else
         @go.log INFO "Not updating Certificates on nodes"
     fi

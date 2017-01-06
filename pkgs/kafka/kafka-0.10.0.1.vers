@@ -2,7 +2,7 @@
 
 APP_VER="0.10.0.1"
 
-APP_TGZ="kafa-mesos-${APP_VER}.tgz"
+APP_TGZ="kafka-mesos-${APP_VER}.tgz"
 
 APP_URL_ROOT="https://archive.apache.org/dist/kafka/0.10.0.1/"
 APP_URL_FILE="kafka_2.10-0.10.0.1.tgz"
@@ -51,6 +51,12 @@ EOL
     cd kafka-mesos
     JAR=$(ls *.jar|sed "s/\.jar//")
     TGZ=$(ls *.tgz|sed "s/\.tgz//")
+
+    JAVA_HOME="/opt/mesosphere/active/java/usr/java"
+    JAVA_TGZ="mesos-java.tgz"
+    cd $JAVA_HOME
+    @go.log INFO "Tarring Java Home for inclusion in Kafka Mesos TGZ"
+    tar zcf ${MYDIR}/$BUILD_TMP/kafka-mesos/$JAVA_TGZ ./jre
 
     cd $MYDIR
     cd $BUILD_TMP

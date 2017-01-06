@@ -79,13 +79,16 @@ function _packageinstall() {
 
     mkdir -p ${APP_HOME}
 
+    APP_CONF_FILE="${APP_HOME}/${APP_ID}.conf"
+
     # Run the install
     . ${APP_PKG_BASE}/install.sh
 
+    if [ "$APP_CNT" == "" ]; then
+        APP_CNT="1"
+    fi
 
-    APP_CONFIG="${APP_HOME}/${APP_ID}.conf"
-
-cat > $APP_CONFIG << EOC
+cat > $APP_CONF_FILE << EOC
 #!/bin/bash
 # Application Instance Config for $APP_NAME instance: $APP_ID
 #
@@ -98,7 +101,7 @@ APP_MAR_ID="${APP_MAR_ID}"
 APP_VERS_FILE="${APP_VERS_FILE}"
 APP_HOME="${APP_HOME}"
 APP_MAR_FILE="$APP_MAR_FILE"
-APP_CONFIG="$APP_CONFIG"
+APP_CONF_FILE="$APP_CONF_FILE"
 APP_ENV_FILE="$APP_ENV_FILE"
 EOC
 

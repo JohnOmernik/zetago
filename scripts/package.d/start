@@ -41,7 +41,7 @@ function _packagestart() {
     done
 
     if [ ! -f "$CONF_FILE" ]; then
-        @go.log FATAL "You must specify a path to a conf file"
+        @go.log FATAL "You must specify a path to a conf file - Provided: $CONF_FILE"
     fi
     . $CONF_FILE
 
