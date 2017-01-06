@@ -29,7 +29,7 @@ cat > $APP_MAR_FILE << EOL
   "id": "${APP_MAR_ID}",
   "cpus": ${APP_CPU},
   "mem": ${APP_MEM},
-  "cmd": "cd $APP_VER_DIR && bin/kafka-manager"
+  "cmd": "cd $APP_VER_DIR && bin/kafka-manager",
   "instances": $APP_CNT,
   "labels": {
    "CONTAINERIZER":"Docker"
