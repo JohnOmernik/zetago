@@ -31,7 +31,7 @@ function _zetaca_install() {
     ./zeta cluster marathon submit "$ZETACA_HOME/marathon.json" "$MARATHON_SUBMIT" 1
 
 
-    sleep 2
+    sleep 5
     echo ""
     echo "It's highly recommended you update nodes with the Zeta CA Master certificate"
     echo "You can do that for each node by running:"

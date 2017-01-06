@@ -34,7 +34,7 @@ function _zetaca() {
     echo ""
     echo "Commands to use with cluster zetaca:"
     echo "./zeta cluster zetaca install - Build and install Zeta CA - Update all hosts as well"
-    echo "./zeta cluster zetaca updatehost - Update a host to use a new CA"
+    echo "./zeta cluster zetaca updatenode -  (-a for all nodes, or CSV list of nodes for specific nodes) -u for unattended"
     echo ""
     echo "Helper Functions: (Not normally needed to be called on their own)"
     echo "./zeta cluster zetaca build - Build the Zetaca Docker container based on conf file"

@@ -3,8 +3,10 @@
 # cluster zetaca update node - Update Nodes to use ZetaCA Certificates
 #
 # Arguments:
-# First Argument: --all - Update all nodes in conf files or CSV list of hosts you wish to update. 
-# Second Argument (Optionall): -u - Assume permissions are correct and run without prompting
+# -a                # Run on all nodes in dcos.conf
+# -u                # Run without prompting (unattended)
+# %CSVLISTOFNODES%  # A list of nodes to run on. Will be ignored if -a is specified
+#
 #
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
@@ -18,19 +20,33 @@ if [ "$CURUSER" != "${IUSER}" ]; then
     @go.log FATAL "Must use ${IUSER} user"
 fi
 
-ARGVAL=$1
-if [ "$ARGVAL" == "--all" ]; then
+UNATTEND="0"
+ALL="0"
+
+for i in "$@"
+do
+    case $i in
+        -1)
+        ALL="1"
+        ;;
+        -u)
+        UNATTEND="1"
+        ;;
+        *)
+        ARG_NODES=$i
+        # unknown option
+        ;;
+    esac
+done
+
+if [ "$ALL" == "=1" ]; then
     RUN_NODES="$INTERNAL_NODES"
 else
-    RUN_NODES=$(echo $ARGVAL|tr "," " ")
-fi
-
-if [ "$2" == "-u" ]; then
-    UNATTEND="1"
+    RUN_NODES=$(echo $ARG_NODES|tr "," " ")
 fi
 
 if [ "$RUN_NODES" == "" ]; then
-    @go.log FATAL "Please provide a CSV list of nodes or --all"
+    @go.log FATAL "Please provide a CSV list of nodes or -a"
 fi
 
 
