@@ -36,7 +36,7 @@ mkdir /hbasebuild
 cd /hbasebuild
 wget $APP_URL
 rpm2cpio $APP_URL_FILE | cpio -idmv
-mv ./opt/mapr/hbase/\${APP_VER_DIR} ./
+mv ./opt/mapr/hbase/${APP_VER_DIR} ./
 mv ./${APP_VER_DIR}/conf ./${APP_VER_DIR}/conf_orig
 chown -R ${IUSER}:${IUSER} ${APP_VER_DIR}
 tar zcf ${APP_TGZ} ${APP_VER_DIR}
