@@ -39,6 +39,7 @@ sudo docker kill $CID
 sudo docker rm $CID
 sudo mv ${APP_CONF_DIR}/conf_orig/* $APP_CONF_DIR/
 sudo rm -rf $APP_CONF_DIR/conf_orig
+sudo chown -R zetaadm:zetaproddata $APP_CONF_DIR
 
 cat > $APP_ENV_FILE << EOL1
 #!/bin/bash
