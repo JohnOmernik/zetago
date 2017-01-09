@@ -172,7 +172,8 @@ cat > $APP_MAR_FILE << EOF
     "HADOOP_HOME": "${HADOOP_HOME}",
     "HBASE_LOG_DIR": "/${APP_VER_DIR}/logs",
     "HBASE_ROOT_LOGGER": "INFO,RFA",
-    "HBASE_CLASSPATH_PREFIX":"/${APP_VER_DIR}/lib/*:/opt/mapr/lib/*"
+    "HBASE_CLASSPATH_PREFIX":"/${APP_VER_DIR}/lib/*:/opt/mapr/lib/*",
+    "JAVA_HOME": "/usr/lib/jvm/java-8-openjdk-amd64"
   },
   "container": {
     "type": "DOCKER",
