@@ -31,15 +31,17 @@ if [ "$BUILD" == "Y" ]; then
     TMP_IMG="zeta/hbaserestbuild"
 
 cat > ./pkg_hbaserest.sh << EOF
-c
+
+mkdir /hbasebuild
+cd /hbasebuild
 wget $APP_URL
 rpm2cpio $APP_URL_FILE | cpio -idmv
 mv ./opt/mapr/hbase/\${APP_VER_DIR} ./
 mv ./${APP_VER_DIR}/conf ./${APP_VER_DIR}/conf_orig
-chown -R ${IUSER}:${IUSER} \${APP_VER_DIR}
-tar zcf \${APP_TGZ} \${APP_VER_DIR}
+chown -R ${IUSER}:${IUSER} ${APP_VER_DIR}
+tar zcf ${APP_TGZ} ${APP_VER_DIR}
 rm -rf ./opt
-rm -rf \${APP_VER_DIR}
+rm -rf ${APP_VER_DIR}
 rm -rf ./conf
 rm ${APP_URL_FILE}
 EOF
@@ -52,7 +54,7 @@ CMD ["/bin/bash"]
 EOL
 
     sudo docker build -t $TMP_IMG .
-    sudo docker run --rm -v=`pwd`:/app/tmp $TMP_IMG cp /app/$APP_TGZ /app/tmp/
+    sudo docker run --rm -v=`pwd`:/app/tmp $TMP_IMG cp /hbasebuild/$APP_TGZ /app/tmp/
     sudo docker rmi -f $TMP_IMG
     rm ./pkg_hbaserest.sh
     rm ./Dockerfile
