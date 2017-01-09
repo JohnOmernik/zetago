@@ -42,7 +42,7 @@ rm -rf \${APP_VER_DIR}
 rm -rf ./conf
 rm ${APP_URL_FILE}
 EOF
-
+chmod +x ./pkg_hbaserest.sh
 cat > ./Dockerfile << EOL
 FROM ${ZETA_DOCKER_REG_URL}/${REQ_APP_IMG_NAME}
 ADD pkg_hbaserest.sh ./
