@@ -2,7 +2,7 @@
 
 APP_VER="1.1.1"
 APP_VER_DIR="hbase-1.1.1"
-APP_TGZ="${APP_VER_DIR}.tgz"
+APP_TMP_TGZ="${APP_VER_DIR}.tgz"
 
 APP_URL_ROOT="http://package.mapr.com/releases/ecosystem-5.x/redhat/"
 APP_URL_FILE="mapr-hbase-1.1.1.201602221251-1.noarch.rpm"
@@ -39,7 +39,7 @@ rpm2cpio $APP_URL_FILE | cpio -idmv
 mv ./opt/mapr/hbase/${APP_VER_DIR} ./
 mv ./${APP_VER_DIR}/conf ./${APP_VER_DIR}/conf_orig
 chown -R ${IUSER}:${IUSER} ${APP_VER_DIR}
-tar zcf ${APP_TGZ} ${APP_VER_DIR}
+tar zcf ${APP_TMP_TGZ} ${APP_VER_DIR}
 rm -rf ./opt
 rm -rf ${APP_VER_DIR}
 rm -rf ./conf
@@ -54,18 +54,16 @@ CMD ["/bin/bash"]
 EOL
 
     sudo docker build -t $TMP_IMG .
-    sudo docker run --rm -v=`pwd`:/app/tmp $TMP_IMG cp /hbasebuild/$APP_TGZ /app/tmp/
+    sudo docker run --rm -v=`pwd`:/app/tmp $TMP_IMG cp /hbasebuild/$APP_TMP_TGZ /app/tmp/
     sudo docker rmi -f $TMP_IMG
     rm ./pkg_hbaserest.sh
     rm ./Dockerfile
 cat > ./Dockerfile << EOL1
 FROM ${ZETA_DOCKER_REG_URL}/buildbase_mapr
-ADD ${APP_TGZ} /
+ADD ${APP_TMP_TGZ} /
 
 cmd ["/bin/bash"]
 EOL1
     sudo docker build -t $APP_IMG .
     sudo docker push $APP_IMG
-
-
 fi
