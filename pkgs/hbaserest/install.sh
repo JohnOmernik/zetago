@@ -34,7 +34,7 @@ mkdir -p $APP_LOGS_DIR
 @go.log INFO "Getting default conf from image"
 
 CID=$(sudo docker run -d $APP_IMG sleep 20)
-sudo docker cp $CID:/$APP_VER_DIR/conf_orig/* ${APP_CONF_DIR}/
+sudo docker cp $CID:/$APP_VER_DIR/conf_orig/ ${APP_CONF_DIR}/
 sudo docker kill $CID
 sudo docker rm $CID
 
