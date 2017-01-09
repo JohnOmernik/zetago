@@ -46,7 +46,7 @@ cat > ${APP_CONF_DIR}/docker_start.sh << EOF4
 #!/bin/bash
 export HBASE_LOGFILE="hbaserest-\$HOST-\$HOSTNAME.log"
 env
-${APP_VER_DIR}/bin/hbase rest start -p 8000 --infoport 8005
+/${APP_VER_DIR}/bin/hbase rest start -p 8000 --infoport 8005
 EOF4
 
 
