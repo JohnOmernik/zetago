@@ -39,35 +39,37 @@ function _prep_status() {
         @go.log FATAL "Must provide a host to connect and update status on via -n= or specify -a for all nodes"
     fi
 
+    PREP_SCRIPT="./bin/prepstatus.sh"
+    REM_LOC="/home/$IUSER/prepstatus.sh"
+#printf "%-30s %-30s %-30s\n" "$PKG" "$PKGBASE" "$INST"
+
+    if [ ! -f "$PREP_SCRIPT" ]; then
+cat > $PREP_SCRIPT << EOF
+#!/bin/bash
+KERNEL=\$(uname -a|cut -d" " -f3)
+UP="true"
+SUDO_CHK=\$(sudo whoami)
+SYS_TYPE=\$(/home/${IUSER}/system_type.sh)
+DCK_VERS=\$(sudo docker info 2> /dev/null|grep "Server Version")
+
+printf "%-30s %-30s %-30s %-30s %-30s\n" "\$UP" "\$SUDO_CHK" "\$KERNEL" "\$SYS_TYPE" "\$DCK_VERS"
+
+EOF
+    chmod +x $PREP_SCRIPT
+    fi
+
+
+
+    printf "%-30s %-30s %-30s %-30s %-30s\n" "Host Up" "Sudo Check" "Kernel" "System Type" "Docker Version"
+    echo "----------------------------------------------------------------------------------------------------------------------------------------------------------"
     for HOST in $MYHOSTS; do
-        TESTVAL=""
-        TESTVAL=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "hostname")
-        if [ "$TESTVAL" != "" ]; then
-            KERNEL_VER="unknown"
-            HOSTUP="true"
-            SYS_TYPE=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "/home/${IUSER}/system_type.sh")
-            TESTVAL=""
-            TESTVAL=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "sudo whoami")
-            if [ "$TESTVAL" == "root" ]; then
-                SUDOPRIV="true"
-                TESTVAL=""
-                TESTVAL=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "sudo docker info 2> /dev/null")
-                if [ "$TESTVAL" != "" ]; then
-                    DOCKER="true"
-                else
-                    DOCKER="false"
-                fi
-                KERNEL_VER=$(ssh -i ${OUT_KEY} ${IUSER}@${HOST} "uname -a|cut -d\" \" -f3")
-            else
-                SUDOPRIV="false"
-                DOCKER="false"
-            fi
+
+        scp -q -i ${OUT_KEY} $PREP_SCRIPT ${IUSER}@${HOST}:$REM_LOC
+        if [ "$?" == "0" ]; then
+            ssh -i ${OUT_KEY} ${IUSER}@${HOST} $REM_LOC
         else
-            HOSTUP="false"
-            SUDOPRIV="false"
-            DOCKER="false"
+            printf "%-30s %-30s %-30s %-30s %-30s\n" "false" "-" "-" "-" "-"
         fi
-        @go.log INFO "Prep Status for $HOST - SYS_TYPE: $SYS_TYPE -  UP: $HOSTUP - SUDO: $SUDOPRIV - KERNEL: $KERNEL_VER - DOCKER: $DOCKER"
     done
 }
 
