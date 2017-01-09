@@ -37,7 +37,8 @@ CID=$(sudo docker run -d $APP_IMG sleep 20)
 sudo docker cp $CID:/$APP_VER_DIR/conf_orig/ ${APP_CONF_DIR}/
 sudo docker kill $CID
 sudo docker rm $CID
-
+sudo mv ${APP_CONF_DIR}/conf_orig/* $APP_CONF_DIR/
+sudo rm -rf $APP_CONF_DIR/conf_orig
 
 cat > $APP_ENV_FILE << EOL1
 #!/bin/bash
