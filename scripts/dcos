@@ -36,6 +36,8 @@ function _dcos() {
     echo "./zeta dcos install -n=NODE1  # Install DCOS on NODE1 given dcos.conf"
     echo "./zeta dcos install -a        # Install DCOS on all nodes listed in dcos.conf"
     echo ""
+    echo "./zeta dcos sshhosts          # One time script to connect to each nodes internal IP, hostname, and FQ hostname to trust the ssh host key - Not needed but helps automate"
+    echo ""
     echo "./zeta dcos -l                # Lock or unlock dcos.conf file"
     echo ""
 

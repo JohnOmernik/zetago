@@ -152,11 +152,7 @@ cat > $BUILD_TMP/dockerwarden.sh << EOL4
 #!/bin/bash
 service mapr-warden start
 
-while true
-do
-sleep 5
-done
-
+tail -f /dev/null
 EOL4
 
 cat > $BUILD_TMP/Dockerfile << EOL
