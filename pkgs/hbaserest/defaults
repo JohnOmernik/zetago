@@ -1,0 +1,4 @@
+#!/bin/bash
+
+DEF_APP_VERS="hbaserest-mapr-1.1.1.vers"
+REC_DIR="zeta"

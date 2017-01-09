@@ -100,7 +100,7 @@ function _fuseinstall() {
 
     JV=$(ssh $NODE_HOST "grep JAVA_HOME /etc/environment")
     if [ "$JV" == "" ]; then
-        @go.log INFO "JAVA_HOMST not found in /etc/environment on $NODE_HOST - Setting to /opt/mesosphere/active/java/usr/java"
+        @go.log INFO "JAVA_HOME not found in /etc/environment on $NODE_HOST - Setting to /opt/mesosphere/active/java/usr/java"
         ssh $NODE_HOST "echo \"JAVA_HOME=/opt/mesosphere/active/java/usr/java\"|sudo tee -a /etc/environment"
     fi
 
