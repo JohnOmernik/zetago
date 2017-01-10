@@ -1,0 +1,4 @@
+#!/bin/bash
+
+DEF_APP_VERS="kafkarest_3.0.1-2.11.vers"
+REC_DIR="zeta"
