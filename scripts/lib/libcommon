@@ -181,6 +181,7 @@ function checkapi(){
         TESTOUT=$(curl -s ${API_URL})
         TESTCNT=$(( $TESTCNT + 1 ))
     done
+    @go.log INFO "API Check of $API_URL - Succeeded!"
 
 
 
