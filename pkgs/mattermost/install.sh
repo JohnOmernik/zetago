@@ -1,7 +1,5 @@
 #!/bin/bash
 
-. "$_GO_USE_MODULES" 'getpass'
-
 ###############
 # $APP Specific
 echo "The next step will walk through instance defaults for ${APP_ID}"

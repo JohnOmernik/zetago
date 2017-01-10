@@ -14,7 +14,6 @@ AUTH_LIB="lib${LDAP_PROVIDER}"
 
 # Load the Auth lib for this cluster
 . "$_GO_USE_MODULES" $AUTH_LIB
-. "$_GO_USE_MODULES" 'getpass'
 . "$_GO_USE_MODULES" 'libmapr'
 function _user() {
 

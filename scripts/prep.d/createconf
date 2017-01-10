@@ -2,8 +2,6 @@
 #
 # This script walks the user through a series of questions in order to create a prep_conf.conf
 #
-. "$_GO_USE_MODULES" 'getpass'
-
 
 echo ""
 echo "-----------------------------------"
