@@ -26,8 +26,8 @@ function _zetaca_install() {
     ./zeta cluster zetaca build
     ./zeta cluster zetaca cascripts
     ./zeta cluster zetaca certcreation
-    @go.log INFO "Zeta CA App Submitted to Marathon: Waiting for deployment to finish before moving on"
 
+    @go.log INFO "Zeta CA App Submitted to Marathon: Waiting for deployment to finish before moving on"
     ./zeta cluster marathon submit "$ZETACA_HOME/marathon.json" "$MARATHON_SUBMIT" 1
 
     sleep 2

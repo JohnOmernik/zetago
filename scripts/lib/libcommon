@@ -169,10 +169,16 @@ function checkapi(){
     while [ "$TESTOUT" == "" ]; do
         @go.log INFO "No response at $API_URL - Test $TESTCNT out of $CHK_CNT - Waiting 5 seconds"
         if [ "$TESTCNT" -ge "$CHK_CNT" ]; then
-            @go.log FATAL "Waiting $CHK_CNT times for API: $API_URL - Exiting and failing"
+            @go.log WARN "$CHK_CNT tests reached, you can reset the counter to 0 and wait, or you can fail here"
+            read -e -p "Do you wish to reset the test counter to 1? (Y/N): " -i "Y" TRESET
+            if [ "$TRESET" == "Y" ]; then
+                TESTCNT=1
+            else
+                @go.log FATAL "Waiting $CHK_CNT times for API: $API_URL - Exiting and failing"
+            fi
         fi
         sleep 5
-        CAOUT=$(curl -s ${API_URL})
+        TESTOUT=$(curl -s ${API_URL})
         TESTCNT=$(( $TESTCNT + 1 ))
     done
 
