@@ -20,7 +20,7 @@ echo "/mapr/$CLUSTERNAME/zeta/prod/kafka/kafkaprod/kafkaprod.conf"
 echo ""
 echo "This is REQUIRED"
 echo ""
-read -e -p "What is the instance name of Kafka will this instance of ${APP_NAME} be running against: " -i "kafka${APP_ROLE}" APP_KAFKA_CONF
+read -e -p "What is the instance name of Kafka will this instance of ${APP_NAME} be running against: "  APP_KAFKA_CONF
 if [ ! -f "$APP_KAFKA_CONF" ]; then
     @go.log WARN "That Kafka Conf does not exist, please try again"
     while [ ! -f "${APP_KAFKA_CONF}" ]; do
@@ -38,7 +38,7 @@ echo ""
 echo "Kafka rest can also run against an instance of Schema registry to help with AVRO based kafka records.  This is not required"
 echo "However, without a Schema registry, kafkarest will only support raw json based records (no Avro)"
 
-read -e -p "What is the path to the conf file for the instance of schema registry that this instance of ${APP_NAME} be running against: (none - for json only mode)" -i "none" APP_SCHEMA_REG_CONF
+read -e -p "What is the path to the conf file for the instance of schema registry that this instance of ${APP_NAME} be running against (none - for json only mode): " -i "none" APP_SCHEMA_REG_CONF
 if [ ! -f "$APP_SCHEMA_REG_CONF" ] && [ "$APP_SCHEMA_REG_CONF" != "none" ]; then
     @go.log WARN "That schema reg Conf does not exist, please try again"
     while [ ! -f "${APP_SCHEMA_REG_CONF}" ] && [ "$APP_SCHEMA_REG_CONF" != "none" ]; do
