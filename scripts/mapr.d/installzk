@@ -11,7 +11,6 @@ sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
 MYDIR=$(pwd)
-
 MEUSER=$(whoami)
 
 if [ "$MEUSER" != "${IUSER}" ]; then
@@ -34,13 +33,7 @@ else
     echo "If you are unsure if this is the case, exit here, and test on all nodes"
 fi
 
-echo ""
-echo "Based on the results of the ip-detect, do you wish to go on?"
-read -e -p "Do the ip-detect results look accurate? " -i "N" IPTEST
 
-if [ "$IPTEST" != "Y" ]; then
-    @go.log FATAL "Exiting due to ip-detect results"
-fi
 MAPR_DEFAULTS="./conf/mapr_defaults"
 mkdir -p $MAPR_DEFAULTS
 mkdir -p $MAPR_DEFAULTS/conf
