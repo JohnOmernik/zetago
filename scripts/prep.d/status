@@ -71,6 +71,8 @@ EOF
             printf "%-30s %-30s %-30s %-30s %-30s\n" "false" "-" "-" "-" "-"
         fi
     done
+    echo ""
+    echo ""
     echo "To log into the initial node, please use:"
     echo ""
     echo "ssh -i $OUT_KEY ${IUSER}@$INIT_NODE"
