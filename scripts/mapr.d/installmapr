@@ -61,6 +61,7 @@ for CLDB in $CLDBS; do
     fi
     ./zeta mapr submitmaprnode $CLDB_HOST 1
 done
+IFS=$OLDIFS
 echo ""
 echo ""
 
