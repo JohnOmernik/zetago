@@ -1,0 +1,92 @@
+#!/bin/bash
+#
+# Create conf file for  package management
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$PACKAGE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+
+echo "This Conf Creation will make the network configuration script for Zeta."
+echo ""
+DNS_SERVERS="198.51.100.1,192.168.100.2,198.51.100.3"
+echo "The DCOS DNS Servers are $DNS_SERVERS"
+echo "You should not need to add additional DNS Servers."
+
+echo "What NTP Servers are your cluster servers using? (CSV)"
+read -e -p "Enter NTP Servers for outbound access, or leave blank: " NTP_SERVERS
+
+echo "Using CIDR Notation (such as 192.168.0.0/24) Please enter the CIDR for the routable addresses on each node"
+read -e -p "Zeta Routable addressess (CIDR): " -i "192.168.0.0/24"  ZETA_CIDR_ROUTABLE
+
+echo "If you have additional interfaces that are non-routable (for node-to-node communication) Please enter the addresses here. If you have more than one, just enter with spaces inbetween: Example: 192.168.1.0/24 192.168.2.0/24"
+read -e -p "Zeta non-routaable (node-to-node) (this can be blank): " ZETA_CIDR_NONROUTABLE
+
+DCOS_CIDR=9.0.0.0/8
+SPARTAN_CIDR=192.50.0.0/15
+DOCKER_CIDR=172.16.0.0/12
+
+echo "The following CIDRs are default to DCOS:"
+echo "DCOS: $DCOS_CIDR"
+echo "SPARTAN: $SPARTAN_CIDR"
+echo "Docker: $DOCKER_CIDR"
+
+DOCKER_INTERFACE=docker0
+
+echo "Docker Interface: $DOCKER_INTERFACE"
+
+echo "Please enter a list of static IP addresses used for remote administration. These IPs should be comma separated"
+echo ""
+read -e -p "Static IPs of remote admin IP machines: " REMOTE_IPS
+
+echo "You may also provide a list of machine names to attempt to look up in order to add to the remote IPs list. This list should be comma separated as well and resolveable from the cluster"
+echo "This list does not have to include machine that have static IPs and already included above, this list is for remote admin boxes with dynamic IPs that could change quite a bit"
+echo ""
+read -e -p "List of remote admin machine names: " REMOTE_NAMES
+echo ""
+
+if [ "$DOCKER_PROXY" != "" ]; then
+    PROXY_HOST=$(echo $DOCKER_PROXY|sed "s@https://@@g"|sed "s@http://@@g"|grep -o -P "(^|@)([^:]+)"|sed "s/@//g")
+
+    echo "The Docker proxy is set to be $DOCKER_PROXY"
+    echo "Host for the proxy is likely: $PROXY_HOST"
+    echo "Please enter the IP address of the Proxy used here (or validate, we attempt to resolve the IP)"
+    PROXY_IP=$(nslookup $PROXY_HOST | awk '/^Address: / { print $2 ; exit }')
+    read -e -p "Please enter or validate the proxy IP: " -i "$PROXY_IP" PROXY_IP
+
+else
+    PROXY_IP=""
+fi
+#ZETA_AGENT01=
+
+
+
+
+cat > $NETWORK_CONF << EOP
+#!/bin/bash
+
+DNS_SERVERS="$DNS_SERVERS"
+NTP_SERVERS="$NTP_SERVERS"
+ZETA_CIDR_ROUTABLE="$ZETA_CIDR_ROUTABLE"
+ZETA_CIDR_NONROUTABLE="$ZETA_CIDR_NONROUTABLE"
+
+
+DCOS_CIDR="$DCOS_CIDR"
+SPARTAN_CIDR="$SPARTAN_CIDR"
+DOCKER_CIDR="$DOCKER_CIDR"
+DOCKER_INTERFACE="$DOCKER_INTERFACE"
+PROXY_IP="$PROXY_IP"
+
+
+NETWORK_LOCKED="1"
+EOP
+
+@go.log INFO "Network conf created at $NETWORK_CONF"
+

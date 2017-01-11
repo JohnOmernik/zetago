@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# ./zeta network
+#
+# Helps to maintain networks in a zeta environment
+#
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$PACKAGE_CONF"
+reqshared "dockerregv2 zetaca openldap"
+
+
+function _network() {
+   LOCK="0"
+
+    for i in "$@"
+    do
+    case $i in
+        -l)
+        LOCK="1"
+        ;;
+        *)
+            # unknown option
+        ;;
+    esac
+    done
+
+    initconf "$NETWORK_CONF"
+
+    echo ""
+    echo "********************************"
+    echo "Network Administration Scripts for Zeta"
+    echo "********************************"
+    echo ""
+    echo "Commands to use with package:"
+    echo ""
+    echo "./zeta network                          # This command"
+    echo "./zeta network  status                   # Lists all packages in ./pkgs and their status in the cluster"
+    echo ""
+    echo "./zeta network -l                # Lock or unlock package.conf file"
+    echo ""
+
+    if [ "$LOCK" == "1" ]; then
+       lockconf "$NETWORK_CONF"
+    fi
+
+
+}
+
+_network "$@"
+
+
+
