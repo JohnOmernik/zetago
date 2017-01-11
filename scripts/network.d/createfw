@@ -29,12 +29,17 @@ function _createfw(){
 cat > $FW << EOF
 #!/bin/bash
 
+MYIP=\$(/opt/mesosphere/bin/detect_ip)
+
+
 DNS_SERVERS="$DNS_SERVERS"
 NTP_SERVERS="$NTP_SERVERS"
 ZETA_CIDR_ROUTABLE="$ZETA_CIDR_ROUTABLE"
 ZETA_CIDR_NONROUTABLE="$ZETA_CIDR_NONROUTABLE"
 REMOTE_ADM_IPS="$REM_IPS"
 DCOS_CIDR="$DCOS_CIDR"
+EDGE_NODES="$EDGE_NODES"
+EDGE_SERVICES="$EDGE_SERVICES"
 SPARTAN_CIDR="$SPARTAN_CIDR"
 DOCKER_CIDR="$DOCKER_CIDR"
 DOCKER_INTERFACE="$DOCKER_INTERFACE"
@@ -101,11 +106,34 @@ iptables -A INPUT -s \$DNS_SERVERS -p tcp --dport 53 -j ACCEPT
 iptables -A INPUT -s \$REMOTE_ADM_IPS -j ACCEPT
 
 
+CHK=\$(echo "\$EDGE_NODES"|grep "\$MYIP")
+
+if [ "\$CHK" != "" ]; then
+    echo "Edge Node: Adding Edge Services to this node"
+    OLDIFS=\$IFS
+    IFS=","
+    for SVC in \$EDGE_SERVICES; do
+        SVC_NAME=\$(echo \$SVC|cut -d":" -f1)
+        SVC_PORT=\$(echo \$SVC|cut -d":" -f2)
+        iptables -A INPUT -p tcp --dport \$SVC_PORT -m comment --comment "Edge Service: \$SVC_NAME" -j ACCEPT
+    done
+fi
+
 # FORWARD
 echo " Creating FORWARD chain.."
 iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
 iptables -A FORWARD -s \$DOCKER_CIDR -d \$DOCKER_CIDR -j ACCEPT
-iptables -A FORWARD -s \$DOCKER_CIDR -d \$PROXY_IP -j ACCEPT
+
+if [ "\$PROXY_IP" != "" ]; then
+        iptables -A FORWARD -s \$DOCKER_CIDR -d \$PROXY_IP -j ACCEPT
+fi
+if [ "\$ALLOW_DIRECT_WEB" == "Y" ]; then
+        iptables -A FORWARD -s \$DOCKER_CIDR -p tcp --dport 80 -j ACCEPT
+        iptables -A FORWARD -s \$DOCKER_CIDR -p tcp --dport 443 -j ACCEPT
+fi
+
+
+
 
 # OUTPUT
 echo "Creating OUTPUT chain.."

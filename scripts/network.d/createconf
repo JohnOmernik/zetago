@@ -4,7 +4,7 @@
 #
 
 sourceconf "$PREP_CONF"
-
+sourceconf "$DCOS_CONF"
 
 echo "This Conf Creation will make the network configuration script for Zeta."
 echo ""
@@ -62,14 +62,28 @@ else
     PROXY_IP=""
     PROXY_PORT=""
 fi
-
 echo ""
 echo "In addition to a proxy, we can also allow direct connections off agent boxes. If you are using a proxy, this is likely not required, with no proxy, you will need to answer Y (the default)"
-read -e -p "Allow direct outbound connections from ports 80 and 443?" -i "Y" ALLOW_DIRECT_WEB
+read -e -p "Allow direct outbound connections from ports 80 and 443? (Y/N): " -i "Y" ALLOW_DIRECT_WEB
 
-#ZETA_AGENT01=
-
-
+echo ""
+echo ""
+echo "***********************************************"
+echo ""
+echo "By default, nodes are treated the same from a firewall perspectice with the exception of EDGE_NODES"
+echo ""
+echo "EDGE_NODES typically run a load balancer or other service to provide cluster services to outside hosts"
+echo "If you specified Public nodes, you'll want to use these as your edge nodes"
+echo "Otherwise, pick a couple of edge nodes from the Agent list to act as edge nodes, please specify IP addresses with comma separating"
+echo ""
+echo "Public nodes: $PUBLIC_NODES"
+echo ""
+echo "Available Agent Nodes: $AGENT_NODES"
+echo ""
+read -e -p "Please specify your edge nodes (the nodes to run the load balancer (installed later): " -i "$PUBLIC_NODES" EDGE_NODES
+echo ""
+echo "By default we add one service to the EDGE_PORTS - Default Loadbalance on 443"
+EDGE_SERVICES="Default Load Balancer:443"
 
 
 cat > $NETWORK_CONF << EOP
@@ -81,7 +95,8 @@ ZETA_CIDR_ROUTABLE="$ZETA_CIDR_ROUTABLE"
 ZETA_CIDR_NONROUTABLE="$ZETA_CIDR_NONROUTABLE"
 REMOTE_IPS="$REMOTE_IPS"
 REMOTE_NAMES="$REMOTE_NAMES"
-
+EDGE_NODES="$EDGE_NODES"
+EDGE_SERVICES="$EDGE_SERVICES"
 DCOS_CIDR="$DCOS_CIDR"
 SPARTAN_CIDR="$SPARTAN_CIDR"
 DOCKER_CIDR="$DOCKER_CIDR"
