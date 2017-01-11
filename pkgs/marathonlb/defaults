@@ -1,0 +1,4 @@
+#!/bin/bash
+
+DEF_APP_VERS="marathonlb-1.4.3.vers"
+REC_DIR="zeta"
