@@ -11,16 +11,19 @@ echo ""
 DNS_SERVERS="198.51.100.1,192.168.100.2,198.51.100.3"
 echo "The DCOS DNS Servers are $DNS_SERVERS"
 echo "You should not need to add additional DNS Servers."
-
+echo ""
 echo "What NTP Servers are your cluster servers using? (CSV)"
+echo ""
 read -e -p "Enter NTP Servers for outbound access, or leave blank: " NTP_SERVERS
-
-echo "Using CIDR Notation (such as 192.168.0.0/24) Please enter the CIDR for the routable addresses on each node"
+echo ""
+echo "Using CIDR Notation (such as 192.168.0.0/24) Please enter the CIDR for the routable addresses on each node (only one)"
+echo ""
 read -e -p "Zeta Routable addressess (CIDR): " -i "192.168.0.0/24"  ZETA_CIDR_ROUTABLE
-
-echo "If you have additional interfaces that are non-routable (for node-to-node communication) Please enter the addresses here. If you have more than one, just enter with spaces inbetween: Example: 192.168.1.0/24 192.168.2.0/24"
+echo ""
+echo "If you have additional interfaces that are non-routable (for node-to-node communication) Please enter the addresses here. If you have more than one, just enter with commans in between: Example: 192.168.1.0/24,192.168.2.0/24"
+echo ""
 read -e -p "Zeta non-routaable (node-to-node) (this can be blank): " ZETA_CIDR_NONROUTABLE
-
+echo ""
 DCOS_CIDR=9.0.0.0/8
 SPARTAN_CIDR=192.50.0.0/15
 DOCKER_CIDR=172.16.0.0/12
