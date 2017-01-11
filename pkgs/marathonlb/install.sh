@@ -59,8 +59,9 @@ read -e -p "Mesos Constraint: " APP_CONSTRAINT
 if [ "$APP_CONSTRAINT" == "" ]; then
     APP_CONSTRAINT=""
 else
-    APP_CONSTRAINT="[\"hostname\", \"LIKE\", \"$APP_CONSTRAINT"\"], "
+    APP_CONSTRAINT="[\"hostname\", \"LIKE\", \"$APP_CONSTRAINT\"], "
 fi
+
 echo "Do you with to generate certificates with ZetaCA or use external enterprise trusted certs (recommended)?"
 read -e -p "Generate certificates from Zeta CA? " -i "N" ZETA_CA_CERTS
 echo ""
