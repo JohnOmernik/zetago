@@ -57,7 +57,9 @@ echo "For example, if you want to run it on two Mesos Agents with the host names
 echo ""
 read -e -p "Mesos Constraint: " APP_CONSTRAINT
 if [ "$APP_CONSTRAINT" == "" ]; then
-    APP_CONSTRAINT='*'
+    APP_CONSTRAINT=""
+else
+    APP_CONSTRAINT="[\"hostname\", \"LIKE\", \"$APP_CONSTRAINT"\"], "
 fi
 echo "Do you with to generate certificates with ZetaCA or use external enterprise trusted certs (recommended)?"
 read -e -p "Generate certificates from Zeta CA? " -i "N" ZETA_CA_CERTS
@@ -86,7 +88,7 @@ cat > ${APP_MAR_FILE} << EOL
   "mem": ${APP_MEM},
   "instances": ${APP_CNT},
   "args":["sse", "--marathon", "http://${ZETA_MARATHON_URL}", "--group", "*"],
-  "constraints": [["hostname", "LIKE", "$APP_CONSTRAINT"], ["hostname", "UNIQUE"]],
+  "constraints": [${APP_CONSTRAINT}["hostname", "UNIQUE"]],
   "env": {
     "HAPROXY_SSL_CERT":"/marathonlb/certs/${CERT_FILE_NAME}"
   },
