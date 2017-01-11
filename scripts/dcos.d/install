@@ -7,9 +7,10 @@
 # -n=%NODE%     # Install on a specifc node. It will check to see if this node is a master or agent. If it's not a master, it will install the DCOS agent by default
 #
 # Usage:
-# ./zeta dcos install -n=node1  # Install DCOS on the specified node given the config files. Multiple nodes can be specified with comman.
-# ./zeta dcos install           # no argument runs on all nodes but checks with user
-# ./zeta dcos install -u        # Run on all nodes, don't validate with user, just fire and forget
+# ./zeta dcos install -n=node1      # Install DCOS on the specified node given the config files. .
+# ./zeta dcos install -n=node1 -p   # Install DCOS on the specified node given the config files. Also install as a public node
+# ./zeta dcos install               # no argument runs on all nodes but checks with user
+# ./zeta dcos install -u            # Run on all nodes, don't validate with user, just fire and forget
 #
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
@@ -19,11 +20,15 @@ IP_DETECT="./conf/ip-detect"
 function _dcos_install() {
     ALL="1"
     UNATTEND="0"
+    PUBLIC="0"
     for i in "$@"
        do
         case $i in
              -u)
              UNATTEND="1"
+             ;;
+             -p)
+             PUBLIC="1"
              ;;
             "-n="*)
             HOST="${i#*=}"
@@ -80,8 +85,14 @@ function _dcos_install() {
     echo ""
     for M in $EXT_MASTERS; do
         if [ "$M" != "" ]; then
-            echo "DCOS: http://$M"
-            echo "DCOS Exibitor: http://$M:8181"
+            echo "DCOS:"
+            echo ""
+            echo "http://$M"
+            echo ""
+            echo ""
+            echo "DCOS Exibitor:"
+            echo ""
+            echo "http://$M:8181"
         fi
     done
     echo ""
@@ -98,19 +109,19 @@ function _dcos_install() {
     for NODE in $RUN_NODES; do
         if [[ "$MASTER_NODES" != *"$NODE"* ]]; then
             # This is an agent node so install now
-            if [ "$NODE" != "$INIT_INTERNAL_IP" ]; then
-                # Non-bootstrap agent
-                @go.log INFO "Install non-boostrap agent on $NODE"
-                ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O -s http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh"
-                ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'cd /tmp/dcos && nohup bash dcos_install.sh slave > /dev/null 2>&1 &'" &
-            else
-                # Bootstrap agent
-                @go.log INFO "Install bootstrap agent on $NODE"
-                ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O -s http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && sed -i \"s/systemctl restart docker/# systemctl restart docker/\" dcos_install.sh"
-                ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'cd /tmp/dcos && nohup bash dcos_install.sh slave > /dev/null 2>&1 &'" &
+            INSTSTR="slave" # Default
+            if [[ "$PUBLIC_NODES" == *"$NODE"* ]]; then
+                INSTSTR="slave_public"
             fi
+            if [ "$ALL" == "0" ] && [ "$PUBLIC" == "1" ]; then
+                INSTSTR="slave_public"
+            fi
+            @go.log INFO "Installing $INSTSTR agent on $NODE"
+            ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O -s http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && sed -i \"s/systemctl restart docker/# systemctl restart docker/\" dcos_install.sh"
+            ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'cd /tmp/dcos && nohup bash dcos_install.sh $INSTSTR > /dev/null 2>&1 &'" &
         fi
     done
+    echo ""
     @go.log INFO "DCOS Agents Initiated on all Agents"
 
 

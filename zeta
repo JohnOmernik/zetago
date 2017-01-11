@@ -8,7 +8,7 @@ declare -r __GO_CORE="${0%/*}/scripts/go-script-bash/go-core.bash"
 BASE_CONF="./conf/base.conf"
 
 if [ ! -f "$BASE_CONF" ]; then
-    echo "Createing Initial Confing in $BASE_CONF"
+    echo "Creating Initial Confing in $BASE_CONF"
 cat > $BASE_CONF << EOF
 #!/bin/bash
 
@@ -19,6 +19,7 @@ export CLUSTER_CONF="./conf/cluster.conf"
 export CLUSTER_ZETACA_CONF="./conf/cluster_zetaca.conf"
 export CLUSTER_BASE_CONF="./conf/cluster_base.conf"
 export PACKAGE_CONF="./conf/package.conf"
+export NETWORK_CONF="./conf/network.conf"
 EOF
 fi
 . $BASE_CONF
