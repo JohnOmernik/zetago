@@ -312,6 +312,7 @@ cat > $MARFILE << MAREOF
   "mem": ${MARATHON_MEM},
   "cmd": "/opt/mapr/server/dockerrun.sh",
   "instances": 1,
+  "acceptedResourceRoles": ["slave_public", "*"],
   "constraints": [["hostname", "LIKE", "$NODE_IP"],["hostname", "UNIQUE"]],
   "labels": {
    "CONTAINERIZER":"Docker"

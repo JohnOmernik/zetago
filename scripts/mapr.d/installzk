@@ -165,6 +165,7 @@ for ZK in $ZK_STRING; do
   "mem": 1536,
   "cmd": "/opt/mapr/runzkdocker.sh",
   "instances": 1,
+  "acceptedResourceRoles": ["slave_public", "*"],
   "constraints": [["hostname", "LIKE", "$ZK_IP"],["hostname", "UNIQUE"]],
   "labels": {
    "CONTAINERIZER":"Docker"

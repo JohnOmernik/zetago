@@ -85,8 +85,14 @@ function _dcos_install() {
     echo ""
     for M in $EXT_MASTERS; do
         if [ "$M" != "" ]; then
-            echo "DCOS: http://$M"
-            echo "DCOS Exibitor: http://$M:8181"
+            echo "DCOS:"
+            echo ""
+            echo "http://$M"
+            echo ""
+            echo ""
+            echo "DCOS Exibitor:"
+            echo ""
+            echo "http://$M:8181"
         fi
     done
     echo ""
