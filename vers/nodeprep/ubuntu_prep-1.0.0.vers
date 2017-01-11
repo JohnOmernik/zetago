@@ -37,6 +37,7 @@ EOS
 
 #Install Docker
 sudo apt-get install -y -q docker-engine=$DOCKER_VER
+sudo apt-mark hold docker-engine
 sudo systemctl enable docker
 
 # Install some common tools
