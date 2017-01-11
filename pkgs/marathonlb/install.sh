@@ -90,6 +90,7 @@ cat > ${APP_MAR_FILE} << EOL
   "instances": ${APP_CNT},
   "args":["sse", "--marathon", "http://${ZETA_MARATHON_URL}", "--group", "*"],
   "constraints": [${APP_CONSTRAINT}["hostname", "UNIQUE"]],
+  $APP_ACCEPTED_ROLES
   "env": {
     "HAPROXY_SSL_CERT":"/marathonlb/certs/${CERT_FILE_NAME}"
   },
