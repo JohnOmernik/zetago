@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Zeta Main Script
+#
 
 declare -r __GO_CORE="${0%/*}/scripts/go-script-bash/go-core.bash"
 
