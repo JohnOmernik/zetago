@@ -4,14 +4,6 @@
 #
 
 sourceconf "$PREP_CONF"
-sourceconf "$DCOS_CONF"
-sourceconf "$MAPR_CONF"
-sourceconf "$CLUSTER_CONF"
-sourceconf "$CLUSTER_ZETACA_CONF"
-sourceconf "$CLUSTER_BASE_CONF"
-sourceconf "$PACKAGE_CONF"
-
-reqshared "dockerregv2 zetaca openldap"
 
 
 echo "This Conf Creation will make the network configuration script for Zeta."
@@ -54,16 +46,24 @@ echo ""
 
 if [ "$DOCKER_PROXY" != "" ]; then
     PROXY_HOST=$(echo $DOCKER_PROXY|sed "s@https://@@g"|sed "s@http://@@g"|grep -o -P "(^|@)([^:]+)"|sed "s/@//g")
-
+    PROXY_PORT=$(echo $DOCKER_PROXY|sed "s@https://@@g"|sed "s@http://@@g"|cut -d":" -f2)
     echo "The Docker proxy is set to be $DOCKER_PROXY"
     echo "Host for the proxy is likely: $PROXY_HOST"
     echo "Please enter the IP address of the Proxy used here (or validate, we attempt to resolve the IP)"
     PROXY_IP=$(nslookup $PROXY_HOST | awk '/^Address: / { print $2 ; exit }')
     read -e -p "Please enter or validate the proxy IP: " -i "$PROXY_IP" PROXY_IP
-
+    echo ""
+    read -e -p "Please enter or validate the proxy port: " -i "$PROXY_PORT" PROXY_PORT
+    echo ""
 else
     PROXY_IP=""
+    PROXY_PORT=""
 fi
+
+echo ""
+echo "In addition to a proxy, we can also allow direct connections off agent boxes. If you are using a proxy, this is likely not required, with no proxy, you will need to answer Y (the default)"
+read -e -p "Allow direct outbound connections from ports 80 and 443?" -i "Y" ALLOW_DIRECT_WEB
+
 #ZETA_AGENT01=
 
 
@@ -76,14 +76,16 @@ DNS_SERVERS="$DNS_SERVERS"
 NTP_SERVERS="$NTP_SERVERS"
 ZETA_CIDR_ROUTABLE="$ZETA_CIDR_ROUTABLE"
 ZETA_CIDR_NONROUTABLE="$ZETA_CIDR_NONROUTABLE"
-
+REMOTE_IPS="$REMOTE_IPS"
+REMOTE_NAMES="$REMOTE_NAMES"
 
 DCOS_CIDR="$DCOS_CIDR"
 SPARTAN_CIDR="$SPARTAN_CIDR"
 DOCKER_CIDR="$DOCKER_CIDR"
 DOCKER_INTERFACE="$DOCKER_INTERFACE"
 PROXY_IP="$PROXY_IP"
-
+PROXY_PORT="$PROXY_PORT"
+ALLOW_DIRECT_WEB="$ALLOW_DIRECT_WEB"
 
 NETWORK_LOCKED="1"
 EOP

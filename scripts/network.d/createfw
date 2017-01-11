@@ -1,0 +1,157 @@
+#!/bin/bash
+#
+# createfw - Using the network.conf create a firewall.sh script to use on Agent and Master nodes
+#
+sourceconf "$PREP_CONF"
+sourceconf "$NETWORK_CONF"
+
+function _createfw(){
+
+    FW="./firewall.sh"
+    touch $FW
+    chmod 700 $FW
+    REM_IPS="$REMOTE_IPS"
+
+    @go.log INFO "Getting current remote IPS"
+    RNAMES=$(echo "$REMOTE_NAMES"|tr "," " ")
+    for N in $RNAMES; do
+        TIP=$(dig +short $N 2> /dev/null)
+        if [ "$TIP" != "" ]; then
+            if [ "$REM_IPS" == "" ]; then
+                REM_IPS="$TIP"
+            else
+                REM_IPS="${REM_IPS},$TIP"
+            fi
+        fi
+    done
+
+
+cat > $FW << EOF
+#!/bin/bash
+
+DNS_SERVERS="$DNS_SERVERS"
+NTP_SERVERS="$NTP_SERVERS"
+ZETA_CIDR_ROUTABLE="$ZETA_CIDR_ROUTABLE"
+ZETA_CIDR_NONROUTABLE="$ZETA_CIDR_NONROUTABLE"
+REMOTE_ADM_IPS="$REM_IPS"
+DCOS_CIDR="$DCOS_CIDR"
+SPARTAN_CIDR="$SPARTAN_CIDR"
+DOCKER_CIDR="$DOCKER_CIDR"
+DOCKER_INTERFACE="$DOCKER_INTERFACE"
+ALLOW_DIRECT_WEB="$ALLOW_DIRECT_WEB"
+PROXY_IP="$PROXY_IP"
+PROXY_PORT="$PROXY_PORT"
+
+# reset firewall state
+echo "Starting my attack run!.. Resetting fireall state.."
+iptables -F
+iptables -X
+iptables -t nat -F
+iptables -t nat -X
+iptables -t mangle -F
+iptables -t mangle -X
+
+echo "DCOS Masquarade and mangle"
+ipset add -exist overlay \$DCOS_CIDR nomatch
+iptables -t nat -A POSTROUTING -s \$DCOS_CIDR -m set --match-set overlay dst -j MASQUERADE
+
+echo "Docker Masquarade"
+# Docker Masquerade
+iptables -t nat -N DOCKER
+iptables -t filter -N DOCKER
+iptables -t filter -N DOCKER-ISOLATION
+iptables -t filter -I DOCKER-ISOLATION -j DROP
+iptables -t filter -I DOCKER-ISOLATION -j RETURN
+iptables -t nat -A PREROUTING -m addrtype --dst-type LOCAL -j DOCKER
+iptables -t filter -A OUTPUT ! -d 127.0.0.0/8 -m addrtype --dst-type LOCAL -j DOCKER
+iptables -t nat -A POSTROUTING -s \$DOCKER_CIDR ! -o \$DOCKER_INTERFACE -j MASQUERADE
+iptables -t filter -I DOCKER -i \$DOCKER_INTERFACE -j RETURN
+iptables -t nat -I DOCKER -i \$DOCKER_INTERFACE -j RETURN
+iptables -A FORWARD -j DOCKER-ISOLATION
+iptables -A FORWARD -o \$DOCKER_INTERFACE -j DOCKER
+iptables -A FORWARD -o \$DOCKER_INTERFACE -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i \$DOCKER_INTERFACE ! -o \$DOCKER_INTERFACE -j ACCEPT
+iptables -A FORWARD -i \$DOCKER_INTERFACE -o \$DOCKER_INTERFACE -j ACCEPT
+iptables -A FORWARD -o d-dcos -j DOCKER
+iptables -A FORWARD -o d-dcos -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i d-dcos ! -o d-dcos -j ACCEPT
+iptables -A FORWARD -i d-dcos -o d-dcos -j ACCEPT
+iptables -A DOCKER-ISOLATION -i d-dcos -o \$DOCKER_INTERFACE -j DROP
+iptables -A DOCKER-ISOLATION -i \$DOCKER_INTERFACE -o d-dcos -j DROP
+iptables -A DOCKER-ISOLATION -j RETURN
+
+
+# INPUT
+echo "Creating input chain..."
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A INPUT -s \$ZETA_CIDR_ROUTABLE -j ACCEPT
+if [ "\$ZETA_CIDR_NONROUTABLE" != "" ]; then
+    SUBS=\$(echo "\$ZETA_CIDR_NONROUTABLE"|tr "," " ")
+    for S in \$SUBS; do
+        iptables -A INPUT -s \$S -j ACCEPT
+    done
+fi
+
+iptables -A INPUT -i \$DOCKER_INTERFACE -s \$SPARTAN_CIDR -j ACCEPT
+iptables -A INPUT -s \$DCOS_CIDR -j ACCEPT
+iptables -A INPUT -s \$DOCKER_CIDR -j ACCEPT
+iptables -A INPUT -s \$DNS_SERVERS -p udp --dport 53 -j ACCEPT
+iptables -A INPUT -s \$DNS_SERVERS -p tcp --dport 53 -j ACCEPT
+iptables -A INPUT -s \$REMOTE_ADM_IPS -j ACCEPT
+
+
+# FORWARD
+echo " Creating FORWARD chain.."
+iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A FORWARD -s \$DOCKER_CIDR -d \$DOCKER_CIDR -j ACCEPT
+iptables -A FORWARD -s \$DOCKER_CIDR -d \$PROXY_IP -j ACCEPT
+
+# OUTPUT
+echo "Creating OUTPUT chain.."
+iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+iptables -A OUTPUT -d \$ZETA_CIDR_ROUTABLE -j ACCEPT
+
+if [ "\$ZETA_CIDR_NONROUTABLE" != "" ]; then
+    SUBS=\$(echo "\$ZETA_CIDR_NONROUTABLE"|tr "," " ")
+    for S in \$SUBS; do
+        iptables -A OUTPUT -d \$S -j ACCEPT
+    done
+fi
+
+iptables -A OUTPUT -d \$SPARTAN_CIDR -j ACCEPT
+iptables -A OUTPUT -d \$DCOS_CIDR -j ACCEPT
+iptables -A OUTPUT -d \$DOCKER_CIDR -j ACCEPT
+iptables -A OUTPUT -d \$DNS_SERVERS -p udp --dport 53 -j ACCEPT
+iptables -A OUTPUT -d \$DNS_SERVERS -p tcp --dport 53 -j ACCEPT
+if [ "\$NTP_SERVERS" == "" ]; then
+    iptables -A OUTPUT -p udp --dport 123 -j ACCEPT
+else
+    iptables -A OUTPUT -d \$NTP_SERVERS -p udp --dport 123 -j ACCEPT
+fi
+if [ "\$PROXY_IP" != "" ]; then
+    iptables -A OUTPUT -d \$PROXY_IP -p tcp --dport \$PROXY_PORT -j ACCEPT
+fi
+if [ "\$ALLOW_DIRECT_WEB" == "Y" ]; then
+    iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
+    iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
+fi
+
+echo "Creating logging and policies.."
+iptables -A INPUT -j LOG --log-prefix="iptables INPUT DROP: "
+iptables -A OUTPUT -j LOG --log-prefix="iptables OUTPUT DROP: "
+iptables -A FORWARD -j LOG --log-prefix="iptables FORWARD DROP: "
+iptables -P INPUT DROP
+iptables -P OUTPUT DROP
+iptables -P FORWARD DROP
+
+echo "Finished!"
+EOF
+
+
+
+
+
+}
+_createfw "$@"

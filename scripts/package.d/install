@@ -79,10 +79,10 @@ function _packageinstall() {
 
     mkdir -p ${APP_HOME}
 
-
+    APP_CONF_FILE="${APP_HOME}/${APP_ID}.conf"
     # Run the install
     . ${APP_PKG_BASE}/install.sh
-
+    # Just incase things are changed...
     APP_CONF_FILE="${APP_HOME}/${APP_ID}.conf"
 
     if [ "$APP_CNT" == "" ]; then
