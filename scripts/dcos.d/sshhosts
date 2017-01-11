@@ -18,7 +18,7 @@ function _addsshhosts() {
     echo "It runs through the nodes three times, one for the Internal IPs, one for the hostsname, and one for the full host names so that the keys can be trusted for each of the three"
     echo ""
     echo ""
-    echo "Connecting by IP to get hostnames - Answer Yes"
+    echo "Connecting by IP to get hostnames - Answer yes"
     for IP in $INTERNAL_NODES; do
         HN=$(ssh $IP hostname)
         if [ "$INTERNAL_HN" == "" ]; then
@@ -29,7 +29,7 @@ function _addsshhosts() {
     done
 
     echo ""
-    echo "Connecting by hostname to get the fully qualified - Answer Yes"
+    echo "Connecting by hostname to get the fully qualified - Answer yes"
     for HN in $INTERNAL_HN; do
         FQHN=$(ssh $HN "hostname -f")
         if [ "$INTERNAL_FQHN" == "" ]; then
@@ -40,7 +40,7 @@ function _addsshhosts() {
     done
 
     echo ""
-    echo "Connecting by  FQHNs to trust them - Answer Yes"
+    echo "Connecting by FQHNs to trust them - Answer yes"
     for FQHN in $INTERNAL_FQHN; do
         ssh $FQHN "hostname -f"
     done

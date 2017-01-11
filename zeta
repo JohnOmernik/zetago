@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Zeta Main Script
+#
 
 declare -r __GO_CORE="${0%/*}/scripts/go-script-bash/go-core.bash"
 
@@ -25,7 +28,7 @@ if [[ ! -f "$__GO_CORE" ]]; then
 fi
 . "$__GO_CORE" "scripts"
 . "$_GO_USE_MODULES" 'log'
-. "$_GO_USE_MODULES" 'libconf'
+. "$_GO_USE_MODULES" 'libcommon'
 
 @go "$@"
 

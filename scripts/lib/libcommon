@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# libconf
+# libcommon
 #
-# Functions for use in conf files
+# Functions for common use
 #
 # initconf - Load a conf and/or replace it. Used when the scripts assume a conf does not exist and needs to have it created
 #
@@ -10,6 +10,9 @@
 #
 # lockconf - lock (or unlock) a give conf file
 #
+# checkapi - Check a given URL to determine if it's up and running. Keep trying until the number of fails is reached, then FATAL out
+#
+# getpass - Request a password from the User 
 # --------------------------------------------
 #
 # function initconf
@@ -142,3 +145,88 @@ function lockconf(){
     fi
 
 }
+
+
+#
+# function checkapi
+#
+# Take an API to check for it being up.  Also take a number of times to check on 5 second loop. After that amount is reached, fail. Default is 10.
+#
+#
+function checkapi(){
+
+    API_URL=$1
+    CHK_CNT=$2
+    if [ "$CHK_CNT" == "" ]; then
+        CHK_CNT=10
+    fi
+
+    @go.log INFO "Waiting for API Respond at $API_URL"
+    TESTOUT=""
+    TESTOUT=$(curl -s ${API_URL})
+    TESTCNT=1
+
+    while [ "$TESTOUT" == "" ]; do
+        @go.log INFO "No response at $API_URL - Test $TESTCNT out of $CHK_CNT - Waiting 5 seconds"
+        if [ "$TESTCNT" -ge "$CHK_CNT" ]; then
+            @go.log WARN "$CHK_CNT tests reached, you can reset the counter to 0 and wait, or you can fail here"
+            read -e -p "Do you wish to reset the test counter to 1? (Y/N): " -i "Y" TRESET
+            if [ "$TRESET" == "Y" ]; then
+                TESTCNT=1
+            else
+                @go.log FATAL "Waiting $CHK_CNT times for API: $API_URL - Exiting and failing"
+            fi
+        fi
+        sleep 5
+        TESTOUT=$(curl -s ${API_URL})
+        TESTCNT=$(( $TESTCNT + 1 ))
+    done
+    @go.log INFO "API Check of $API_URL - Succeeded!"
+
+
+
+}
+
+#
+# This script has a function to return a password.
+# It works with the user to get the password at the STDIN (hiding the input)
+# It then checks again to see if the passwords match. If they match,  it returns
+# If it doesn't match it tries again
+#
+#
+# getpass USER PASSVAR
+#
+# Asks a user to enter the password for a specific user
+#
+# - USER is the username the function is asking the password for. This is only a string representation, and is displayed in prompts
+# - PASSVA is the variable that function should store the password in so it's returned to the caller
+function getpass(){
+    local MYUSER=$1
+    local RESULT=$2
+
+    local MYPASS1="1234"
+    local MYPASS2="2345"
+
+    # If the passwords don't match, keep asking for passwords until they do
+    while [ "$MYPASS1" != "$MYPASS2" ]; 
+    do
+        stty -echo
+        printf "Please enter password for $MYUSER: "
+        read MYPASS1
+        echo ""
+        printf "Please re-enter password for $MYUSER: "
+        read MYPASS2
+        echo ""
+        stty echo
+        if [ "$MYPASS1" != "$MYPASS2" ]; then
+            echo ""
+            echo "Passwords entered for $MYUSER do not match! Please try again"
+            echo ""
+        fi
+    done
+    eval $RESULT="'$MYPASS1'"
+
+
+
+}
+

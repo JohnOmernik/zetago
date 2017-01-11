@@ -104,6 +104,7 @@ function _updatenodesca() {
         ssh $ZETACA_IP "sudo service docker restart"
         @go.log INFO "Starting Zeta CA Again"
         ./zeta cluster marathon scale "shared/zetaca" 1 "$MARATHON_SUBMIT" 1
+        checkapi "${ZETA_CA_CERT}"
     fi
     @go.log INFO "Zeta CA Node update complete"
 

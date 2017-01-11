@@ -1,0 +1,15 @@
+#!/bin/bash
+
+APP_VER="3.1.1-2.11"
+APP_VER_DIR="confluent-3.1.1"
+APP_IMG_TAG="$APP_VER"
+
+APP_IMG_NAME="confluent"
+
+APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
+
+if [ "$BUILD" == "Y" ]; then
+    @go.log INFO "Kafkarest requires that a confluent image is built for the same version. We will run that command now"
+    CONFLUENT_VERS="confluent_${APP_VER}.vers"
+    ./zeta package build confluent -v=$CONFLIENT_VERS -u
+fi
