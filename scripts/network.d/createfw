@@ -40,6 +40,8 @@ function _createfw(){
         @go.log INFO "Creating FW Directory"
         mkdir -p $FW_SCRIPT_DIR
         sudo chmod 700 $FW_SCRIPT_DIR
+        @go.log INFO "Creating Archive Directory at $FW_SCRIPT_DIR/archive"
+        mkdir -p $FW_SCRIPT_DIR/archive
         @go.log INFO "Creating Deployment logs directory $FW_SCRIPT_DIR/logs"
         mkdir -p $FW_SCRIPT_DIR/logs # Log directory
         @go.log INFO "Creating custom rules files at $FW_CUSTOM_DIR"
@@ -54,7 +56,7 @@ function _createfw(){
     fi
     if [ -f "$FW_SCRIPT_SRC" ]; then
         @go.log INFO "Firewall script already exists, making backup of old script"
-        FW_SCRIPT_BKUP="$FW_SCRIPT_DIR/firewall_$CURSTAMP.sh"
+        FW_SCRIPT_BKUP="$FW_SCRIPT_DIR/archive/firewall_$CURSTAMP.sh"
         mv $FW_SCRIPT_SRC $FW_SCRIPT_BKUP
     fi
 
