@@ -137,6 +137,28 @@ iptables -t nat -X
 iptables -t mangle -F
 iptables -t mangle -X
 
+#Delete the logging chains if they exist... they may not no big deal it will just give you an error "chain doesn't exist" that's ok
+iptables -X logaccept
+iptables -X logdrop
+iptables -X logreject
+# Create the logging chains
+iptables -N logaccept
+iptables -N logdrop
+iptables -N logreject
+
+#Establish logging rules instead of using the built in DROP, REJECT, and ACCEPT. Use these if you want it to be logged
+iptables -A logdrop -m state --state NEW  -j LOG --log-prefix "iptables - DROP " --log-macdecode --log-tcp-sequence --log-tcp-options --log-ip-options
+iptables -A logdrop -j DROP
+
+iptables -A logreject  -j LOG --log-prefix "iptables - REJECT " --log-macdecode --log-tcp-sequence --log-tcp-options --log-ip-options
+iptables -A logreject -p tcp -j REJECT --reject-with tcp-reset
+
+iptables -A logaccept -m state --state NEW  -j LOG --log-prefix "iptables - ACCEPT " --log-macdecode --log-tcp-sequence --log-tcp-options --log-ip-options
+iptables -A logaccept -j ACCEPT
+
+
+
+
 echo "DCOS Masquarade and mangle"
 ipset add -exist overlay \$DCOS_CIDR nomatch
 iptables -t nat -A POSTROUTING -s \$DCOS_CIDR -m set --match-set overlay dst -j MASQUERADE
@@ -184,7 +206,7 @@ iptables -A INPUT -s \$DCOS_CIDR -j ACCEPT
 iptables -A INPUT -s \$DOCKER_CIDR -j ACCEPT
 iptables -A INPUT -s \$DNS_SERVERS -p udp --dport 53 -j ACCEPT
 iptables -A INPUT -s \$DNS_SERVERS -p tcp --dport 53 -j ACCEPT
-iptables -A INPUT -s \$REMOTE_ADM_IPS -j ACCEPT
+iptables -A INPUT -s \$REMOTE_ADM_IPS -j logaccept
 echo "Importing Custom Global INPUT Rules"
 $ALL_INPUT
 
@@ -195,7 +217,7 @@ if [ "\$CHK" != "" ]; then
     for SVC in \$EDGE_SERVICES; do
         SVC_NAME=\$(echo \$SVC|cut -d":" -f1)
         SVC_PORT=\$(echo \$SVC|cut -d":" -f2)
-        iptables -A INPUT -p tcp --dport \$SVC_PORT -m comment --comment "Edge Service: \$SVC_NAME" -j ACCEPT
+        iptables -A INPUT -p tcp --dport \$SVC_PORT -m comment --comment "Edge Service: \$SVC_NAME" -j logaccept
     done
     IFS=\$OLDIFS
     echo "Importing Custom Edge INPUT Rules"
@@ -246,11 +268,11 @@ else
     iptables -A OUTPUT -d \$NTP_SERVERS -p udp --dport 123 -j ACCEPT
 fi
 if [ "\$PROXY_IP" != "" ]; then
-    iptables -A OUTPUT -d \$PROXY_IP -p tcp --dport \$PROXY_PORT -j ACCEPT
+    iptables -A OUTPUT -d \$PROXY_IP -p tcp --dport \$PROXY_PORT -j logaccept
 fi
 if [ "\$ALLOW_DIRECT_WEB" == "Y" ]; then
-    iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
-    iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
+    iptables -A OUTPUT -p tcp --dport 80 -j logaccept
+    iptables -A OUTPUT -p tcp --dport 443 -j logaccept
 fi
 echo "Importing Custom Global OUTPUT Rules"
 $ALL_OUTPUT
@@ -258,10 +280,13 @@ if [ "\$CHK" != "" ]; then
     echo "Importing Custom Edge OUTPUT Rules"
 $EDGE_OUTPUT
 fi
-echo "Creating logging and policies.."
-iptables -A INPUT -j LOG --log-prefix="iptables INPUT DROP: "
-iptables -A OUTPUT -j LOG --log-prefix="iptables OUTPUT DROP: "
-iptables -A FORWARD -j LOG --log-prefix="iptables FORWARD DROP: "
+
+### Make the final rule "logdrop" on all chains
+iptables -A FORWARD -j logdrop
+iptables -A INPUT -j logdrop
+iptables -A OUTPUT -j logdrop
+
+
 iptables -P INPUT DROP
 iptables -P OUTPUT DROP
 iptables -P FORWARD DROP
