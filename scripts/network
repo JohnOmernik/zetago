@@ -8,13 +8,6 @@
 
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
-sourceconf "$MAPR_CONF"
-sourceconf "$CLUSTER_CONF"
-sourceconf "$CLUSTER_ZETACA_CONF"
-sourceconf "$CLUSTER_BASE_CONF"
-sourceconf "$PACKAGE_CONF"
-reqshared "dockerregv2 zetaca openldap"
-
 
 function _network() {
    LOCK="0"
@@ -41,7 +34,9 @@ function _network() {
     echo "Commands to use with package:"
     echo ""
     echo "./zeta network                          # This command"
-    echo "./zeta network  status                   # Lists all packages in ./pkgs and their status in the cluster"
+    echo "./zeta network status                   # Lists all packages in ./pkgs and their status in the cluster"
+    echo "./zeta network deployfw                 # Calls createfw and then deploys to all nodes"
+    echo "./zeta network createfw                 # Creates the current FW for nodes"
     echo ""
     echo "./zeta network -l                # Lock or unlock package.conf file"
     echo ""
