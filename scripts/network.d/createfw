@@ -115,9 +115,9 @@ iptables -t mangle -F
 iptables -t mangle -X
 
 echo "DCOS Masquarade and mangle"
-ipset add -exist overlay \$DCOS_CIDR nomatch
-iptables -t nat -A POSTROUTING -s \$DCOS_CIDR -m set --match-set overlay dst -j MASQUERADE
-
+ipset add -exist overlay \$DCOS_CIDR nomatch 2> /dev/null
+iptables -t nat -A POSTROUTING -s \$DCOS_CIDR -m set --match-set overlay dst -j MASQUERADE 2> /dev/null
+ 
 echo "Docker Masquarade"
 # Docker Masquerade
 iptables -t nat -N DOCKER
