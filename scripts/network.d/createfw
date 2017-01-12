@@ -136,9 +136,9 @@ iptables -t mangle -F
 iptables -t mangle -X
 
 echo "DCOS Masquarade and mangle"
-ipset add -exist overlay \$DCOS_CIDR nomatch 2> /dev/null
-iptables -t nat -A POSTROUTING -s \$DCOS_CIDR -m set --match-set overlay dst -j MASQUERADE 2> /dev/null
- 
+ipset add -exist overlay \$DCOS_CIDR nomatch
+iptables -t nat -A POSTROUTING -s \$DCOS_CIDR -m set --match-set overlay dst -j MASQUERADE
+
 echo "Docker Masquarade"
 # Docker Masquerade
 iptables -t nat -N DOCKER
@@ -183,6 +183,7 @@ iptables -A INPUT -s \$DOCKER_CIDR -j ACCEPT
 iptables -A INPUT -s \$DNS_SERVERS -p udp --dport 53 -j ACCEPT
 iptables -A INPUT -s \$DNS_SERVERS -p tcp --dport 53 -j ACCEPT
 iptables -A INPUT -s \$REMOTE_ADM_IPS -j ACCEPT
+echo "Importing Custom Global INPUT Rules"
 $ALL_INPUT
 
 if [ "\$CHK" != "" ]; then
@@ -195,6 +196,7 @@ if [ "\$CHK" != "" ]; then
         iptables -A INPUT -p tcp --dport \$SVC_PORT -m comment --comment "Edge Service: \$SVC_NAME" -j ACCEPT
     done
     IFS=\$OLDIFS
+    echo "Importing Custom Edge INPUT Rules"
     $EDGE_INPUT
 fi
 
@@ -210,8 +212,10 @@ if [ "\$ALLOW_DIRECT_WEB" == "Y" ]; then
         iptables -A FORWARD -s \$DOCKER_CIDR -p tcp --dport 80 -j ACCEPT
         iptables -A FORWARD -s \$DOCKER_CIDR -p tcp --dport 443 -j ACCEPT
 fi
+echo "Importing Custom Global FORWARD Rules"
 $ALL_FORWARD
 if [ "\$CHK" != "" ]; then
+    echo "Importing Custom Edge FORWARD Rules"
 $EDGE_FORWARD
 fi
 
@@ -246,8 +250,10 @@ if [ "\$ALLOW_DIRECT_WEB" == "Y" ]; then
     iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
     iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
 fi
+echo "Importing Custom Global OUTPUT Rules"
 $ALL_OUTPUT
 if [ "\$CHK" != "" ]; then
+    echo "Importing Custom Edge OUTPUT Rules"
 $EDGE_OUTPUT
 fi
 echo "Creating logging and policies.."
