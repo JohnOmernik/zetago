@@ -48,6 +48,7 @@ function _deployfw() {
 
     @go.log INFO "Deploying Firewall to $RUN_NODES"
     for NODE in $RUN_NODES; do
+        @go.log INFO "Deploying FW Scripts to $NODE"
         ssh $NODE "mkdir -p $FW_SCRIPT_TMP_DIR && chmod 700 $FW_SCRIPT_TMP_DIR"
         scp -q $FW_SCRIPT_SRC $NODE:$FW_SCRIPT_TMP
         ssh $NODE "chmod 700 $FW_SCRIPT_TMP && sudo mv $FW_SCRIPT_TMP $FW_SCRIPT_DST && sudo chown root:root $FW_SCRIPT_DST && sudo chmod 700 $FW_SCRIPT_DST && date +%Y%m%d%H%M%S && sudo $FW_SCRIPT_DST" > ${FW_SCRIPT_DIR}/logs/${NODE}_fwdeploy.log
