@@ -82,8 +82,13 @@ cat > $FW_SCRIPT_SRC << EOF
 
 # FWCHANGELOG - $CURSTAMP - $FW_NOTES
 
-MYIP=\$(/opt/mesosphere/bin/detect_ip)
-
+IP_DETECT="/opt/mesosphere/bin/detect_ip"
+if [ -f "\$IP_DETECT" ]; then
+    MYIP=\$(\$IP_DETECT)
+else
+    echo "DCOS not yet installed, No Service ports being opened"
+    MYIP="NOSERVICES"
+fi
 
 DNS_SERVERS="$DNS_SERVERS"
 NTP_SERVERS="$NTP_SERVERS"

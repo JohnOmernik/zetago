@@ -54,6 +54,8 @@ function _deployfw() {
     done
     if [ "$UPDATE_FIRST_RUN" == "1" ]; then
         if [ "$FW_FIRST_RUN" == "0" ]; then
+            @go.log WARN "No Edge nodes services exposed as DCOS is not yet installed - Run again after DCOS is installed"
+            @go.log INFO "Updated FW_FIRST_RUN to be 1"
             sed -i "s/FW_FIRST_RUN=\"0\"/FW_FIRST_RUN=\"1\"/g" ${NETWORK_CONF}
         fi
     fi
