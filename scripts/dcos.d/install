@@ -14,8 +14,15 @@
 #
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
 
 IP_DETECT="./conf/ip-detect"
+
+if [ "$FW_FIRST_RUN" != "1" ]; then
+    @go.log FATAL "Before Installing or Bootstrapping DCOS, it's required to run the network firewall deploy via ./zeta network deployfw"
+fi
+
+
 
 function _dcos_install() {
     ALL="1"

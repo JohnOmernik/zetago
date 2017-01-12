@@ -2,14 +2,65 @@
 #
 # createfw - Using the network.conf create a firewall.sh script to use on Agent and Master nodes
 #
+# Arguments:
+# -u Unattended Installation
+# -f="Notes for the FW Change config" 
+#
 sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
 
 function _createfw(){
 
-    FW="./firewall.sh"
-    touch $FW
-    chmod 700 $FW
+    UNATTEND="0"
+    FW_NOTES=""
+
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            "-f="*)
+            FW_NOTES="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+
+
+    CURSTAMP=$(date +%Y%m%d%H%M%S)
+
+
+    if [ ! -d "$FW_SCRIPT_DIR" ]; then
+        mkdir -p $FW_SCRIPT_DIR
+        sudo chmod 700 $FW_SCRIPT_DIR
+        mkdir -p $FW_SCIPRT_DIR/logs # Log directory
+    fi
+    if [ -f "$FW_SCRIPT_SRC" ]; then
+        @go.log INFO "Firewall script already exists, making backup of old script"
+        FW_SCRIPT_BKUP="$FW_SCRIPT_DIR/firewall_$CURSTAMP.sh"
+        mv $FW_SCRIPT_SRC $FW_SCRIPT_BKUP
+    fi
+
+    if [ "$UNATTEND" != "1" ] && [ "$FW_NOTES" == "" ]; then
+        echo "Please provide notes on why the firewall was changed"
+        read -e -p "FW Notes: " FW_NOTES
+    fi
+
+    if [ "$UNATTEND" == "1" ] && [ "$FW_NOTES" == "" ]; then
+        @go.log WARN "Unattended requested with no firewall notes - Using that as changelog"
+        FW_NOTES="Unattened install with no notes provided"
+    fi
+
+
+
+    touch $FW_SCRIPT_SRC
+    chmod 700 $FW_SCRIPT_SRC
     REM_IPS="$REMOTE_IPS"
 
     @go.log INFO "Getting current remote IPS"
@@ -26,8 +77,10 @@ function _createfw(){
     done
 
 
-cat > $FW << EOF
+cat > $FW_SCRIPT_SRC << EOF
 #!/bin/bash
+
+# FWCHANGELOG - $CURSTAMP - $FW_NOTES
 
 MYIP=\$(/opt/mesosphere/bin/detect_ip)
 
@@ -177,7 +230,7 @@ iptables -P FORWARD DROP
 
 echo "Finished!"
 EOF
-
+chmod +x $FW_SCRIPT_SRC
 
 
 

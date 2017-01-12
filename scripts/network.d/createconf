@@ -85,6 +85,14 @@ echo ""
 echo "By default we add one service to the EDGE_PORTS - Default Loadbalance on 443"
 EDGE_SERVICES="Default Load Balancer:443"
 
+echo ""
+FW_SCRIPT_DIR="./conf/firewall"
+FW_SCRIPT_SRC="${FW_SCRIPT_DIR}/firewall.sh"
+FW_SCRIPT_DST="/etc/firewall.sh"
+FW_SCRIPT_TMP_DIR="/home/$IUSER/firewall/"
+FW_SCRIPT_TMP="${FW_SCRIPT_TMP_DIR}/firewall.sh"
+echo ""
+echo "Firewall Script Temp Location: $FW_SCRIPT_SRC"
 
 cat > $NETWORK_CONF << EOP
 #!/bin/bash
@@ -104,7 +112,12 @@ DOCKER_INTERFACE="$DOCKER_INTERFACE"
 PROXY_IP="$PROXY_IP"
 PROXY_PORT="$PROXY_PORT"
 ALLOW_DIRECT_WEB="$ALLOW_DIRECT_WEB"
-
+FW_FIRST_RUN="0"
+FW_SCRIPT_DIR="$FW_SCRIPT_DIR"
+FW_SCRIPT_SRC="$FW_SCRIPT_SRC"
+FW_SCRIPT_TMP_DIR="$FW_SCRIPT_TMP_DIR"
+FW_SCRIPT_TMP="$FW_SCRIPT_TMP"
+FW_SCRIPT_DST="$FW_SCRIPT_DST"
 NETWORK_LOCKED="1"
 EOP
 
