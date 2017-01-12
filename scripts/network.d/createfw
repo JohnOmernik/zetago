@@ -39,7 +39,7 @@ function _createfw(){
     if [ ! -d "$FW_SCRIPT_DIR" ]; then
         mkdir -p $FW_SCRIPT_DIR
         sudo chmod 700 $FW_SCRIPT_DIR
-        mkdir -p $FW_SCIPRT_DIR/logs # Log directory
+        mkdir -p $FW_SCRIPT_DIR/logs # Log directory
     fi
     if [ -f "$FW_SCRIPT_SRC" ]; then
         @go.log INFO "Firewall script already exists, making backup of old script"
