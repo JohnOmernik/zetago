@@ -44,7 +44,7 @@ function _deployfw() {
         FW_NOTES="Firewall deploy refresh of config"
     fi
 
-    ./zeta network createfw -u -n="$FW_NOTES"
+    ./zeta network createfw -u -f="$FW_NOTES"
 
     @go.log INFO "Deploying Firewall to $RUN_NODES"
     for NODE in $RUN_NODES; do
