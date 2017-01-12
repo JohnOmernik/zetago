@@ -37,9 +37,20 @@ function _createfw(){
 
 
     if [ ! -d "$FW_SCRIPT_DIR" ]; then
+        @go.log INFO "Creating FW Directory"
         mkdir -p $FW_SCRIPT_DIR
         sudo chmod 700 $FW_SCRIPT_DIR
+        @go.log INFO "Creating Deployment logs directory $FW_SCRIPT_DIR/logs"
         mkdir -p $FW_SCRIPT_DIR/logs # Log directory
+        @go.log INFO "Creating custom rules files at $FW_CUSTOM_DIR"
+        mkdir -p $FW_CUSTOM_DIR
+        @go.log INFO "Creating Base Custom files for INPUT, FORWARD, OUTPUT"
+        echo "# Custom INPUT RULES for ALL Nodes in Zeta Cluster" > $FW_CUSTOM_DIR/all_nodes_input.fw
+        echo "# Custom FORWARD RULES for ALL Nodes in Zeta Cluster" > $FW_CUSTOM_DIR/all_nodes_forward.fw
+        echo "# Custom OUTPUT RULES for ALL Nodes in Zeta Cluster" > $FW_CUSTOM_DIR/all_nodes_output.fw
+        echo "# Custom INPUT RULES for Edge Nodes in Zeta Cluster" > $FW_CUSTOM_DIR/edge_nodes_input.fw
+        echo "# Custom FORWARD RULES for Edge Nodes in Zeta Cluster" > $FW_CUSTOM_DIR/edge_nodes_forward.fw
+        echo "# Custom OUTPUT RULES for Edge Nodes in Zeta Cluster" > $FW_CUSTOM_DIR/edge_nodes_output.fw
     fi
     if [ -f "$FW_SCRIPT_SRC" ]; then
         @go.log INFO "Firewall script already exists, making backup of old script"
@@ -76,6 +87,13 @@ function _createfw(){
         fi
     done
 
+    ALL_INPUT=$(cat $FW_CUSTOM_DIR/all_nodes_input.fw)
+    ALL_OUTPUT=$(cat $FW_CUSTOM_DIR/all_nodes_output.fw)
+    ALL_FORWARD=$(cat $FW_CUSTOM_DIR/all_nodes_forward.fw)
+    EDGE_INPUT=$(cat $FW_CUSTOM_DIR/edge_nodes_input.fw)
+    EDGE_OUTPUT=$(cat $FW_CUSTOM_DIR/edge_nodes_output.fw)
+    EDGE_FORWARD=$(cat $FW_CUSTOM_DIR/edge_nodes_forward.fw)
+
 
 cat > $FW_SCRIPT_SRC << EOF
 #!/bin/bash
@@ -104,6 +122,9 @@ DOCKER_INTERFACE="$DOCKER_INTERFACE"
 ALLOW_DIRECT_WEB="$ALLOW_DIRECT_WEB"
 PROXY_IP="$PROXY_IP"
 PROXY_PORT="$PROXY_PORT"
+
+
+CHK=\$(echo "\$EDGE_NODES"|grep "\$MYIP")
 
 # reset firewall state
 echo "Starting my attack run!.. Resetting fireall state.."
@@ -162,9 +183,7 @@ iptables -A INPUT -s \$DOCKER_CIDR -j ACCEPT
 iptables -A INPUT -s \$DNS_SERVERS -p udp --dport 53 -j ACCEPT
 iptables -A INPUT -s \$DNS_SERVERS -p tcp --dport 53 -j ACCEPT
 iptables -A INPUT -s \$REMOTE_ADM_IPS -j ACCEPT
-
-
-CHK=\$(echo "\$EDGE_NODES"|grep "\$MYIP")
+$ALL_INPUT
 
 if [ "\$CHK" != "" ]; then
     echo "Edge Node: Adding Edge Services to this node"
@@ -176,6 +195,7 @@ if [ "\$CHK" != "" ]; then
         iptables -A INPUT -p tcp --dport \$SVC_PORT -m comment --comment "Edge Service: \$SVC_NAME" -j ACCEPT
     done
     IFS=\$OLDIFS
+    $EDGE_INPUT
 fi
 
 # FORWARD
@@ -190,8 +210,10 @@ if [ "\$ALLOW_DIRECT_WEB" == "Y" ]; then
         iptables -A FORWARD -s \$DOCKER_CIDR -p tcp --dport 80 -j ACCEPT
         iptables -A FORWARD -s \$DOCKER_CIDR -p tcp --dport 443 -j ACCEPT
 fi
-
-
+$ALL_FORWARD
+if [ "\$CHK" != "" ]; then
+$EDGE_FORWARD
+fi
 
 
 # OUTPUT
@@ -224,7 +246,10 @@ if [ "\$ALLOW_DIRECT_WEB" == "Y" ]; then
     iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
     iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
 fi
-
+$ALL_OUTPUT
+if [ "\$CHK" != "" ]; then
+$EDGE_OUTPUT
+fi
 echo "Creating logging and policies.."
 iptables -A INPUT -j LOG --log-prefix="iptables INPUT DROP: "
 iptables -A OUTPUT -j LOG --log-prefix="iptables OUTPUT DROP: "
