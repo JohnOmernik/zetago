@@ -130,7 +130,7 @@ function _dcos_install() {
     done
     echo ""
     @go.log INFO "DCOS Agents Initiated on all Agents"
-
+    @go.log WARN 'Once Nodes are up an running please run: ./zeta network deployfw -f="Post DCOS FW Install"'
 
 }
 
