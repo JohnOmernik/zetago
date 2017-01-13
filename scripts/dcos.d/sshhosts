@@ -2,7 +2,7 @@
 #
 # sshhosts
 #
-# A helper script to add ssh host keys to the init node 
+# A helper script to add ssh host keys to the init node
 #
 # Arguments - None
 #
@@ -12,37 +12,49 @@ sourceconf "$DCOS_CONF"
 
 function _addsshhosts() {
 
-    INTERNAL_HN=""
-    INTERNAL_FQHN=""
-    echo "This script connects and allows you to trust the keys of the SSH hosts"
-    echo "It runs through the nodes three times, one for the Internal IPs, one for the hostsname, and one for the full host names so that the keys can be trusted for each of the three"
-    echo ""
-    echo ""
-    echo "Connecting by IP to get hostnames - Answer yes"
-    for IP in $INTERNAL_NODES; do
-        HN=$(ssh $IP hostname)
-        if [ "$INTERNAL_HN" == "" ]; then
-            INTERNAL_HN="$HN"
-        else
-            INTERNAL_HN="${INTERNAL_HN} $HN"
-        fi
+    UNATTEND="0"
+    for i in "$@"
+       do
+        case $i in
+             -u)
+             UNATTEND="1"
+             ;;
+            "-n="*)
+            HOST="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
     done
 
-    echo ""
-    echo "Connecting by hostname to get the fully qualified - Answer yes"
-    for HN in $INTERNAL_HN; do
-        FQHN=$(ssh $HN "hostname -f")
-        if [ "$INTERNAL_FQHN" == "" ]; then
-            INTERNAL_FQHN="$FQHN"
-        else
-            INTERNAL_FQHN="${INTERNAL_FQHN} $FQHN"
-        fi
-    done
+    if [ "$HOST" == "" ]; then
+        RUN_NODES="$INTERNAL_NODES"
+    else
+        RUN_NODES="$HOST"
+    fi
 
-    echo ""
-    echo "Connecting by FQHNs to trust them - Answer yes"
-    for FQHN in $INTERNAL_FQHN; do
-        ssh $FQHN "hostname -f"
+    if [ "$UNATTEND" == "1" ]; then
+        @go.log WARN "We are automatically trusting all host keys due to UNATTEND being set"
+    else
+        read -e -p "Do you wish to automatically trust host keys provided? - Please understand the risks here: (Y/N)" -i "N" TRST
+        if [ "$TRST" != "Y" ]; then
+            @go.log FATAL "User choose not to accept SSH Keys - Exiting"
+        fi
+    fi
+
+    for IP in $RUN_NODES; do
+        CHK=$(grep "$IP" ~/.ssh/known_hosts
+        if [ "$CHK" == "" ]; then
+            ssh-keyscan -H $IP >> ~/.ssh/known_hosts
+            HN=$(ssh $IP hostname)
+            FQHN=$(ssh $IP hostname -f)
+            ssh-keyscan -H $HN >> ~/.ssh/known_hosts
+            ssh-keyscan -H $FQHN >> ~/.ssh/known_hosts
+            @go.log INFO "Trusting Key from $IP - $HN - $FQHN"
+        else
+            @go.log INFO "$IP is already in known hosts - Skipping"
+        fi
     done
 
 }
