@@ -22,7 +22,7 @@ function createedgerules() {
         PROTOCOL=$(echo $L|cut -d":" -f2)
         PORT=$(echo $L|cut -d":" -f3)
         ROLE=$(echo $L|cut -d":" -f4)
-        APP_IP=$(echo $L|cut -d":" -f5)
+        APP_ID=$(echo $L|cut -d":" -f5)
         COMMENTS=$(echo $L|cut -d":" -f6)
 
         if [ "$TYPE" == "EDGE" ]; then
