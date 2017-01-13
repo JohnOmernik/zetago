@@ -101,11 +101,6 @@ EOS
 
     EDGE_SERVICE_RULES=""
     createedgerules "$SERVICES_CONF" "EDGE_SERVICE_RULES"
-    echo ""
-    echo "EDGE Rules: "
-    echo "$EDGE_SERVICE_RULES"
-    echo ""
-
 
     touch $FW_SCRIPT_SRC
     chmod 700 $FW_SCRIPT_SRC

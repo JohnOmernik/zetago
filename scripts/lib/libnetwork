@@ -26,8 +26,6 @@ function createedgerules() {
         local LCOMMENTS=""
         getpstr "LTYPE" "LPROTOCOL" "LPORT" "LROLE" "LAPP_ID" "LCOMMENTS" "$L"
 
-        echo "Parsed: $LTYPE:$LPROTOCOL:$LPORT:$LROLE:$LAPP_ID:$LCOMMENTS"
-
         if [ "$LTYPE" == "EDGE" ]; then
             if [ "$LPROTOCOL" == 'tcp' ]; then
                 OUTPUT="${OUTPUT}iptables -A INPUT -p $LPROTOCOL --dport $LPORT -m comment --comment \"Edge Service: Role: $LROLE - APP_ID - $LAPP_ID - $LCOMMENTS\" -j logaccept"$'\n'
@@ -64,8 +62,6 @@ function getpstr(){
     local RCOMMENTS=$6
     local PSTR=$7
     
-    echo "$PSTR"
-
     local MTYPE=$(echo $PSTR|cut -d":" -f1)
     local MPROTOCOL=$(echo $PSTR|cut -d":" -f2)
     local MPORT=$(echo $PSTR|cut -d":" -f3)
