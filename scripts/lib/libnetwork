@@ -66,11 +66,11 @@ nondockerports(){
         local ACOMMENTS=""
         getpstr "ATYPE" "APROTOCOL" "APORT" "AROLE" "AAPP_ID" "ACOMMENTS" "$PSTR"
 
-        if [ "$TYPE" == "EDGE" ]; then
+        if [ "$ATYPE" == "EDGE" ]; then
             if [ "$PLIST" == "" ]; then
-                PLIST="$PORT"
+                PLIST="$APORT"
             else
-                PLIST="${PLIST}, ${PORT}"
+                PLIST="${PLIST}, ${APORT}"
             fi
         fi
     done
@@ -107,7 +107,7 @@ function getpstr(){
     local RAPP_ID=$5
     local RCOMMENTS=$6
     local PSTR=$7
-    
+
     local MTYPE=$(echo $PSTR|cut -d":" -f1)
     local MPROTOCOL=$(echo $PSTR|cut -d":" -f2)
     local MPORT=$(echo $PSTR|cut -d":" -f3)
