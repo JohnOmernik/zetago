@@ -2,6 +2,9 @@
 #
 # Scripts for working with marathon
 #
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
 
 function _marathon() {
 
