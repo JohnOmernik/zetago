@@ -18,19 +18,19 @@ function createedgerules() {
     OUTPUT=""
     while read L; do
         [[ "$L" =~ ^#.*$ ]] && continue
-        local TYPE=""
-        local PROTOCOL=""
-        local PORT=""
-        local ROLE=""
-        local APP_ID=""
-        local COMMENTS=""
-        getpstr "TYPE" "PROTOCOL" "PORT" "ROLE" "APP_ID" "COMMENTS" "$L"
+        local LTYPE=""
+        local LPROTOCOL=""
+        local LPORT=""
+        local LROLE=""
+        local LAPP_ID=""
+        local LCOMMENTS=""
+        getpstr "LTYPE" "LPROTOCOL" "LPORT" "LROLE" "LAPP_ID" "LCOMMENTS" "$L"
 
-        echo "Parsed: $TYPE:$PROTOCOL:$PORT:$ROLE:$APP_ID:$COMMENTS"
+        echo "Parsed: $LTYPE:$LPROTOCOL:$LPORT:$LROLE:$LAPP_ID:$LCOMMENTS"
 
-        if [ "$TYPE" == "EDGE" ]; then
-            if [ "$PROTOCOL" == 'tcp' ]; then
-                OUTPUT="${OUTPUT}iptables -A INPUT -p $PROTOCOL --dport $PORT -m comment --comment \"Edge Service: Role: $ROLE - APP_ID - $APP_ID - $COMMENTS\" -j logaccept"$'\n'
+        if [ "$LTYPE" == "EDGE" ]; then
+            if [ "$LPROTOCOL" == 'tcp' ]; then
+                OUTPUT="${OUTPUT}iptables -A INPUT -p $LPROTOCOL --dport $LPORT -m comment --comment \"Edge Service: Role: $LROLE - APP_ID - $LAPP_ID - $LCOMMENTS\" -j logaccept"$'\n'
             else
                 @go.log WARN "Edge service found with protocol other than tcp. Skipping - not adding to edge services in firewall"
             fi
@@ -66,19 +66,19 @@ function getpstr(){
     
     echo "$PSTR"
 
-    local TYPE=$(echo $PSTR|cut -d":" -f1)
-    local PROTOCOL=$(echo $PSTR|cut -d":" -f2)
-    local PORT=$(echo $PSTR|cut -d":" -f3)
-    local ROLE=$(echo $PSTR|cut -d":" -f4)
-    local APP_ID=$(echo $PSTR|cut -d":" -f5)
-    local COMMENTS=$(echo $PSTR|cut -d":" -f6)
+    local MTYPE=$(echo $PSTR|cut -d":" -f1)
+    local MPROTOCOL=$(echo $PSTR|cut -d":" -f2)
+    local MPORT=$(echo $PSTR|cut -d":" -f3)
+    local MROLE=$(echo $PSTR|cut -d":" -f4)
+    local MAPP_ID=$(echo $PSTR|cut -d":" -f5)
+    local MCOMMENTS=$(echo $PSTR|cut -d":" -f6)
 
-    eval $RTYPE="'$TYPE'"
-    eval $RPROTOCOL="'$PROTOCOL'"
-    eval $RPORT="'$PORT'"
-    eval $RROLE="'$ROLE'"
-    eval $RAPP_ID="'$APP_ID'"
-    eval $RCOMMENTS="'$COMMENTS'"
+    eval $RTYPE="'$MTYPE'"
+    eval $RPROTOCOL="'$MPROTOCOL'"
+    eval $RPORT="'$MPORT'"
+    eval $RROLE="'$MROLE'"
+    eval $RAPP_ID="'$MAPP_ID'"
+    eval $RCOMMENTS="'$MCOMMENTS'"
 
 }
 
@@ -199,34 +199,34 @@ function queryport(){
     local SRC_CONF=$3
     local POUT=$4
 
-    local TYPE=""
-    local PROTOCOL=""
-    local PORT=""
-    local ROLE=""
-    local APP_ID=""
-    local COMMENTS=""
+    local QTYPE=""
+    local QPROTOCOL=""
+    local QPORT=""
+    local QROLE=""
+    local QAPP_ID=""
+    local QCOMMENTS=""
 
-    getpstr "TYPE" "PROTOCOL" "PORT" "ROLE" "APP_ID" "COMMENTS" "$POUT"
+    getpstr "QTYPE" "QPROTOCOL" "QPORT" "QROLE" "QAPP_ID" "QCOMMENTS" "$POUT"
 
 
     echo "Zeta Port Request:"
     echo "$USERMSG"
     echo ""
-    read -e -p "Please enter the type of the port (CLUSTER or EDGE): " -i "$TYPE" TYPE
+    read -e -p "Please enter the type of the port (CLUSTER or EDGE): " -i "$QTYPE" QTYPE
     echo ""
     echo "At this time only tcp is supported for protocol"
     PROTOCOL="tcp"
     echo ""
-    read -e -p "Please enter the port you are requesting: " -i "$PORT" PORT
+    read -e -p "Please enter the port you are requesting: " -i "$QPORT" QPORT
     echo ""
-    read -e -p "For the port above, what role is the service running in? " -i "$ROLE" ROLE
+    read -e -p "For the port above, what role is the service running in? " -i "$QROLE" QROLE
     echo ""
-    read -e -p "For the port above, what is the APP_ID for the service? " -i "$APP_ID" APP_ID
+    read -e -p "For the port above, what is the APP_ID for the service? " -i "$QAPP_ID" QAPP_ID
     echo ""
-    read -e -p "For the port above, Please enter any comments you wish to add? " -i "$COMMENTS" COMMENTS
+    read -e -p "For the port above, Please enter any comments you wish to add? " -i "$QCOMMENTS" QCOMMENTS
 
 
-    OUTPUT="$TYPE:$PROTOCOL:$PORT:$ROLE:$APP_ID:$COMMENTS"
+    OUTPUT="$QTYPE:$QPROTOCOL:$QPORT:$QROLE:$QAPP_ID:$QCOMMENTS"
 
     eval $RESULT="'$OUTPUT'"
 
@@ -249,14 +249,14 @@ function checkport(){
     local SRC_CONF=$2
     local POUT=$3
 
-    local TYPE=""
-    local PROTOCOL=""
-    local PORT=""
-    local ROLE=""
-    local APP_ID=""
-    local COMMENTS=""
+    local CTYPE=""
+    local CPROTOCOL=""
+    local CPORT=""
+    local CROLE=""
+    local CAPP_ID=""
+    local CCOMMENTS=""
 
-    getpstr "TYPE" "PROTOCOL" "PORT" "ROLE" "APP_ID" "COMMENTS" "$POUT"
+    getpstr "CTYPE" "CPROTOCOL" "CPORT" "CROLE" "CAPP_ID" "CCOMMENTS" "$POUT"
 
     local OUTPUT=""
     while read L; do
@@ -270,7 +270,7 @@ function checkport(){
 
         getpstr "STYPE" "SPROTOCOL" "SPORT" "SROLE" "SAPP_ID" "SCOMMENTS" "$L"
 
-        if [ "$PROTOCOL" == "$SPROTOCOL" ] && [ "$PORT" == "$SPORT" ]; then
+        if [ "$CPROTOCOL" == "$SPROTOCOL" ] && [ "$CPORT" == "$SPORT" ]; then
             OUTPUT="$L"
             break
         fi
