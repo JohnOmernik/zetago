@@ -24,8 +24,9 @@ function createedgerules() {
         local ROLE=""
         local APP_ID=""
         local COMMENTS=""
-        echo "$L"
         getpstr "TYPE" "PROTOCOL" "PORT" "ROLE" "APP_ID" "COMMENTS" "$L"
+
+        echo "Parsed: $TYPE:$PROTOCOL:$PORT:$ROLE:$APP_ID:$COMMENTS"
 
         if [ "$TYPE" == "EDGE" ]; then
             if [ "$PROTOCOL" == 'tcp' ]; then
