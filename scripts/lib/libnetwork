@@ -62,7 +62,8 @@ function getpstr(){
     local RAPP_ID=$5
     local RCOMMENTS=$6
     local PSTR=$7
-
+    
+    echo "$PSTR"
 
     local TYPE=$(echo $PSTR|cut -d":" -f1)
     local PROTOCOL=$(echo $PSTR|cut -d":" -f2)
