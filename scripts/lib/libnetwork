@@ -27,7 +27,7 @@ function createedgerules() {
 
         if [ "$TYPE" == "EDGE" ]; then
             if [ "$PROTOCOL" == 'tcp' ]; then
-                OUTPUT="${OUTPUT}iptables -A INPUT -p $PROTOCOL --dport $PORT -m comment --comment "Edge Service: Role: $ROLE - APP_ID - $APP_ID - $COMMENTS" -j logaccept"$'\n'
+                OUTPUT="${OUTPUT}iptables -A INPUT -p $PROTOCOL --dport $PORT -m comment --comment \"Edge Service: Role: $ROLE - APP_ID - $APP_ID - $COMMENTS\" -j logaccept"$'\n'
             else
                 @go.log WARN "Edge service found with protocol other than tcp. Skipping - not adding to edge services in firewall"
             fi
