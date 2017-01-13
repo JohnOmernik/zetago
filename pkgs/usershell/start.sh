@@ -90,7 +90,18 @@ EOF
     @go.log INFO "Linking Hadoop Client for use in Container"
     ln -s $HADOOP_HOME/bin/hadoop ${APP_USER_PATH}/hadoop
 
-    read -e -p "What port should the instace of usershell for $APP_USER run on? " -i "31022" APP_PORT
+
+
+    PORTSTR="CLUSTER:tcp:31022:${APP_ROLE}:${APP_ID}:Usershell for $APP_USER"
+    getport "CHKADD" "Usershell for $APP_USER" "$SERVICES_CONF" "$PORTSTR"
+
+    if [ "$CHKADD" != "" ]; then
+        getpstr "MYTYPE" "MYPROTOCOL" "APP_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+        APP_PORTSTR="$CHKADD"
+    else
+        @go.log FATAL "Failed to get Port for usershell instance $PSTR"
+    fi
+
 
     APP_MAR_ID="${APP_ROLE}/${APP_ID}/${APP_USER}usershell"
 
