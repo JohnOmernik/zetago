@@ -124,7 +124,7 @@ function getport(){
         while [ "$CHKPORT" != "" ]; do
             echo "The Port you checked for already exists in services.conf"
             read -e -p "Do you wish to try another port?" -i "Y" TRYAGAIN
-            if [ "${TRYAGAIN" != "Y" ]; then
+            if [ "${TRYAGAIN}" != "Y" ]; then
                 OUTPUT=""
                 break
             fi
@@ -147,7 +147,6 @@ function getport(){
 
 
 }
-
 
 #
 #
