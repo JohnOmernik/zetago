@@ -78,7 +78,7 @@ nondockerports(){
     if [ "$PLIST" == "" ]; then
         RETOUT="\"ports\":[],"
     else
-        RETOUT="\"ports\":[ $PLIST ],"
+        RETOUT="\"ports\":[ $PLIST ], \"requirePorts\" : true,"
     fi
 
     eval $RESULT="'$RETOUT'"

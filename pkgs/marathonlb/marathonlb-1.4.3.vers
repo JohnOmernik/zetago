@@ -43,6 +43,8 @@ if [ "$BUILD" == "Y" ]; then
         sed -i "/FROM /a $DOCKER_LINE5" Dockerfile
         sed -i "/FROM /a $DOCKER_LINE6" Dockerfile
     fi
+    sed -i "/apt-get purge -y/d" Dockerfile
+
     sudo docker build -t ${APP_IMG} .
     sudo docker push ${APP_IMG}
 else
