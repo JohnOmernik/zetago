@@ -97,7 +97,7 @@ function sourceconf(){
     if [ -f "$CUR_CONF" ]; then
         . $CUR_CONF
     else
-        @go.log FATAL "The Conf file $CONF_FILE could not be found at $CUR CONF. That file must be present before you can run this command"
+        @go.log FATAL "The Conf file $CONF_FILE could not be found at $CUR_CONF. That file must be present before you can run this command"
     fi
 }
 
