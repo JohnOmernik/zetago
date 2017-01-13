@@ -150,13 +150,17 @@ echo "MapR Allows you to tie your MapR comms to specific subnets.  So if you hav
 echo "Examples: 10.0.2.0/24,10.0.3.0/24"
 echo ""
 
+
+ZETA_CIDR_ROUTABLE="172.31.0.0/16"
+ZETA_CIDR_NONROUTABLE=""
+
 if [ "$ZETA_CIDR_NONROUTABLE" == "" ]; then
     SUBNETS="$ZETA_CIDR_ROUTABLE"
 else
     SUBNETS="${ZETA_CIDR_ROUTABLE},${ZETA_CIDR_NONROUTABLE}"
 fi
 
-read -p "Please validate or specify MapR Subnets: " -i "$SUBNETS" SUBNETS
+read -e -p "Please validate or specify MapR Subnets: " -i "$SUBNETS" SUBNETS
 echo ""
 echo "---------------------------------------"
 echo "The MapR Clustername will be taken from the DCOS clustername"
