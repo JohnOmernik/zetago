@@ -46,11 +46,11 @@ function _addsshhosts() {
     for IP in $RUN_NODES; do
         CHK=$(grep "$IP" ~/.ssh/known_hosts)
         if [ "$CHK" == "" ]; then
-            ssh-keyscan -H $IP >> ~/.ssh/known_hosts
+            ssh-keyscan $IP >> ~/.ssh/known_hosts
             HN=$(ssh $IP hostname)
             FQHN=$(ssh $IP hostname -f)
-            ssh-keyscan -H $HN >> ~/.ssh/known_hosts
-            ssh-keyscan -H $FQHN >> ~/.ssh/known_hosts
+            ssh-keyscan $HN >> ~/.ssh/known_hosts
+            ssh-keyscan $FQHN >> ~/.ssh/known_hosts
             @go.log INFO "Trusting Key from $IP - $HN - $FQHN"
         else
             @go.log INFO "$IP is already in known hosts - Skipping"
