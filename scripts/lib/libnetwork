@@ -37,6 +37,52 @@ function createedgerules() {
 
     eval $RESULT="'$OUTPUT'"
 }
+#
+#
+# function nondockerports() - Return a port list for non-docker tasks running on the cluster based on a ~ sepearated list of ports
+#
+# Arguments:
+# $1 - Result variables
+# $2 - ~ sepearated list of PSTRs
+#
+# Return
+# a Ports Array value
+#
+nondockerports(){
+
+    local RESULT=$1
+    local PSTRS=$2
+    local PLIST=""
+
+    OLDIFS=$IFS
+    IFS="~"
+    for PSTR in $PSTRS; do
+
+        local TYPE=""
+        local ROTOCOL=""
+        local PORT=""
+        local ROLE=""
+        local APP_ID=""
+        local COMMENTS=""
+        getpstr "TYPE" "PROTOCOL" "PORT" "ROLE" "APP_ID" "COMMENTS" "$PSTR"
+
+        if [ "$TYPE" == "EDGE" ]; then
+            if [ "$PLIST" == "" ]; then
+                PLIST="$PORT"
+            else
+                PLIST="${PLIST}, ${PORT}"
+            fi
+        fi
+    done
+    IFS=$OLDIFS
+    if [ "$PLIST" == "" ]; then
+        RETOUT="\"ports\":[],"
+    else
+        RETOUT="\"ports\":[ $PLIST ],"
+    fi
+
+    eval $RESULT="'$OUTPUT'"
+}
 
 
 #

@@ -9,9 +9,38 @@
 echo "The next step will walk through instance defaults for ${APP_ID}"
 echo ""
 echo "Ports: "
-read -e -p "Please enter the port for the Drill Web-ui and Rest API to run on for ${APP_ID}: " -i "20004" APP_WEB_PORT
-read -e -p "Please enter the port for the Drillbit User Port for ${APP_ID}: " -i "20005" APP_USER_PORT
-read -e -p "Please enter the port for the Drillbit Data port for ${APP_ID}: " -i "20006" APP_BIT_PORT
+
+PORTSTR="CLUSTER:tcp:20004:${APP_ROLE}:${APP_ID}:Web UI and API port for Apache Drill"
+getport "CHKADD" "WebUI and Rest API port for Apache Drill" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_WEB_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_WEB_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for Drill $PSTR"
+fi
+
+PORTSTR="CLUSTER:tcp:20005:${APP_ROLE}:${APP_ID}:User Communication Port for Apache Drill"
+getport "CHKADD" "User Communication Port for Apache Drill" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_USER_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_USER_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for Drill $PSTR"
+fi
+
+
+PORTSTR="CLUSTER:tcp:20006:${APP_ROLE}:${APP_ID}:Bit Communication Port for Apache Drill"
+getport "CHKADD" "Bit Communication Port for Apache Drill" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_BIT_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_BIT_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for Drill $PSTR"
+fi
+
 echo ""
 echo "Resources"
 read -e -p "Please enter the amount of Heap Space per Drillbit: " -i "4G" APP_HEAP_MEM
@@ -24,6 +53,9 @@ read -e -p "What is the default MapR topology for your data to use for Spill Loc
 read -e -p "How many drillbits should we start by default: " -i "1" APP_CNT
 echo ""
 
+
+
+nondockerports "APP_PORT_LIST" "${APP_WEB_PORTSTR}~${APP_USER_PORTSTR}-${APP_BIT_PORTSTR}"
 
 ##########
 # Do instance specific things: Create Dirs, copy start files, make executable etc
@@ -301,6 +333,9 @@ EOF3
 
 chmod +x ${APP_HOME}/zetadrill
 
+
+
+
 cat > ${APP_MAR_FILE} << EOF4
 {
 "id": "${APP_MAR_ID}",
@@ -320,7 +355,7 @@ cat > ${APP_MAR_FILE} << EOF4
 "APP_ID": "${APP_ID}",
 "DRILL_CONF_DIR":"${APP_HOME}/conf.std"
 },
-"ports":[],
+$APP_PORT_LIST
 "user": "mapr",
 "uris": ["file://${APP_PKG_DIR}/${APP_TGZ}"],
 "constraints": [["hostname", "UNIQUE"]]
