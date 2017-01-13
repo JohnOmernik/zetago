@@ -102,6 +102,11 @@ function _installldap() {
     . /mapr/$CLUSTERNAME/zeta/shared/zetaca/gen_server_cert.sh
 
 
+    @go.log INFO "Adding OpenLDAP Ports to $SERVICES_CONF"
+    echo "CLUSTER:tcp:389:shared:openldap:OpenLDAP Port" >> $SERVICES_CONF
+    echo "CLUSTER:tcp:636:shared:openldap:OpenLDAP SSL Port" >> $SERVICES_CONF
+
+
 cat > /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/openldap.sh << EOL
 export ZETA_OPENLDAP_HOST="openldap-shared.marathon.slave.mesos"
 export ZETA_OPENLDAP_PORT="389"

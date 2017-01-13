@@ -45,8 +45,19 @@ function _installldapadmin() {
     sudo chown -R ${IUSER}:${IUSER} ${APP_ROOT}
     sudo chmod -R 750 ${APP_ROOT}
 
-    echo "What port do you want to run ldap admin on? (Default 6443)"
-    read -e -p "LDAP Admin Port: " -i "6443" APP_PORT
+
+
+    PORTSTR="CLUSTER:tcp:6443:shared:ldapadmin:Zeta OpenLDAP Admin UI"
+    getport "CHKADD" "Port for OpenLDAP Admin" "$SERVICES_CONF" "$PORTSTR"
+
+    if [ "$CHKADD" != "" ]; then
+        getpstr "TYPE" "PROTOCOL" "APP_PORT" "MYROLE" "MYAPP_ID" "COMMENTS" "$CHKADD"
+        APP_PORTSTR="$CHKADD"
+    else
+        @go.log FATAL "Adding Porting to services failed $PSTR"
+    fi
+
+
 
 cat > /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/ldapadmin.sh << EOL
 export ZETA_LDAPADMIN_HOST="ldapadmin-shared.marathon.slave.mesos"
