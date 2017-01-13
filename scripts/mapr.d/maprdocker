@@ -53,6 +53,19 @@ CN_GUESS="maprdocker-mapr-shared.marathon.slave.mesos"
 . /home/${IUSER}/zetaca/zetaca_env.sh
 . /home/${IUSER}/zetaca/gen_server_cert.sh
 
+
+
+PORTSTR="CLUSTER:tcp:${DOCKER_REG_PORT}:shared:maprdocker:Bootstrap Docker Registry"
+
+getport "CHKADD" "Port for MapR Bootstrap Docker Registry " "$SERVICES_CONF" "$PORTSTR" "1"
+
+if [ "$CHKADD" != "" ]; then
+    @go.log INFO "$DOCKER_REG_PORT added to services port for the CLUSTER"
+else
+    @go.log FATAL "Adding Porting to services failed $PSTR"
+fi
+
+
 @go.log INFO "Creating Marathon file"
 mkdir -p ./conf/marathon_files
 MARATHON_FILE="./conf/marathon_files/maprdocker.marathon"
