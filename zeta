@@ -30,6 +30,7 @@ fi
 . "$__GO_CORE" "scripts"
 . "$_GO_USE_MODULES" 'log'
 . "$_GO_USE_MODULES" 'libcommon'
+. "$_GO_USE_MODULES" 'libnetwork'
 
 @go "$@"
 

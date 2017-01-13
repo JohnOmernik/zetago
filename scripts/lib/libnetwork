@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# libnetwork - functions to assist networking functions
+#
+#
+
+#
+# createedgerules - Function to read the services.conf file and return a list of iptables rules that represent the edge rules
+#
+# Arguments:
+# $1 - The path to the services.conf file
+# $2 - The Variables to hold the results in
+function createedgerules() {
+
+    local SRC_CONF=$1
+    local RESULT=$2
+
+    OUTPUT=""
+    while read L; do
+        [[ "$L" =~ ^#.*$ ]] && continue
+        TYPE=$(echo $L|cut -d":" -f1)
+        PROTOCOL=$(echo $L|cut -d":" -f2)
+        PORT=$(echo $L|cut -d":" -f3)
+        ROLE=$(echo $L|cut -d":" -f4)
+        APP_IP=$(echo $L|cut -d":" -f5)
+        COMMENTS=$(echo $L|cut -d":" -f6)
+
+        if [ "$TYPE" == "EDGE" ]; then
+            if [ "$PROTOCOL" == 'tcp' ]; then
+                OUTPUT="${OUTPUT}iptables -A INPUT -p $PROTOCOL --dport $PORT -m comment --comment "Edge Service: Role: $ROLE - APP_ID - $APP_ID - $COMMENTS" -j logaccept"$'\n'
+            else
+                @go.log WARN "Edge service found with protocol other than tcp. Skipping - not adding to edge services in firewall"
+            fi
+        fi
+    done < $SRC_CONF
+
+    eval $RESULT="'$OUTPUT'"
+}
