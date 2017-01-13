@@ -37,7 +37,7 @@ function _addsshhosts() {
     if [ "$UNATTEND" == "1" ]; then
         @go.log WARN "We are automatically trusting all host keys due to UNATTEND being set"
     else
-        read -e -p "Do you wish to automatically trust host keys provided? - Please understand the risks here: (Y/N)" -i "N" TRST
+        read -e -p "Do you wish to automatically trust host keys provided? - Please understand the risks here: (Y/N): " -i "N" TRST
         if [ "$TRST" != "Y" ]; then
             @go.log FATAL "User choose not to accept SSH Keys - Exiting"
         fi
