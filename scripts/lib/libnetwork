@@ -18,12 +18,14 @@ function createedgerules() {
     OUTPUT=""
     while read L; do
         [[ "$L" =~ ^#.*$ ]] && continue
-        TYPE=$(echo $L|cut -d":" -f1)
-        PROTOCOL=$(echo $L|cut -d":" -f2)
-        PORT=$(echo $L|cut -d":" -f3)
-        ROLE=$(echo $L|cut -d":" -f4)
-        APP_ID=$(echo $L|cut -d":" -f5)
-        COMMENTS=$(echo $L|cut -d":" -f6)
+        local TYPE=""
+        local PROTOCOL=""
+        local PORT=""
+        local ROLE=""
+        local APP_ID=""
+        local COMMENTS=""
+
+        getpstr "TYPE" "PROTOCOL" "PORT" "ROLE" "APP_ID" "COMMENTS" "$L"
 
         if [ "$TYPE" == "EDGE" ]; then
             if [ "$PROTOCOL" == 'tcp' ]; then
@@ -36,3 +38,248 @@ function createedgerules() {
 
     eval $RESULT="'$OUTPUT'"
 }
+
+
+#
+#
+# function getpstr - Reads a pstr (TYPE:PROTOCOL:PORT:ROLE:APP_ID:COMMENTS) and split it into the variables provided
+#
+# Arguments
+# $1 - Return TYPE
+# $2 - Return PROTOCOL
+# $3 - Return PORT
+# $4 - Return ROLE
+# $5 - Return APP_ID
+# $6 - Return COMMENTs
+# $7 - pstr to parse
+
+function getpstr(){
+
+    local RTYPE=$1
+    local RPROTOCOL=$2
+    local RPORT=$3
+    local RROLE=$4
+    local RAPP_ID=$5
+    local RCOMMENTS=$6
+    local PSTR=$7
+
+
+    local TYPE=$(echo $PSTR|cut -d":" -f1)
+    local PROTOCOL=$(echo $PSTR|cut -d":" -f2)
+    local PORT=$(echo $PSTR|cut -d":" -f3)
+    local ROLE=$(echo $PSTR|cut -d":" -f4)
+    local APP_ID=$(echo $PSTR|cut -d":" -f5)
+    local COMMENTS=$(echo $PSTR|cut -d":" -f6)
+
+    eval $RTYPE="'$TYPE'"
+    eval $RPROTOCOL="'$PROTOCOL'"
+    eval $RPORT="'$PORT'"
+    eval $RROLE="'$ROLE'"
+    eval $RAPP_ID="'$APP_ID'"
+    eval $RCOMMENTS="'$COMMENTS'"
+
+}
+
+
+# Arguments:
+# $1 - VARIABLE NAME TO rerturn the result in
+# $2 - Message to the user to request the port
+# $3 - Path to Services conf
+# $4 - Suggested PORT Line (in TYPE:PROTOCOL:PORT:ROLE:APP_ID:COMMENTS format)
+# $5 - Unattened (1 to be unattended)
+function getport(){
+
+    local RESULT=$1
+    local USERMSG=$2
+    local SRC_CONF=$3
+    local POUT=$4
+    local UNATTEND=$5
+
+    local TYPE=""
+    local PROTOCOL=""
+    local PORT=""
+    local ROLE=""
+    local APP_ID=""
+    local COMMENTS=""
+
+    getpstr "TYPE" "PROTOCOL" "PORT" "ROLE" "APP_ID" "COMMENTS" "$POUT"
+
+
+    local OUTPUT=""
+
+    if [ "$UNATTEND" == "1" ]; then
+        checkport "CHKPORT" "$SRC_CONF" "$POUT"
+        if [ "$CHKPORT" == "" ]; then
+            addport "CHKADD" "$SRC_CONF" "$POUT"
+            if [ "$CHKADD" != "" ]; then
+                @go.log INFO "Unattened port identified $POUT - $USERMSG and added"
+                OUTPUT="$POUT"
+            else
+                @go.log FATAL "Port addition to services.conf failed"
+            fi
+        fi
+    else
+        queryport "NPORT" "$USERMSG" "$SRC_CONF" "$POUT"
+        checkport "CHKPORT" "$SRC_CONF" "$NPORT"
+        while [ "$CHKPORT" != "" ]; do
+            echo "The Port you checked for already exists in services.conf"
+            read -e -p "Do you wish to try another port?" -i "Y" TRYAGAIN
+            if [ "${TRYAGAIN" != "Y" ]; then
+                OUTPUT=""
+                break
+            fi
+            queryport "NPORT" "$USERMSG" "$SRC_CONF" "$POUT"
+            checkport "CHKPORT" "$SRC_CONF" "$NPORT"
+        done
+        if [ "$CHKPORT" == "" ]; then
+            addport "CHKADD" "$SRC_CONF" "$NPORT"
+            if [ "$CHKADD" != "" ]; then
+                @go.log INFO "Port identified $NPORT - $USERMSG and added"
+                OUTPUT="$NPORT"
+             else
+                @go.log FATAL "Port addition to services.conf failed"
+
+            fi
+        fi
+    fi
+
+    eval $RESULT="'$OUTPUT'"
+
+
+}
+
+
+#
+#
+# addport() - Adds a port to the services file
+#
+# Add this time it just appends. In the future we need to add a check to ensure someone else isn't adding the same port at the same time
+# This COULD be accomplished by having this function make a a directory with the port name (atomic) If it succeeds, then the port lock is ours
+# If it fails someone else created the directory, and we need a new port
+# If we succeed. We add to the file
+#
+# For now we just add to the file
+#
+# Arguments
+# $1 - Result
+# $2 - path to services file
+# #3 - PORT Line (in TYPE:PROTOCOL:PORT:ROLE:APP_ID:COMMENTS format)
+#
+# Return:
+# Blank if add to file failed
+# PORT Line if it succeeded
+#
+function addport () {
+    local RESULT=$1
+    local SRC_CONF=$2
+    local POUT=$3
+    local OUTPUT=""
+
+    echo "$POUT" >> $SRC_CONF
+
+    OUTPUT="$POUT"
+    eval $RESULT="'$OUTPUT'"
+
+}
+
+#
+# queryport() - Requests information from the user to get a port
+#
+#
+# Arguments:
+# $1 - VARIABLE NAME TO rerturn the result in
+# $2 - Message to the user to request the port
+# $3 - Path to Services conf
+# $4 - Suggested PORT Line (in TYPE:PROTOCOL:PORT:ROLE:APP_ID:COMMENTS format)
+function queryport(){
+
+    local RESULT=$1
+    local USERMSG=$2
+    local SRC_CONF=$3
+    local POUT=$4
+
+    local TYPE=""
+    local PROTOCOL=""
+    local PORT=""
+    local ROLE=""
+    local APP_ID=""
+    local COMMENTS=""
+
+    getpstr "TYPE" "PROTOCOL" "PORT" "ROLE" "APP_ID" "COMMENTS" "$POUT"
+
+
+    echo "Zeta Port Request:"
+    echo "$USERMSG"
+    echo ""
+    read -e -p "Please enter the type of the port (CLUSTER or EDGE): " -i "$TYPE" TYPE
+    echo ""
+    echo "At this time only tcp is supported for protocol"
+    PROTOCOL="tcp"
+    echo ""
+    read -e -p "Please enter the port you are requesting: " -i "$PORT" PORT
+    echo ""
+    read -e -p "For the port above, what role is the service running in? " -i "$ROLE" ROLE
+    echo ""
+    read -e -p "For the port above, what is the APP_ID for the service? " -i "$APP_ID" APP_ID
+    echo ""
+    read -e -p "For the port above, Please enter any comments you wish to add? " -i "$COMMENTS" COMMENTS
+
+
+    OUTPUT="$TYPE:$PROTOCOL:$PORT:$ROLE:$APP_ID:$COMMENTS"
+
+    eval $RESULT="'$OUTPUT'"
+
+
+}
+
+#
+# function checkport - Simple function to check if a port exists in the SERVICES_CONF
+#
+# Arguments:
+# $1 - VARIABLE NAME TO rerturn the result in
+# $2 - Path to Services conf
+# $3 - PORT Line (in TYPE:PROTOCOL:PORT:ROLE:APP_ID:COMMENTS format)
+#
+# returns nothing if not found, returns services line if found
+#
+function checkport(){
+
+    local RESULT=$1
+    local SRC_CONF=$2
+    local POUT=$3
+
+    local TYPE=""
+    local PROTOCOL=""
+    local PORT=""
+    local ROLE=""
+    local APP_ID=""
+    local COMMENTS=""
+
+    getpstr "TYPE" "PROTOCOL" "PORT" "ROLE" "APP_ID" "COMMENTS" "$POUT"
+
+    local OUTPUT=""
+    while read L; do
+        [[ "$L" =~ ^#.*$ ]] && continue
+        local STYPE=""
+        local SPROTOCOL=""
+        local SPORT=""
+        local SROLE=""
+        local SAPP_ID=""
+        local SCOMMENTS=""
+
+        getpstr "STYPE" "SPROTOCOL" "SPORT" "SROLE" "SAPP_ID" "SCOMMENTS" "$L"
+
+        if [ "$PROTOCOL" == "$SPROTOCOL" ] && [ "$PORT" == "$SPORT" ]; then
+            OUTPUT="$L"
+            break
+        fi
+    done < $SRC_CONF
+
+    eval $RESULT="'$OUTPUT'"
+
+
+}
+
+
+
+
