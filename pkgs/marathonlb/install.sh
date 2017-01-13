@@ -89,12 +89,9 @@ cat > ${APP_MAR_FILE} << EOL
   "cpus": ${APP_CPU},
   "mem": ${APP_MEM},
   "instances": ${APP_CNT},
-  "args":["sse", "--marathon", "http://${ZETA_MARATHON_URL}", "--group", "*"],
+  "args":["sse", "--marathon", "http://${ZETA_MARATHON_URL}", "--group", "*", "--ssl-certs", "/marathonlb/certs/${CERT_FILE_NAME}"],
   "constraints": [${APP_CONSTRAINT}["hostname", "UNIQUE"]],
   $APP_ACCEPTED_ROLES
-  "env": {
-    "HAPROXY_SSL_CERT":"/marathonlb/certs/${CERT_FILE_NAME}"
-  },
   "labels": {
     "PRODUCTION_READY":"True",
     "CONTAINERIZER":"Docker",
