@@ -44,7 +44,7 @@ function _addsshhosts() {
     fi
 
     for IP in $RUN_NODES; do
-        CHK=$(grep "$IP" ~/.ssh/known_hosts
+        CHK=$(grep "$IP" ~/.ssh/known_hosts)
         if [ "$CHK" == "" ]; then
             ssh-keyscan -H $IP >> ~/.ssh/known_hosts
             HN=$(ssh $IP hostname)
