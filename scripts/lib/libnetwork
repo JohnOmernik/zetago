@@ -58,13 +58,13 @@ nondockerports(){
     IFS="~"
     for PSTR in $PSTRS; do
 
-        local TYPE=""
-        local ROTOCOL=""
-        local PORT=""
-        local ROLE=""
-        local APP_ID=""
-        local COMMENTS=""
-        getpstr "TYPE" "PROTOCOL" "PORT" "ROLE" "APP_ID" "COMMENTS" "$PSTR"
+        local ATYPE=""
+        local AROTOCOL=""
+        local APORT=""
+        local AROLE=""
+        local AAPP_ID=""
+        local ACOMMENTS=""
+        getpstr "ATYPE" "APROTOCOL" "APORT" "AROLE" "AAPP_ID" "ACOMMENTS" "$PSTR"
 
         if [ "$TYPE" == "EDGE" ]; then
             if [ "$PLIST" == "" ]; then
@@ -81,7 +81,7 @@ nondockerports(){
         RETOUT="\"ports\":[ $PLIST ],"
     fi
 
-    eval $RESULT="'$OUTPUT'"
+    eval $RESULT="'$RETOUT'"
 }
 
 
