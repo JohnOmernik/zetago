@@ -94,12 +94,17 @@ function _packageuninstall() {
             if [ "$APP_MAR_ID" != "" ]; then
                 ./zeta cluster marathon destroy $APP_MAR_ID $MARATHON_SUBMIT 1
             fi
+            @go.log INFO "Removeing ports for $APP_ID"
+            APP_STR="${APP_ROLE}:${APP_ID}"
+            sed -i "/${APP_STR}/d" ${SERVICES_CONF}
+
             @go.log WARN "$APP_NAME instance $APP_ID unininstalled"
             if [ "$DESTROY" == "1" ]; then
                 @go.log WARN "Also removing all data for app"
                 @go.log WARN "If volumes exist, we need to handle those"
                 sudo rm -rf $APP_HOME
             fi
+
         else
             @go.log WARN "User canceled uninstall"
         fi
