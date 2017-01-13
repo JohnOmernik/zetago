@@ -68,6 +68,7 @@ echo ""
 if [ "$ZETA_CA_CERTS" == "Y" ]; then
     CN_GUESS="${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
     . /mapr/$CLUSTERNAME/zeta/shared/zetaca/gen_server_cert.sh
+    CERT_FILE_NAME="cert.pem"
 else
     echo "Please enter the certificate file name:"
     read -e -p "Certificate file: " -i "cert.pem" CERT_FILE_NAME
