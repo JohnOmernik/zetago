@@ -227,6 +227,26 @@ export SUBNETS="$SUBNETS"
 export MAPR_VERS="$MAPR_VERS"
 export MAPR_LOCKED="1"
 
+@go.log INFO "Adding MapR Ports to $SERVICES_CONF"
+echo "CLUSTER:tcp:2049:shared:mapr:MapR NFS Services" >> $SERVICES_CONF
+echo "CLUSTER:tcp:9997:shared:mapr:MapR NFS Services" >> $SERVICES_CONF
+echo "CLUSTER:tcp:9998:shared:mapr:MapR NFS Services" >> $SERVICES_CONF
+
+echo "CLUSTER:tcp:7220:shared:mapr:MapR CLDB Services" >> $SERVICES_CONF
+echo "CLUSTER:tcp:7221:shared:mapr:MapR CLDB Services" >> $SERVICES_CONF
+echo "CLUSTER:tcp:7222:shared:mapr:MapR CLDB Services" >> $SERVICES_CONF
+
+echo "CLUSTER:tcp:7660:shared:mapr:MapR Gateway Services" >> $SERVICES_CONF
+echo "CLUSTER:tcp:1111:shared:mapr:MapR Metrics RPC Services" >> $SERVICES_CONF
+
+echo "CLUSTER:tcp:7443:shared:mapr:MapR maprlogin utility" >> $SERVICES_CONF
+echo "CLUSTER:tcp:8443:shared:mapr:MapR mapr web ui and API" >> $SERVICES_CONF
+
+echo "CLUSTER:tcp:${ZK_CLIENT_PORT}:shared:mapr:MapR Zookeeper Main" >> $SERVICES_CONF
+echo "CLUSTER:tcp:${ZK_MASTER_ELECTION_PORT}:shared:mapr:MapR Zookeeper Master Election" >> $SERVICES_CONF
+echo "CLUSTER:tcp:${ZK_QUORUM_PORT}:shared:mapr:MapR Zookeeper Quorum Port" >> $SERVICES_CONF
+
+
 # Do not change the rest of this script, this creates two more variables from your ZKs, one to put into the zoo.cfg on each ZK (ZOOCFG) and the other to pass to the mapr configure script ($ZKS)
 
 #Example: 0:node1,1:node2,2:node3"
