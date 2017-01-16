@@ -79,6 +79,7 @@ EOF
     echo "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
     for HOST in $MYHOSTS; do
 
+        scp -q -i ${OUT_KEY} ./bin/system_type.sh /home/${IUSER}/system_type.sh
         scp -q -i ${OUT_KEY} $PREP_SCRIPT ${IUSER}@${HOST}:$REM_LOC
         if [ "$?" == "0" ]; then
             ssh -i ${OUT_KEY} ${IUSER}@${HOST} $REM_LOC
