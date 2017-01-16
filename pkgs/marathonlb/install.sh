@@ -81,7 +81,7 @@ else
 fi
 
 
-CHKSVC=$(cat $SERVICE_CONF|grep marathonlb)
+CHKSVC=$(cat $SERVICES_CONF|grep marathonlb)
 if [ "$CHKSVC" == "" ]; then
     @go.log INFO "Adding marathonlb 443 Edge services to $SERVICES_CONF"
     echo "EDGE:tcp:443:shared:marathonlb:Default access for marathonlb into the cluster" >> $SERVICE_CONF
