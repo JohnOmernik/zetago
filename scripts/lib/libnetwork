@@ -65,9 +65,9 @@ function bridgeports() {
 
     OUTPUT=""
     if [ "$ATYPE" == "EDGE" ]; then
-        OUTPUT = "{ \"containerPort\": ${CPORT}, \"hostPort\": 0, \"servicePort\": ${APORT}, \"protocol\": \"${APROTOCOL}\" }"
+        OUTPUT = "\{ \"containerPort\": ${CPORT}, \"hostPort\": 0, \"servicePort\": ${APORT}, \"protocol\": \"${APROTOCOL}\" \}"
     else
-        OUTPUT = "{ \"containerPort\": ${CPORT}, \"hostPort\": ${APORT}, \"protocol\": \"${APROTOCOL}\" }"
+        OUTPUT = "\{ \"containerPort\": ${CPORT}, \"hostPort\": ${APORT}, \"protocol\": \"${APROTOCOL}\" \}"
     fi
     eval $RESULT="'$OUTPUT'"
 }

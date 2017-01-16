@@ -6,6 +6,34 @@ echo "The next step will walk through instance defaults for ${APP_ID}"
 echo ""
 ##########
 
+PORTSTR="CLUSTER:tcp:27005:${APP_ROLE}:${APP_ID}:HBASEREST Info Port"
+getport "CHKADD" "HBASEREST Info Port" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_INFO_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_INFO_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME instance $APP_ID with $PSTR"
+fi
+
+PORTSTR="CLUSTER:tcp:27000:${APP_ROLE}:${APP_ID}:HBASEREST HTTP Port"
+getport "CHKADD" "HBASEREST HTTP Port" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME instance $APP_ID with $PSTR"
+fi
+
+
+bridgeports "APP_INFO_PORT_JSON", "8005", "$APP_INFO_PORTSTR"
+bridgeports "APP_PORT_JSON", "8000", "$APP_PORTSTR"
+
+
+
+
+
 read -e -p "Please enter the port for ${APP_NAME} info service: " -i "27005" APP_INFO_PORT
 read -e -p "Please enter the port for ${APP_NAME} REST API: " -i "27000" APP_PORT
 read -e -p "Please enter the amount of memory to use for the $APP_ID instance of $APP_NAME: " -i "1024" APP_MEM
@@ -181,8 +209,8 @@ cat > $APP_MAR_FILE << EOF
       "image": "${APP_IMG}",
       "network": "BRIDGE",
       "portMappings": [
-        { "containerPort": 8000, "hostPort": ${APP_PORT}, "servicePort": 0, "protocol": "tcp"},
-        { "containerPort": 8005, "hostPort": ${APP_INFO_PORT}, "servicePort": 0, "protocol": "tcp"}
+        ${APP_PORT_JSON}.
+        ${APP_INFO_PORT_JSON}
       ]
     },
   "volumes": [
