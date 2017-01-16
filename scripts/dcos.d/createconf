@@ -56,7 +56,7 @@ echo ""
 INTERNAL_NODES=""
 for NODE in $NODES; do
     scp -o StrictHostKeyChecking=no $IP_DETECT $NODE:/tmp/ip-detect > /dev/null 2>&1
-    INTERNAL=$(ssh -o StrictHostKeyChecking=no $NODE "/tmp/ip-detect")
+sed -e 's/^[ \t]*//'    INTERNAL=$(ssh -o StrictHostKeyChecking=no $NODE "/tmp/ip-detect")
     INIT_N="N"
     if [ "$INTERNAL_NODES" == "" ]; then
        INTERNAL_NODES=""
@@ -135,17 +135,10 @@ read -p "Enter the noproxy information (blank for none): " DOCKER_NOPROXY
 
 
 
-AGENT_NODES=""
-for N in $INTERNAL_NODES; do
-    if [[ "$N" == *"$MASTER_NODES"* ]]; then
-        T=$N
-    else
-        if [ "$AGENT_NODES" == "" ]; then
-            AGENT_NODES="$N"
-        else
-            AGENT_NODES="${AGENT_NODES} $N"
-        fi
-    fi
+AGENT_NODES="$INTERNAL_NODES"
+
+for N in $MASTER_NODES; do 
+    AGENT_NODES=$(echo "$AGENT_NODES"| sed "s/$N//g"|sed -e 's/^[ \t]*//'|sed -e 's/[ \t]*$//')
 done
 
 
