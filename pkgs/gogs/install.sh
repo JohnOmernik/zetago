@@ -30,8 +30,8 @@ else
 fi
 
 
-bridgeports "APP_SSH_JSON", "22", "$APP_SSH_PORTSTR"
-bridgeports "APP_HTTPS_JSON", "$APP_HTTPS_PORT", "$APP_HTTPS_PORTSTR"
+bridgeports "APP_SSH_JSON" "22" "$APP_SSH_PORTSTR"
+bridgeports "APP_HTTPS_JSON" "$APP_HTTPS_PORT" "$APP_HTTPS_PORTSTR"
 
 
 
