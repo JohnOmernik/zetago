@@ -93,7 +93,8 @@ echo ""
 echo "The remaining nodes you can pick from are:"
 SOME_NODES="$REMAINING_NODES"
 for N in $MASTER_NODES; do
-    SOME_NODES=$(echo "$REMAINING_NODES"| sed "s/$N//g")
+    SOME_NODES=$(echo "$SOME_NODES"| sed "s/$N//g"|sed -e 's/^[ \t]*//'|sed -e 's/[ \t]*$//')
+
 done
 
 echo ""
