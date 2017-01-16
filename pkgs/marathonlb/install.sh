@@ -81,6 +81,12 @@ else
 fi
 
 
+CHKSVC=$(cat $SERVICE_CONF|grep marathonlb)
+if [ "$CHKSVC" == "" ]; then
+    @go.log INFO "Adding marathonlb 443 Edge services to $SERVICES_CONF"
+    echo "EDGE:tcp:443:shared:marathonlb:Default access for marathonlb into the cluster" >> $SERVICE_CONF
+fi
+
 cat > $APP_ENV_FILE << EOL1
 #!/bin/bash
 export ZETA_MARATHON_LB_INSTALLED="Y"

@@ -66,7 +66,7 @@ cat > $SERVICES_CONF << EOS
 # Services Configuration file
 #
 # # Are comments
-# Format - One per line 
+# Format - One per line
 #TYPE:PROTOCOL:PORT:ROLE:APP_ID:Comments
 #
 # Type is either "EDGE" or "CLUSTER" (Edge being externally accessible on edge node as service port, CLUSTER is internal only on cluster)
@@ -76,7 +76,6 @@ cat > $SERVICES_CONF << EOS
 # APP_IP is the ID of the application or service that is running with the port
 # Comments are any addition comments
 #
-EDGE:tcp:443:shared:marathonlb:Default access for marathonlb into the cluster
 EOS
     fi
 

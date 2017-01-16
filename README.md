@@ -21,8 +21,25 @@ This other repos may continue to get updates until they are completely folded in
 2. Spin up 5 hosts (I used m3.xlarge) running Ubuntu 16.04 (For now)
 3. Note the subnet (Mine was 172.31.0.0/16)
 4. On the Add storage, the two disks is correct, but up up the root volume to be 50 GB instead of 8
-5. Security Group - SSH (22) from anywhere, All traffic from 172.31.0.0/16 (or your subnet) and All traffic from your IP (we will change this later
-6. Launch with the prv key you intend to use
+5. Security Group - SSH (22) from anywhere, All traffic from 172.31.0.0/16 (or your subnet) and All traffic from your IP (we will change this later, once we get the node firewalls up, we will open this to world to keep things easier to manage)
+6. Launch with the prv key you intend to use from the initial node prep in "Prep Cluster" below
+
+
+### Initial Prep - On Prem
+----------
+1. Get some master nodes
+    - No extra disk needed. min 32 GB of ram, rec 64. A 3 node quorum of masters running 64 GB of ram can scale to the 10s of thousands of agent nodes
+    - A good amount of disk space - at least a TB 
+    - 1 Units work well. 
+2. Get some agent nodes
+    - Since we are doing storage, we like ensuring good specs. 
+        - At least 2 Octo-Core (with hyperthreading) processors
+        - 256 GB or more of Ram
+        - 2 main (OS) harddrives with over 750GB available. Fast is good here (SSD, 15k) running in RAID1
+        - 8 or more "Storage" drives. Faster equates to better storage in your cluster
+        - Networking: We like upping this as much as possible. 4 10Gbps Copper, bonded into two HA pairs.  One for the main Zeta (Routable) subnet and another for fast disk backchannel
+    - Aim for at least 5 nodes to start with. 
+
 
 
 ### Get initial Repo
@@ -47,18 +64,19 @@ This other repos may continue to get updates until they are completely folded in
     - $ ./zeta prep -l # This locks the conf, so it doesn't prompt you every time. It asks you to use the prep.conf again and then confirms the locking. Now it will assume the conf is correct. 
 3. Your conf is created, reviewed, and locked, the next step is to prep the nodes.
     - $ ./zeta prep install -a -u # This installs the prep on all nodes (-a) and does so unattended (-u) however it will prompt you for the version file to use... (Just use the default 1.0.0 by hitting enter)
-4. Once this completes, you can check the status of the nodes by running $ ./zeta prep status -a. Once all nodes are running with Docker, you can proceed to the next steps. 
+4. Once this completes, you can check the status of the nodes by running $ ./zeta prep status  Once all nodes are running with Docker, you can proceed to the next steps. 
 5. Also, to get the SSH command to connect to the initial nodes, type ./zeta prep at anytime
 
 ### Connect to cluster
 ----------
-1. Once the ./zeta prep status -a command returns docker installed on all nodes it's time to switch the context. Instead of running nodes from your machine, you will be connecting to the initial node (specidfied in the config) and running all remaining commands from there
+1. Once the ./zeta prep status command returns docker installed on all nodes it's time to switch the context. Instead of running commands using ./zeta from your machine, you will be connecting to the initial node (specidfied in the config) and running all remaining commands from there
+    - You can get the exact SSH command to connect to the initial node by typing ./zeta prep on your machine, it will show you the SSH command to connect to the initial node. 
 2. To get the SSH command to use, just type ./zeta prep and it will show you the SSH command to connect to the initial node
 3. Once connected to the inital node run $ cd zetago  # All commands will start from here
 
-### DCOS Install
+### DCOS and Firewall Install
 ----------
-1. Run the prep by typeing $./zeta dcos
+1. Run the prep by typeing $ ./zeta dcos
     - It will ask some questions about conf, including showing you the internal IPs of your nodes
     - IP for bootstrap node (use the init node, the default)
     - Port for bootstrap (use the default)
@@ -66,8 +84,11 @@ This other repos may continue to get updates until they are completely folded in
     - clustername: pick anything
     - dns resolvers should be setup for AWS, but if you are on another platform, please correct them
     - All conf info is in ./conf/dcos.conf
-2. Start the bootstrap server by running $ ./zeta dcos bootstrap
-3. Install DCOS by running $ ./zeta dcos install -a
+2. Prior to doing the DCOS install, it's now time to run the network setup: Run $ ./zeta network
+    - This command sets the network.conf file with information about your networking setup
+ 
+3. Start the bootstrap server by running $ ./zeta dcos bootstrap
+4. Install DCOS by running $ ./zeta dcos install -a
     - This installs DCOS first on the Masters specified, then on the remaining nodes. 
     - It also provides the Master UI Address (as well as exhibitor)
     - The Master will take some time to come up, it checks this, and doesn't install agents until after the master is healthy.
