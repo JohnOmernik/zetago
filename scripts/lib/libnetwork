@@ -37,18 +37,55 @@ function createedgerules() {
 
     eval $RESULT="'$OUTPUT'"
 }
+
+#
+# function bridgeports() - Returns only the portion of the docker string that is hostPort or Service port
+#
+# Arguments
+# $1 Result variable
+# Arguments:
+# $1 - Result variable
+# $2 - Container Port (set by App)
+# $3 - PSTR
+# Return
+# A port enclosed by {} for use in Marathon JSON file
+#
+function bridgeports() {
+    local RESULT=$1
+    local CPORT=$2
+    local PSTR=$3
+
+    local ATYPE=""
+    local AROTOCOL=""
+    local APORT=""
+    local AROLE=""
+    local AAPP_ID=""
+    local ACOMMENTS=""
+    getpstr "ATYPE" "APROTOCOL" "APORT" "AROLE" "AAPP_ID" "ACOMMENTS" "$PSTR"
+
+    OUTPUT=""
+    if [ "$ATYPE" == "EDGE" ]; then
+        OUTPUT = "{ \"containerPort\": ${CPORT}, \"hostPort\": 0, \"servicePort\": ${APORT}, \"protocol\": \"${APROTOCOL}\" }"
+    else
+        OUTPUT = "{ \"containerPort\": ${CPORT}, \"hostPort\": ${APORT}, \"protocol\": \"${APROTOCOL}\" }"
+    fi
+    eval $RESULT="'$OUTPUT'"
+}
+
+
+
 #
 #
-# function nondockerports() - Return a port list for non-docker tasks running on the cluster based on a ~ sepearated list of ports
+# function nonbridgeports() - Return a port list for non-docker tasks or docker HOST tasks running on the cluster based on a ~ sepearated list of ports
 #
 # Arguments:
 # $1 - Result variables
 # $2 - ~ sepearated list of PSTRs
 #
 # Return
-# a Ports Array value
+# an array for use in the marathon ports json
 #
-nondockerports(){
+nonbridgeports(){
 
     local RESULT=$1
     local PSTRS=$2

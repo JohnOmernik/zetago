@@ -55,7 +55,7 @@ echo ""
 
 
 
-nondockerports "APP_PORT_LIST" "${APP_WEB_PORTSTR}~${APP_USER_PORTSTR}-${APP_BIT_PORTSTR}"
+nonbridgeports "APP_PORT_LIST" "${APP_WEB_PORTSTR}~${APP_USER_PORTSTR}-${APP_BIT_PORTSTR}"
 
 ##########
 # Do instance specific things: Create Dirs, copy start files, make executable etc

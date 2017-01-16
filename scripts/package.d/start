@@ -82,6 +82,13 @@ function _packagestart() {
             ./zeta cluster marathon scale $APP_MAR_ID $APP_CNT $MARATHON_SUBMIT 1
         fi
     fi
+
+    echo ""
+    echo "If your package added EDGE ports now is the time to reload the firewall to expose those ports:"
+    echo ""
+    echo "$ ./zeta network deployfw -f=\"Reload of Firewall to add new EDGE Services from $APP_ID running in $APP_ROLE\""
+    echo ""
+
 }
 
 

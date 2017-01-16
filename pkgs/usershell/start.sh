@@ -146,7 +146,7 @@ EOS
             fi
         fi
     fi
-    nondockerports "APP_PORT_LIST" "${APP_PORTSTR}"
+    nonbridgeports "APP_PORT_LIST" "${APP_PORTSTR}"
 
     if [ -d "$SPARK_PKG_HOME" ]; then
         SPARK_HOME_SHORT=$(ls -1 ${SPARK_PKG_HOME}|grep -v "run\.sh"|grep -v "${PKG_ID}\.conf")

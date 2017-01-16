@@ -6,10 +6,35 @@ echo "The next step will walk through instance defaults for ${APP_ID}"
 echo ""
 echo "The Gogs git server needs two ports, a SSH port and a HTTPS port"
 echo ""
-read -e -p "Please enter a ssh port to use with gogs: " -i "30022" APP_SSH_PORT
-echo ""
-read -e -p "Please enter a https port to use with gogs: " -i "30443" APP_HTTPS_PORT
-echo ""
+
+
+
+PORTSTR="CLUSTER:tcp:30022:${APP_ROLE}:${APP_ID}:Gogs Service SSH Port"
+getport "CHKADD" "Gogs Service SSH Port" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_SSH_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_SSH_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME instance $APP_ID with $PSTR"
+fi
+
+PORTSTR="CLUSTER:tcp:300443:${APP_ROLE}:${APP_ID}:Gogs Service HTTPS Port"
+getport "CHKADD" "Gogs Service HTTPS Port" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_HTTPS_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_HTTPS_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME instance $APP_ID with $PSTR"
+fi
+
+
+bridgeports "APP_SSH_JSON", "22", "$APP_SSH_PORTSTR"
+bridgeports "APP_HTTPS_JSON", "$APP_HTTPS_PORT", "$APP_HTTPS_PORTSTR"
+
+
+
 read -e -p "Please enter the CPU shares to use with $APP_NAME: " -i "1.0" APP_CPU
 echo ""
 read -e -p "Please enter the Marathon Memory limit to use with $APP_NAME: " -i "2048" APP_MEM
@@ -113,8 +138,8 @@ cat > $APP_MAR_FILE << EOL
       "image": "${APP_IMG}",
       "network": "BRIDGE",
       "portMappings": [
-        { "containerPort": 22, "hostPort": ${APP_SSH_PORT}, "servicePort": 0, "protocol": "tcp"},
-        { "containerPort": ${APP_HTTPS_PORT}, "hostPort": ${APP_HTTPS_PORT}, "servicePort": 0, "protocol": "tcp"}
+        ${APP_SSH_JSON},
+        ${APP_HTTPS_JSON}
       ]
     },
     "volumes": [

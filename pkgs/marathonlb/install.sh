@@ -84,7 +84,7 @@ fi
 CHKSVC=$(cat $SERVICES_CONF|grep marathonlb)
 if [ "$CHKSVC" == "" ]; then
     @go.log INFO "Adding marathonlb 443 Edge services to $SERVICES_CONF"
-    echo "EDGE:tcp:443:shared:marathonlb:Default access for marathonlb into the cluster" >> $SERVICE_CONF
+    echo "EDGE:tcp:443:shared:marathonlb:Default access for marathonlb into the cluster" >> $SERVICES_CONF
 fi
 
 cat > $APP_ENV_FILE << EOL1
@@ -132,5 +132,9 @@ echo "To start please run: "
 echo ""
 echo "$ ./zeta package start ${APP_HOME}/$APP_ID.conf"
 echo ""
-
+echo ""
+echo "In addition since this is marathonlb, it's recommend you now redeploy the zeta firewall to ensure proper edge connectivity"
+echo ""
+echo "$ ./zeta network deployfw -f=\"Post marathonlb install firewall deploy\""
+echo ""
 
