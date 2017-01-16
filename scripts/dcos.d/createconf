@@ -56,7 +56,7 @@ echo ""
 INTERNAL_NODES=""
 for NODE in $NODES; do
     scp -o StrictHostKeyChecking=no $IP_DETECT $NODE:/tmp/ip-detect > /dev/null 2>&1
-sed -e 's/^[ \t]*//'    INTERNAL=$(ssh -o StrictHostKeyChecking=no $NODE "/tmp/ip-detect")
+    INTERNAL=$(ssh -o StrictHostKeyChecking=no $NODE "/tmp/ip-detect")
     INIT_N="N"
     if [ "$INTERNAL_NODES" == "" ]; then
        INTERNAL_NODES=""
