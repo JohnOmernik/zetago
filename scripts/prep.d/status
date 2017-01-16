@@ -38,6 +38,20 @@ function _prep_status() {
         @go.log FATAL "Must provide a host to connect and update status on via -n= or specify -a for all nodes"
     fi
 
+    SCRIPTS="./bin/ubuntu_prep.sh ./bin/centos_prep1.sh ./bin/centos_prep2.sh"
+
+    FOUND="1"
+    for SCRIPT in $SCRIPTS; do
+        if [ ! -f "$SCRIPT" ]; then
+            FOUND="0"
+        fi
+    done
+    if [ "$FOUND" == "0" ]; then
+        @go.log INFO "System Scripts not found, creating in ./bin"
+        ./zeta prep createsystemprep -u
+    fi
+
+
     PREP_SCRIPT="./bin/prepstatus.sh"
     REM_LOC="/home/$IUSER/prepstatus.sh"
 #printf "%-30s %-30s %-30s\n" "$PKG" "$PKGBASE" "$INST"
