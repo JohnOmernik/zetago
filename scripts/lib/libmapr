@@ -36,7 +36,7 @@ EOCRED
     ERR_RESULT=$(echo $CURL_RESULT|grep "ERROR")
     if [ "$ERR_RESULT" != "" ]; then
         @go.log WARN "MAPR API Failure: Command $CMD - Result: $CURL_RESULT"
-        while [ "$ATTEMPT" -lt "$RETRIES" ] || [ "$ERR_RESULT" != "" ]; do
+        while [ "$ATTEMPT" -lt "$RETRIES" ] && [ "$ERR_RESULT" != "" ]; do
             @go.log WARN "Attempt to create home directory failed, trying again after 30 seconds"
             sleep 30
             CURL_RESULT=$(${CURL_GET_BASE}${CMD})
