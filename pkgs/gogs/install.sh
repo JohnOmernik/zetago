@@ -19,7 +19,7 @@ else
     @go.log FATAL "Failed to get Port for $APP_NAME instance $APP_ID with $PSTR"
 fi
 
-PORTSTR="CLUSTER:tcp:300443:${APP_ROLE}:${APP_ID}:Gogs Service HTTPS Port"
+PORTSTR="CLUSTER:tcp:30443:${APP_ROLE}:${APP_ID}:Gogs Service HTTPS Port"
 getport "CHKADD" "Gogs Service HTTPS Port" "$SERVICES_CONF" "$PORTSTR"
 
 if [ "$CHKADD" != "" ]; then
