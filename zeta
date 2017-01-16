@@ -5,6 +5,11 @@
 
 declare -r __GO_CORE="${0%/*}/scripts/go-script-bash/go-core.bash"
 
+if [ ! -d "./conf" ]; then
+    mkdir -p ./conf
+    chmod 700 ./conf
+fi
+
 BASE_CONF="./conf/base.conf"
 
 if [ ! -f "$BASE_CONF" ]; then
