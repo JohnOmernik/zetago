@@ -91,7 +91,11 @@ echo ""
 echo "At this point you can optionally enter public nodes. These nodes are given the slave_public role and are good for exposing services via a few nodes"
 echo ""
 echo "The remaining nodes you can pick from are:"
-SOME_NODES=$(echo "$REMAINING_NODES"|sed "s/$MASTER_NODES//g")
+SOME_NODES="$REMAINING_NODES"
+for N in $MASTER_NODES; do
+    SOME_NODES=$(echo "$REMAINING_NODES"| sed "s/$N//g")
+done
+
 echo ""
 echo "$SOME_NODES"
 echo ""
