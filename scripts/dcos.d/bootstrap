@@ -17,7 +17,7 @@ ssh -o StrictHostKeyChecking=no $BOOTSTRAP_NODE "mkdir -p $BOOTSTRAP_LOC/genconf
 
 ./zeta dcos createipdetect "$IP_DETECT" "1"
 
-CHKIP=$(ssh -o -o StrictHostKeyChecking=no $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && ls ip-detect")
+CHKIP=$(ssh -o StrictHostKeyChecking=no $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && cd genconf && ls ip-detect")
 
 if [ "$CHKIP" == "" ]; then
     scp ./conf/ip-detect $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
@@ -68,7 +68,7 @@ ssh_user: ${IUSER}
 EOF
 
 
-CHKYML=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && ls config.yaml")
+CHKYML=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && cd genconf && ls config.yaml")
 if [ "$CHKYML" == "" ]; then
     scp /tmp/config.yaml $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
 else
