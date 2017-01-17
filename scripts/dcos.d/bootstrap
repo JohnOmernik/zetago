@@ -64,7 +64,6 @@ EOF
 scp /tmp/config.yaml $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
 rm /tmp/config.yaml
 
-
 CHK=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && ls dcos_generate_config.sh")
 
 if [ "$CHK" != "" ]; then
