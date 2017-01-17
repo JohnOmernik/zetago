@@ -5,6 +5,7 @@
 
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
 sourceconf "$MAPR_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
@@ -140,10 +141,10 @@ function _user() {
         TST=$(id $USER_NAME)
         while [ "$TST" == "" ]; do
             echo "...waiting for ldap sync"
-            sleep 1
+            sleep 2
             TST=$(id $USER_NAME)
         done
-
+        sleep 3
         if [ ! -d "/mapr/$CLUSTERNAME/user/$USER_NAME" ]; then
             @go.log INFO "$USER_NAME Home Directory not found: Creating"
             maprapi "/volume/create?name=user.${USER_NAME}&path=/user/${USER_NAME}&rootdirperms=770&user=${USER_NAME}:fc,a,dump,restore,m,d%20${IUSER}:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=${USER_NAME}" "10"

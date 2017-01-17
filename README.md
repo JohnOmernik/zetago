@@ -21,8 +21,35 @@ This other repos may continue to get updates until they are completely folded in
 2. Spin up 5 hosts (I used m3.xlarge) running Ubuntu 16.04 (For now)
 3. Note the subnet (Mine was 172.31.0.0/16)
 4. On the Add storage, the two disks is correct, but up up the root volume to be 50 GB instead of 8
-5. Security Group - SSH (22) from anywhere, All traffic from 172.31.0.0/16 (or your subnet) and All traffic from your IP (we will change this later
-6. Launch with the prv key you intend to use
+5. Security Group - SSH (22) from anywhere, All traffic from 172.31.0.0/16 (or your subnet) and All traffic from your IP (we will change this later, once we get the node firewalls up, we will open this to world to keep things easier to manage)
+6. Launch with the prv key you intend to use from the initial node prep in "Prep Cluster" below
+
+
+### Initial Prep - On Prem
+----------
+1. Get some master nodes
+    - No extra disk needed. min 32 GB of ram, rec 64. A 3 node quorum of masters running 64 GB of ram can scale to the 10s of thousands of agent nodes
+    - A good amount of disk space - at least a TB 
+    - 1 Units work well. 
+2. Get some agent nodes
+    - Since we are doing storage, we like ensuring good specs. 
+        - At least 2 Octo-Core (with hyperthreading) processors
+        - 256 GB or more of Ram
+        - 2 main (OS) harddrives with over 750GB available. Fast is good here (SSD, 15k) running in RAID1
+        - 8 or more "Storage" drives. Faster equates to better storage in your cluster
+        - Networking: We like upping this as much as possible. 4 10Gbps Copper, bonded into two HA pairs.  One for the main Zeta (Routable) subnet and another for fast disk backchannel
+    - Aim for at least 5 nodes to start with. 
+
+
+### Initial Prep - Edge Nodes vs. Public 
+----------
+Public nodes in DCOS run with the "slave_public" role. That means taks will not run on them unless explicitly told to. This works great when you want to have a public node that is your edge node, and provides a hop point into your cluster than you can control 
+
+For some clusters, having a "smaller" edge node in the slave_public role to be this hop point is a great idea. In AWS for example, adding a node specifically for this is easy. 
+
+If you have a on-prem cluster where having a large node dedicated to a special role for edge services is wasteful, and you rely on other security measures in your enterprise. You can still have an "edge" node for services, but it will run standard task in addition to the load balancing functions. 
+
+That is the fundamental difference, if you don't want to have "public" nodes as defined by DCOS, then leave the public prompt in the DCOS config creation blank, and instead specify edge nodes manually in the network configuration.  If you specify public nodes in the DCOS config, it will auto populate the suggested node in the network config. 
 
 
 ### Get initial Repo
@@ -47,30 +74,51 @@ This other repos may continue to get updates until they are completely folded in
     - $ ./zeta prep -l # This locks the conf, so it doesn't prompt you every time. It asks you to use the prep.conf again and then confirms the locking. Now it will assume the conf is correct. 
 3. Your conf is created, reviewed, and locked, the next step is to prep the nodes.
     - $ ./zeta prep install -a -u # This installs the prep on all nodes (-a) and does so unattended (-u) however it will prompt you for the version file to use... (Just use the default 1.0.0 by hitting enter)
-4. Once this completes, you can check the status of the nodes by running $ ./zeta prep status -a. Once all nodes are running with Docker, you can proceed to the next steps. 
+4. Once this completes, you can check the status of the nodes by running $ ./zeta prep status  Once all nodes are running with Docker, you can proceed to the next steps. 
 5. Also, to get the SSH command to connect to the initial nodes, type ./zeta prep at anytime
 
 ### Connect to cluster
 ----------
-1. Once the ./zeta prep status -a command returns docker installed on all nodes it's time to switch the context. Instead of running nodes from your machine, you will be connecting to the initial node (specidfied in the config) and running all remaining commands from there
+1. Once the ./zeta prep status command returns docker installed on all nodes it's time to switch the context. Instead of running commands using ./zeta from your machine, you will be connecting to the initial node (specidfied in the config) and running all remaining commands from there
+    - You can get the exact SSH command to connect to the initial node by typing ./zeta prep on your machine, it will show you the SSH command to connect to the initial node. 
 2. To get the SSH command to use, just type ./zeta prep and it will show you the SSH command to connect to the initial node
 3. Once connected to the inital node run $ cd zetago  # All commands will start from here
 
-### DCOS Install
+### DCOS and Firewall Install
 ----------
-1. Run the prep by typeing $./zeta dcos
+1. Run the prep by typeing $ ./zeta dcos
     - It will ask some questions about conf, including showing you the internal IPs of your nodes
     - IP for bootstrap node (use the init node, the default)
     - Port for bootstrap (use the default)
     - Pick one of the remaining (non-bootstrap) Internal IPs to be the master node (or if you doing lots of nodes, pick multiple, space separated)
+    - Now you have the option to pick (a) public node(s).  This will be your edge node for network as well, and only run tasks specified as slave_public.  You may leave this blank, 
     - clustername: pick anything
     - dns resolvers should be setup for AWS, but if you are on another platform, please correct them
+    - Proxy information is required if you are behind a proxy. 
     - All conf info is in ./conf/dcos.conf
-2. Start the bootstrap server by running $ ./zeta dcos bootstrap
-3. Install DCOS by running $ ./zeta dcos install -a
+2. Now that the DCOS config is setup, it's time to trust the keys on the various hosts. Run: ./zeta dcos sshhosts # -u if you want unattended
+    - If you run this command, it uses ssh-key to get the host key of all nodes and trust them by adding it to the known_hosts file. It does this for the IP, the short name, and the fully qualified name of every host. 
+    - You can run this with -u if you don't want to it to prompt. Otherwise it will prompt once before trusting all keys. 
+3. Prior to doing the DCOS install, it's now time to run the network setup: Run $ ./zeta network
+    - You cannot start further DCOS install processes without putting a firewall up. 
+    - This command sets the network.conf file with information about your networking setup. Some notes:
+        - NTP Servers: If you specify this, it will limit outbound NTP request only to those servers, otherwise, if left blank, we allow outbound NTP to all.
+        - Zeta Routable Addresses: This is your main subnet, the subnet that your default gateway is on that all servers connect to. For me, on AWS, it's 172.31.0.0/16, but it may be different for you. 
+        - Zeta Non-Routable Addresses: If you have other interfaces that connect all nodes (non-gateway interfaces)  You can add them here to ensure node to node communication is unfettered. So lets say your routable interfaces are 192.168.0.0/24.  Then you have two more network interfaces between nodes that are not routable: 10.0.4.0/24 and 192.168.250.0/24 Then you would put here: 10.0.4.0/24,192.168.250.0/24  If you have no additional interfaces, just leave blank
+        - Static IPs of Remote Machines: If you have certain machines that you will bedoing administration from, put them here comma separated. 
+        - List of remote admin machine names: If you are on a network that is dynamic, and wish to use a reverse lookup for admin machines, you can enter names here. The FW script will attempt to look up each name, and add the look up IP to the remote allowed IP list. 
+        - Allow direct outbound connections on 80/443: If you don't use a proxy, then you must say yes here, if not, your zeta will fail. If you use a proxy, and specified in the DCOS config, you can say no here. 
+        - Edge nodes: These are the nodes that will allow services into your cluster. It will auto populate with public nodes from the DCOS config, but you can add more nodes, or use non-public nodes (if you don't have public nodes) here.  
+4.  Now that the initial config is setup, install the firewall on each node by running ./zeta network deployfw -f="Initial firewall deployment"
+    - The flag -f="Nodes on deploy" are the nodes that each deploy uses in the change log. 
+    - This updates the FW_FIRST_RUN flag in the network.conf to allow you to continue to install DCOS. 
+    - It's recommened at this point if you had a more restrictive AWS Security group to now open things up wide open for the cluster. We are managing the firewall connnections now. 
+5. Start the bootstrap server by running $ ./zeta dcos bootstrap
+6. Install DCOS by running $ ./zeta dcos install -a
     - This installs DCOS first on the Masters specified, then on the remaining nodes. 
     - It also provides the Master UI Address (as well as exhibitor)
     - The Master will take some time to come up, it checks this, and doesn't install agents until after the master is healthy.
+7. Check the UI for DCOS and once all your agents are connected, rerun the firewall now that DCOS is deployed. $ ./zeta network deployfw -f="Post DCOS Firewall Deploy"
 
 ### MapR Install
 ----------
@@ -104,7 +152,6 @@ This other repos may continue to get updates until they are completely folded in
     - $ ./zeta mapr installzk -u
 6. Once ZKs are running start them MapR containers:
     - $ ./zeta mapr installmapr -u
-    - Note: You will have to type yes for each node on the SSH stuff, we need to work that out better, it will be appearing as an issue soon
 7. Yeah! MapR should be up and running, it should print a CLDB link for you to go check and see your cluster running!
 8. Now to complete MapR, running 
     - $ ./zeta mapr installfuse -u # This installs the FUSE client on all agents so it's ready for cluster installation (ZETA!)
@@ -142,3 +189,4 @@ This other repos may continue to get updates until they are completely folded in
 1. The best part about zeta is the packages!
 2. You can build, install, start, stop, and uninstall pacakges with the ./zeta package interface
 3. $ ./zeta package # For more info
+4. A Very important package if you want to do services is the marathonlb package ./zeta package build marathonlb and ./zeta package install marathonlb

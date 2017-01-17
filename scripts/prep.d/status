@@ -38,6 +38,20 @@ function _prep_status() {
         @go.log FATAL "Must provide a host to connect and update status on via -n= or specify -a for all nodes"
     fi
 
+    SCRIPTS="./bin/ubuntu_prep.sh ./bin/centos_prep1.sh ./bin/centos_prep2.sh"
+
+    FOUND="1"
+    for SCRIPT in $SCRIPTS; do
+        if [ ! -f "$SCRIPT" ]; then
+            FOUND="0"
+        fi
+    done
+    if [ "$FOUND" == "0" ]; then
+        @go.log INFO "System Scripts not found, creating in ./bin"
+        ./zeta prep createsystemprep -u
+    fi
+
+
     PREP_SCRIPT="./bin/prepstatus.sh"
     REM_LOC="/home/$IUSER/prepstatus.sh"
 #printf "%-30s %-30s %-30s\n" "$PKG" "$PKGBASE" "$INST"
@@ -51,8 +65,9 @@ UP="true"
 SUDO_CHK=\$(sudo whoami)
 SYS_TYPE=\$(/home/${IUSER}/system_type.sh)
 DCK_VERS=\$(sudo docker info 2> /dev/null|grep "Server Version")
+EXT_IP=\$(curl -s icanhazip.com)
 
-printf "%-30s %-30s %-30s %-30s %-30s %-30s\n" "\$HNAME" "\$UP" "\$SUDO_CHK" "\$KERNEL" "\$SYS_TYPE" "\$DCK_VERS"
+printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "\$EXT_IP" "\$HNAME" "\$UP" "\$SUDO_CHK" "\$KERNEL" "\$SYS_TYPE" "\$DCK_VERS"
 
 EOF
     chmod +x $PREP_SCRIPT
@@ -60,15 +75,16 @@ EOF
 
 
 
-    printf "%-30s %-30s %-30s %-30s %-30s %-30s\n" "Hostname" "Host Up" "Sudo Check" "Kernel" "System Type" "Docker Version"
-    echo "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+    printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "Ext IP" "Hostname" "Host Up" "Sudo Check" "Kernel" "System Type" "Docker Version"
+    echo "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
     for HOST in $MYHOSTS; do
 
+        scp -q -i ${OUT_KEY} ./bin/system_type.sh ${IUSER}@${HOST}:/home/${IUSER}/system_type.sh
         scp -q -i ${OUT_KEY} $PREP_SCRIPT ${IUSER}@${HOST}:$REM_LOC
         if [ "$?" == "0" ]; then
             ssh -i ${OUT_KEY} ${IUSER}@${HOST} $REM_LOC
         else
-            printf "%-30s %-30s %-30s %-30s %-30s\n" "false" "-" "-" "-" "-"
+            printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$HOST" "false" "-" "-" "-" "-" "-"
         fi
     done
     echo ""

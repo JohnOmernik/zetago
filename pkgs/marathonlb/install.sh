@@ -68,6 +68,10 @@ echo ""
 if [ "$ZETA_CA_CERTS" == "Y" ]; then
     CN_GUESS="${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
     . /mapr/$CLUSTERNAME/zeta/shared/zetaca/gen_server_cert.sh
+
+    cat ${APP_CERT_LOC}/cert.pem ${APP_CERT_LOC}/key-no-password.pem > ${APP_CERT_LOC}/certkey.pem
+
+    CERT_FILE_NAME="certkey.pem"
 else
     echo "Please enter the certificate file name:"
     read -e -p "Certificate file: " -i "cert.pem" CERT_FILE_NAME
@@ -76,6 +80,12 @@ else
     echo ""
 fi
 
+
+CHKSVC=$(cat $SERVICES_CONF|grep marathonlb)
+if [ "$CHKSVC" == "" ]; then
+    @go.log INFO "Adding marathonlb 443 Edge services to $SERVICES_CONF"
+    echo "EDGE:tcp:443:shared:marathonlb:Default access for marathonlb into the cluster" >> $SERVICES_CONF
+fi
 
 cat > $APP_ENV_FILE << EOL1
 #!/bin/bash
@@ -88,12 +98,9 @@ cat > ${APP_MAR_FILE} << EOL
   "cpus": ${APP_CPU},
   "mem": ${APP_MEM},
   "instances": ${APP_CNT},
-  "args":["sse", "--marathon", "http://${ZETA_MARATHON_URL}", "--group", "*"],
+  "args":["sse", "--marathon", "http://${ZETA_MARATHON_URL}", "--group", "EDGE", "--ssl-certs", "/marathonlb/certs/${CERT_FILE_NAME}"],
   "constraints": [${APP_CONSTRAINT}["hostname", "UNIQUE"]],
   $APP_ACCEPTED_ROLES
-  "env": {
-    "HAPROXY_SSL_CERT":"/marathonlb/certs/${CERT_FILE_NAME}"
-  },
   "labels": {
     "PRODUCTION_READY":"True",
     "CONTAINERIZER":"Docker",
@@ -125,5 +132,9 @@ echo "To start please run: "
 echo ""
 echo "$ ./zeta package start ${APP_HOME}/$APP_ID.conf"
 echo ""
-
+echo ""
+echo "In addition since this is marathonlb, it's recommend you now redeploy the zeta firewall to ensure proper edge connectivity"
+echo ""
+echo "$ ./zeta network deployfw -f=\"Post marathonlb install firewall deploy\""
+echo ""
 

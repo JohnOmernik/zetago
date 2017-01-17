@@ -6,6 +6,7 @@
 
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
 sourceconf "$MAPR_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
@@ -44,8 +45,17 @@ function _shareddocker() {
     sudo docker tag registry:2 ${DOCKER_REG_URL}/dockerregv2
     sudo docker push ${DOCKER_REG_URL}/dockerregv2
 
-    echo "What Service port should this new shared Docker Registry use? The MapR Docker Container is using port 5000, we recommend something different: How about 5005?"
-    read -e -p "What service port should we used for the shared docker registry instance? " -i "5005" NEW_DOCKER_REG_PORT
+
+
+    PORTSTR="CLUSTER:tcp:5005:shared:dockerregv2:Zeta Shared Docker Registry"
+    getport "CHKADD" "Port for Shared Zeta Docker Registry" "$SERVICES_CONF" "$PORTSTR"
+
+    if [ "$CHKADD" != "" ]; then
+        getpstr "TYPE" "PROTOCOL" "NEW_DOCKER_REG_PORT" "MYROLE" "MYAPP_ID" "COMMENTS" "$CHKADD"
+        APP_PORTSTR="$CHKADD"
+    else
+        @go.log FATAL "Adding Porting to services failed $PSTR"
+    fi
 
     NEW_DOCKER_REG_HOST="dockerregv2-shared.marathon.slave.mesos"
     ZETA_DOCKER_REG_URL="${NEW_DOCKER_REG_HOST}:${NEW_DOCKER_REG_PORT}"

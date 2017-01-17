@@ -7,11 +7,23 @@
 
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+if [ "$FW_FIRST_RUN" != "1" ]; then
+    @go.log FATAL "Before Installing or Bootstrapping DCOS, it's required to run the network firewall deploy via ./zeta network deployfw"
+fi
 
 
 ssh -o StrictHostKeyChecking=no $BOOTSTRAP_NODE "mkdir -p $BOOTSTRAP_LOC/genconf"
 
-scp ./conf/ip-detect $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
+./zeta dcos createipdetect "$IP_DETECT" "1"
+
+CHKIP=$(ssh -o StrictHostKeyChecking=no $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && cd genconf && ls ip-detect")
+
+if [ "$CHKIP" == "" ]; then
+    scp ./conf/ip-detect $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
+else
+    @go.log WARN "IP Detect already exists, skipping the creation"
+fi
 
 
 MASTERS=""
@@ -34,8 +46,6 @@ for RESOLVER in $DNS_RESOLVERS; do
     RESOLVERS="${RESOLVERS}- $RESOLVER"
 done
 
-
-
 cat > /tmp/config.yaml << EOF
 ---
 bootstrap_url: http://$BOOTSTRAP_NODE:$BOOTSTRAP_PORT
@@ -57,9 +67,35 @@ ssh_port: '22'
 ssh_user: ${IUSER}
 EOF
 
-scp /tmp/config.yaml $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
+
+CHKYML=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && cd genconf && ls config.yaml")
+if [ "$CHKYML" == "" ]; then
+    scp /tmp/config.yaml $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
+else
+    @go.log WARN "Not copying config.yaml because one already exists"
+fi
 rm /tmp/config.yaml
 
-ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && sudo docker pull nginx && curl -O https://downloads.dcos.io/dcos/stable/dcos_generate_config.sh && sudo bash dcos_generate_config.sh && sudo docker run -d -p ${BOOTSTRAP_PORT}:80 -v ${BOOTSTRAP_LOC}/genconf/serve:/usr/share/nginx/html:ro nginx"
+CHK=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && ls dcos_generate_config.sh")
+
+if [ "$CHK" != "" ]; then
+    read -e -p "There appears to be a dcos_generate_config.sh already on the Bootstrap node in the bootstrap location. Do you wish to re-download? Answer N to use existing (Y/N): " -i "N" DL
+else
+    DL="Y"
+fi
+
+if [ "$DL" == "Y" ]; then
+    ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && curl -O https://downloads.dcos.io/dcos/stable/dcos_generate_config.sh"
+fi
+
+CHKGENCONF=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && ls *.tar")
+if [ "$CHKGENCONF" == "" ]; then
+    ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && sudo docker pull nginx && sudo bash dcos_generate_config.sh"
+else
+    @go.log WARN "Not regenerating docker image, tar found in $BOOTSTRAP_LOC"
+fi
+
+
+ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && sudo docker run -d -p ${BOOTSTRAP_PORT}:80 -v ${BOOTSTRAP_LOC}/genconf/serve:/usr/share/nginx/html:ro nginx"
 
 @go.log INFO "Bootstrap is running and available at http://$BOOTSTRAP_NODE:$BOOTSTRAP_PORT"

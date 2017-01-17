@@ -1,0 +1,67 @@
+#!/bin/bash
+#
+# Run a created firewall 
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+
+function _deployfw() {
+    UNATTEND="0"
+    FW_NOTES=""
+    FW_NODES=""
+    UPDATE_FIRST_RUN="1"
+
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            "-f="*)
+            FW_NOTES="${i#*=}"
+            ;;
+            "-n="*)
+            FW_NODES="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ "$FW_NODES" == "" ]; then
+        RUN_NODES="$INTERNAL_NODES"
+
+    else
+        RUN_NODES="$FW_NODES"
+        UPDATE_FIRST_RUN="0"
+        @go.log WARN "First run config setting will not be updated for individual node runs"
+    fi
+
+    if [ "$FW_NOTES" == "" ]; then
+        FW_NOTES="Firewall deploy refresh of config"
+    fi
+
+    ./zeta network createfw -u -f="$FW_NOTES"
+
+    @go.log INFO "Deploying Firewall to $RUN_NODES"
+    for NODE in $RUN_NODES; do
+        @go.log INFO "Deploying FW Scripts to $NODE"
+        ssh $NODE "mkdir -p $FW_SCRIPT_TMP_DIR && chmod 700 $FW_SCRIPT_TMP_DIR"
+        scp -q $FW_SCRIPT_SRC $NODE:$FW_SCRIPT_TMP
+        ssh $NODE "chmod 700 $FW_SCRIPT_TMP && sudo mv $FW_SCRIPT_TMP $FW_SCRIPT_DST && sudo chown root:root $FW_SCRIPT_DST && sudo chmod 700 $FW_SCRIPT_DST && echo \"$(date +%Y%m%d%H%M%S) ------------------------------\" && sudo $FW_SCRIPT_DST" &>> ${FW_SCRIPT_DIR}/logs/${NODE}_fwdeploy.log
+    done
+    if [ "$UPDATE_FIRST_RUN" == "1" ]; then
+        if [ "$FW_FIRST_RUN" == "0" ]; then
+            @go.log WARN "No Edge nodes services exposed as DCOS is not yet installed - Run again after DCOS is installed"
+            @go.log INFO "Updated FW_FIRST_RUN to be 1"
+            sed -i "s/FW_FIRST_RUN=\"0\"/FW_FIRST_RUN=\"1\"/g" ${NETWORK_CONF}
+        fi
+    fi
+
+}
+
+
+_deployfw "$@"

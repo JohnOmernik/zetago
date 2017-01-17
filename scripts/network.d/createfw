@@ -2,14 +2,107 @@
 #
 # createfw - Using the network.conf create a firewall.sh script to use on Agent and Master nodes
 #
+# Arguments:
+# -u Unattended Installation
+# -f="Notes for the FW Change config"
+#
 sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
 
 function _createfw(){
 
-    FW="./firewall.sh"
-    touch $FW
-    chmod 700 $FW
+    UNATTEND="0"
+    FW_NOTES=""
+
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            "-f="*)
+            FW_NOTES="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+
+
+    CURSTAMP=$(date +%Y%m%d%H%M%S)
+
+    # Check for base install of fwscripts
+    if [ ! -d "$FW_SCRIPT_DIR" ]; then
+        @go.log INFO "Creating FW Directory"
+        mkdir -p $FW_SCRIPT_DIR
+        sudo chmod 700 $FW_SCRIPT_DIR
+    fi
+    if [ ! -d "$FW_SCRIPT_DIR/archive" ]; then
+        @go.log INFO "Creating Archive Directory at $FW_SCRIPT_DIR/archive"
+        mkdir -p $FW_SCRIPT_DIR/archive
+    fi
+    if [ ! -d "$FW_SCRIPT_DIR/logs" ]; then
+        @go.log INFO "Creating Deployment logs directory $FW_SCRIPT_DIR/logs"
+        mkdir -p $FW_SCRIPT_DIR/logs # Log directory
+    fi
+    if [ ! -d "$FW_CUSTOM_DIR" ]; then
+        @go.log INFO "Creating custom rules files at $FW_CUSTOM_DIR"
+        mkdir -p $FW_CUSTOM_DIR
+        @go.log INFO "Creating Base Custom files for INPUT, FORWARD, OUTPUT"
+        echo "# Custom INPUT RULES for ALL Nodes in Zeta Cluster" > $FW_CUSTOM_DIR/all_nodes_input.fw
+        echo "# Custom FORWARD RULES for ALL Nodes in Zeta Cluster" > $FW_CUSTOM_DIR/all_nodes_forward.fw
+        echo "# Custom OUTPUT RULES for ALL Nodes in Zeta Cluster" > $FW_CUSTOM_DIR/all_nodes_output.fw
+        echo "# Custom INPUT RULES for Edge Nodes in Zeta Cluster" > $FW_CUSTOM_DIR/edge_nodes_input.fw
+        echo "# Custom FORWARD RULES for Edge Nodes in Zeta Cluster" > $FW_CUSTOM_DIR/edge_nodes_forward.fw
+        echo "# Custom OUTPUT RULES for Edge Nodes in Zeta Cluster" > $FW_CUSTOM_DIR/edge_nodes_output.fw
+    fi
+    if [ ! -f "$SERVICES_CONF" ]; then
+        @go.log INFO "Creating Services Config File with Default Entry at $SERVICES_CONF"
+cat > $SERVICES_CONF << EOS
+# Services Configuration file
+#
+# # Are comments
+# Format - One per line
+#TYPE:PROTOCOL:PORT:ROLE:APP_ID:Comments
+#
+# Type is either "EDGE" or "CLUSTER" (Edge being externally accessible on edge node as service port, CLUSTER is internal only on cluster)
+# PROTOCOL right now is only tcp (if other types are supported in the future this will be updated
+# PORT is the port number
+# ROLE is the application role that the port is service
+# APP_IP is the ID of the application or service that is running with the port
+# Comments are any addition comments
+#
+EOS
+    fi
+
+    # Proceed with creation - but check for backup first
+    if [ -f "$FW_SCRIPT_SRC" ]; then
+        @go.log INFO "Firewall script already exists, making backup of old script"
+        FW_SCRIPT_BKUP="$FW_SCRIPT_DIR/archive/firewall_$CURSTAMP.sh"
+        mv $FW_SCRIPT_SRC $FW_SCRIPT_BKUP
+    fi
+
+    if [ "$UNATTEND" != "1" ] && [ "$FW_NOTES" == "" ]; then
+        echo "Please provide notes on why the firewall was changed"
+        read -e -p "FW Notes: " FW_NOTES
+    fi
+
+    if [ "$UNATTEND" == "1" ] && [ "$FW_NOTES" == "" ]; then
+        @go.log WARN "Unattended requested with no firewall notes - Using that as changelog"
+        FW_NOTES="Unattened install with no notes provided"
+    fi
+
+
+
+    EDGE_SERVICE_RULES=""
+    createedgerules "$SERVICES_CONF" "EDGE_SERVICE_RULES"
+
+    touch $FW_SCRIPT_SRC
+    chmod 700 $FW_SCRIPT_SRC
     REM_IPS="$REMOTE_IPS"
 
     @go.log INFO "Getting current remote IPS"
@@ -25,12 +118,26 @@ function _createfw(){
         fi
     done
 
+    ALL_INPUT=$(cat $FW_CUSTOM_DIR/all_nodes_input.fw)
+    ALL_OUTPUT=$(cat $FW_CUSTOM_DIR/all_nodes_output.fw)
+    ALL_FORWARD=$(cat $FW_CUSTOM_DIR/all_nodes_forward.fw)
+    EDGE_INPUT=$(cat $FW_CUSTOM_DIR/edge_nodes_input.fw)
+    EDGE_OUTPUT=$(cat $FW_CUSTOM_DIR/edge_nodes_output.fw)
+    EDGE_FORWARD=$(cat $FW_CUSTOM_DIR/edge_nodes_forward.fw)
 
-cat > $FW << EOF
+
+cat > $FW_SCRIPT_SRC << EOF
 #!/bin/bash
 
-MYIP=\$(/opt/mesosphere/bin/detect_ip)
+# FWCHANGELOG - $CURSTAMP - $FW_NOTES
 
+IP_DETECT="/opt/mesosphere/bin/detect_ip"
+if [ -f "\$IP_DETECT" ]; then
+    MYIP=\$(\$IP_DETECT)
+else
+    echo "DCOS not yet installed, No Service ports being opened"
+    MYIP="NOSERVICES"
+fi
 
 DNS_SERVERS="$DNS_SERVERS"
 NTP_SERVERS="$NTP_SERVERS"
@@ -47,6 +154,9 @@ ALLOW_DIRECT_WEB="$ALLOW_DIRECT_WEB"
 PROXY_IP="$PROXY_IP"
 PROXY_PORT="$PROXY_PORT"
 
+
+CHK=\$(echo "\$EDGE_NODES"|grep "\$MYIP")
+
 # reset firewall state
 echo "Starting my attack run!.. Resetting fireall state.."
 iptables -F
@@ -55,6 +165,28 @@ iptables -t nat -F
 iptables -t nat -X
 iptables -t mangle -F
 iptables -t mangle -X
+
+#Delete the logging chains if they exist... they may not no big deal it will just give you an error "chain doesn't exist" that's ok
+iptables -X logaccept
+iptables -X logdrop
+iptables -X logreject
+# Create the logging chains
+iptables -N logaccept
+iptables -N logdrop
+iptables -N logreject
+
+#Establish logging rules instead of using the built in DROP, REJECT, and ACCEPT. Use these if you want it to be logged
+iptables -A logdrop -m state --state NEW  -j LOG --log-prefix "iptables - DROP " --log-macdecode --log-tcp-sequence --log-tcp-options --log-ip-options
+iptables -A logdrop -j DROP
+
+iptables -A logreject  -j LOG --log-prefix "iptables - REJECT " --log-macdecode --log-tcp-sequence --log-tcp-options --log-ip-options
+iptables -A logreject -p tcp -j REJECT --reject-with tcp-reset
+
+iptables -A logaccept -m state --state NEW  -j LOG --log-prefix "iptables - ACCEPT " --log-macdecode --log-tcp-sequence --log-tcp-options --log-ip-options
+iptables -A logaccept -j ACCEPT
+
+
+
 
 echo "DCOS Masquarade and mangle"
 ipset add -exist overlay \$DCOS_CIDR nomatch
@@ -103,21 +235,16 @@ iptables -A INPUT -s \$DCOS_CIDR -j ACCEPT
 iptables -A INPUT -s \$DOCKER_CIDR -j ACCEPT
 iptables -A INPUT -s \$DNS_SERVERS -p udp --dport 53 -j ACCEPT
 iptables -A INPUT -s \$DNS_SERVERS -p tcp --dport 53 -j ACCEPT
-iptables -A INPUT -s \$REMOTE_ADM_IPS -j ACCEPT
-
-
-CHK=\$(echo "\$EDGE_NODES"|grep "\$MYIP")
+iptables -A INPUT -s \$REMOTE_ADM_IPS -j logaccept
+echo "Importing Custom Global INPUT Rules"
+$ALL_INPUT
 
 if [ "\$CHK" != "" ]; then
     echo "Edge Node: Adding Edge Services to this node"
-    OLDIFS=\$IFS
-    IFS=","
-    for SVC in \$EDGE_SERVICES; do
-        SVC_NAME=\$(echo \$SVC|cut -d":" -f1)
-        SVC_PORT=\$(echo \$SVC|cut -d":" -f2)
-        iptables -A INPUT -p tcp --dport \$SVC_PORT -m comment --comment "Edge Service: \$SVC_NAME" -j ACCEPT
-    done
-    IFS=\$OLDIFS
+    $EDGE_SERVICE_RULES
+
+    echo "Importing Custom Edge INPUT Rules"
+    $EDGE_INPUT
 fi
 
 # FORWARD
@@ -132,8 +259,12 @@ if [ "\$ALLOW_DIRECT_WEB" == "Y" ]; then
         iptables -A FORWARD -s \$DOCKER_CIDR -p tcp --dport 80 -j ACCEPT
         iptables -A FORWARD -s \$DOCKER_CIDR -p tcp --dport 443 -j ACCEPT
 fi
-
-
+echo "Importing Custom Global FORWARD Rules"
+$ALL_FORWARD
+if [ "\$CHK" != "" ]; then
+    echo "Importing Custom Edge FORWARD Rules"
+    $EDGE_FORWARD
+fi
 
 
 # OUTPUT
@@ -160,24 +291,32 @@ else
     iptables -A OUTPUT -d \$NTP_SERVERS -p udp --dport 123 -j ACCEPT
 fi
 if [ "\$PROXY_IP" != "" ]; then
-    iptables -A OUTPUT -d \$PROXY_IP -p tcp --dport \$PROXY_PORT -j ACCEPT
+    iptables -A OUTPUT -d \$PROXY_IP -p tcp --dport \$PROXY_PORT -j logaccept
 fi
 if [ "\$ALLOW_DIRECT_WEB" == "Y" ]; then
-    iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
-    iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
+    iptables -A OUTPUT -p tcp --dport 80 -j logaccept
+    iptables -A OUTPUT -p tcp --dport 443 -j logaccept
+fi
+echo "Importing Custom Global OUTPUT Rules"
+$ALL_OUTPUT
+if [ "\$CHK" != "" ]; then
+    echo "Importing Custom Edge OUTPUT Rules"
+    $EDGE_OUTPUT
 fi
 
-echo "Creating logging and policies.."
-iptables -A INPUT -j LOG --log-prefix="iptables INPUT DROP: "
-iptables -A OUTPUT -j LOG --log-prefix="iptables OUTPUT DROP: "
-iptables -A FORWARD -j LOG --log-prefix="iptables FORWARD DROP: "
+### Make the final rule "logdrop" on all chains
+iptables -A FORWARD -j logdrop
+iptables -A INPUT -j logdrop
+iptables -A OUTPUT -j logdrop
+
+
 iptables -P INPUT DROP
 iptables -P OUTPUT DROP
 iptables -P FORWARD DROP
 
 echo "Finished!"
 EOF
-
+chmod +x $FW_SCRIPT_SRC
 
 
 

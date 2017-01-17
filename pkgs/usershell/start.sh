@@ -90,7 +90,18 @@ EOF
     @go.log INFO "Linking Hadoop Client for use in Container"
     ln -s $HADOOP_HOME/bin/hadoop ${APP_USER_PATH}/hadoop
 
-    read -e -p "What port should the instace of usershell for $APP_USER run on? " -i "31022" APP_PORT
+
+
+    PORTSTR="CLUSTER:tcp:31022:${APP_ROLE}:${APP_ID}:Usershell for $APP_USER"
+    getport "CHKADD" "Usershell for $APP_USER" "$SERVICES_CONF" "$PORTSTR"
+
+    if [ "$CHKADD" != "" ]; then
+        getpstr "MYTYPE" "MYPROTOCOL" "APP_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+        APP_PORTSTR="$CHKADD"
+    else
+        @go.log FATAL "Failed to get Port for usershell instance $PSTR"
+    fi
+
 
     APP_MAR_ID="${APP_ROLE}/${APP_ID}/${APP_USER}usershell"
 
@@ -135,11 +146,15 @@ EOS
             fi
         fi
     fi
+    nonbridgeports "APP_PORT_LIST" "${APP_PORTSTR}"
+
     if [ -d "$SPARK_PKG_HOME" ]; then
         SPARK_HOME_SHORT=$(ls -1 ${SPARK_PKG_HOME}|grep -v "run\.sh"|grep -v "${PKG_ID}\.conf")
         SPARK_HOME="${SPARK_PKG_HOME}/$SPARK_HOME_SHORT"
 
         echo "Using $SPARK_HOME for spark home"
+
+
 
 cat > $APP_MAR_FILE << EOM
 {
@@ -151,6 +166,7 @@ cat > $APP_MAR_FILE << EOM
   "labels": {
    "CONTAINERIZER":"Docker"
   },
+  ${APP_PORT_LIST}
   "container": {
     "type": "DOCKER",
     "docker": {
@@ -179,6 +195,7 @@ cat > $APP_MAR_FILE << EOU
   "labels": {
    "CONTAINERIZER":"Docker"
   },
+  ${APP_PORT_LIST}
   "container": {
     "type": "DOCKER",
     "docker": {

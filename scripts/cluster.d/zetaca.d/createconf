@@ -5,6 +5,7 @@
 
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
 sourceconf "$MAPR_CONF"
 sourceconf "$CLUSTER_CONF"
 
@@ -36,7 +37,19 @@ echo ""
 ZETACA_IP=$(./conf/ip-detect)
 echo "The IP Address of this host is where we recommend running the zetaca, that IP is $ZETACA_IP"
 echo ""
-read -e -p "Please enter the port for the Zeta CA Rest service to run on: " -i "10443" APP_PORT
+
+PORTSTR="CLUSTER:tcp:10443:shared:zetaca:Zeta CA Rest API Service"
+getport "CHKADD" "Please enter the port for the Zeta CA Rest service to run on: " "$SERVICES_CONF" "$PORTSTR" "1"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "TYPE" "PROTOCOL" "APP_PORT" "ROLE" "APP_ID" "COMMENTS" "$CHKADD"
+    APP_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Adding Porting to services failed $PSTR"
+fi
+
+
+
 echo ""
 echo "We need some information for the CA Certificate - You can accept defaults, or choose your own for your setup"
 echo "In addition, we may ask if you want to use the CA Certificate value for defaults for other certificates generated, you can always override values on the server certs, but defaults help make things go faster"
@@ -110,6 +123,7 @@ export ZETA_CERT_O="$CERT_O"
 export ZETA_CERT_OU="$CERT_OU"
 export ZETA_CERT_CN="$CERT_CN"
 
+export ZETA_CA_PORTSTR="$APP_PORTSTR"
 export ZETA_CA_PORT="$APP_PORT"
 export ZETA_CA="http://zetaca-shared.marathon.slave.mesos:$APP_PORT"
 export ZETA_CA_CERT="\${ZETA_CA}/cacert"

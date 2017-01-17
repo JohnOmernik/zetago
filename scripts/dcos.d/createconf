@@ -13,37 +13,9 @@ echo "This process will ask a series of questions in order to create a dcos.conf
 echo "The configuration will be located: $DCOS_CONF"
 echo "-----------------------------------"
 echo ""
-echo "ip-detect"
-echo "---------"
-echo "DCOS and zeta itself requires that each node provide an IP address using a predictable interface"
-echo "To that end, this creates a ip-detect script that should work to pull that IP address"
-echo "This script is located at $IP_DETECT and uses the following list to walk through interfaces, the first one not being blank it returns:"
-echo ""
-echo "$INTERFACE_LIST"
 
-cat > $IP_DETECT << EOF
-#!/bin/bash
-. /etc/profile
-INTS="$INTERFACE_LIST"
+./zeta dcos createipdetect "$IP_DETECT"
 
-for INT in \$INTS; do
-#    echo "Interface: \$INT"
-    T=\$(ip addr|grep "\$INT")
-    if [ "\$T" != "" ]; then
-        MEIP=\$(ip addr show \$INT | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
-        echo \$MEIP
-        break
-    fi
-done
-EOF
-chmod +x $IP_DETECT
-echo "Running it on this node, ip-detect prodices this as a result:"
-echo ""
-$IP_DETECT
-echo ""
-echo "If nothing is returned, or the returned result is incorrect, please edit $IP_DETECT manually, if this is not working, Zeta install will fail"
-echo ""
-echo ""
 echo "---------------------------------------------"
 echo "config.yaml"
 echo "This next section will create a config.yaml for the DCOS install"
@@ -91,7 +63,11 @@ echo ""
 echo "At this point you can optionally enter public nodes. These nodes are given the slave_public role and are good for exposing services via a few nodes"
 echo ""
 echo "The remaining nodes you can pick from are:"
-SOME_NODES=$(echo "$REMAINING_NODES"|sed "s/$MASTER_NODES//g")
+SOME_NODES="$REMAINING_NODES"
+for N in $MASTER_NODES; do
+    SOME_NODES=$(echo "$SOME_NODES"| sed "s/$N//g"|sed -e 's/^[ \t]*//'|sed -e 's/[ \t]*$//'|sed -r "s/ {2,}/ /g")
+done
+
 echo ""
 echo "$SOME_NODES"
 echo ""
@@ -109,23 +85,39 @@ echo ""
 read -e -p "DNS Search base: " -i "us-west-2.compute.internal" DNS_SEARCH
 echo ""
 
-AGENT_NODES=""
-for N in $INTERNAL_NODES; do
-    if [[ "$N" == *"$MASTER_NODES"* ]]; then
-        T=$N
-    else
-        if [ "$AGENT_NODES" == "" ]; then
-            AGENT_NODES="$N"
-        else
-            AGENT_NODES="${AGENT_NODES} $N"
-        fi
-    fi
+echo ""
+echo "Cluster proxies. If your cluster needs HTTP_PROXY information to connect to the Internet, now is the time to enter that"
+echo "We will ask for both Proxy information, as well as NOPROXY information"
+
+echo ""
+echo "---------------------------------------"
+echo "If you need to specify a HTTP_PROXY for docker building, please enter it here"
+echo "If this variable is filled, it will add the proxy lines to the docker files for building the images"
+echo ""
+read -p "Enter the proxy information (blank for none): " DOCKER_PROXY
+
+echo ""
+echo "---------------------------------------"
+echo "If you need to specify a NO_PROXY string it's highly recommended. Use your subnets and internal domain names"
+echo "Example: \"192.168.0.0/16,mycompany.com\""
+echo ""
+read -p "Enter the noproxy information (blank for none): " DOCKER_NOPROXY
+
+
+
+
+AGENT_NODES="$INTERNAL_NODES"
+
+for N in $MASTER_NODES; do
+    AGENT_NODES=$(echo "$AGENT_NODES"| sed "s/$N//g"|sed -e 's/^[ \t]*//'|sed -e 's/[ \t]*$//'|sed -r "s/ {2,}/ /g")
 done
 
 
 
 cat > $DCOS_CONF << EOP
 #!/bin/bash
+DOCKER_PROXY="$DOCKER_PROXY"
+DOCKER_NOPROXY="$DOCKER_NOPROXY"
 
 CLUSTERNAME="$CLUSTERNAME"
 MASTER_NODES="$MASTER_NODES"

@@ -80,31 +80,52 @@ echo "Public nodes: $PUBLIC_NODES"
 echo ""
 echo "Available Agent Nodes: $AGENT_NODES"
 echo ""
-read -e -p "Please specify your edge nodes (the nodes to run the load balancer (installed later): " -i "$PUBLIC_NODES" EDGE_NODES
+read -e -p "Please specify your edge nodes (the nodes to run the load balancer (installed later)): " -i "$PUBLIC_NODES" EDGE_NODES
 echo ""
-echo "By default we add one service to the EDGE_PORTS - Default Loadbalance on 443"
-EDGE_SERVICES="Default Load Balancer:443"
 
+echo ""
+FW_SCRIPT_DIR="./conf/firewall"
+FW_SCRIPT_SRC="${FW_SCRIPT_DIR}/firewall.sh"
+FW_SCRIPT_DST="/etc/firewall.sh"
+FW_SCRIPT_TMP_DIR="/home/$IUSER/firewall"
+FW_SCRIPT_TMP="${FW_SCRIPT_TMP_DIR}/firewall.sh"
+FW_CUSTOM_DIR="$FW_SCRIPT_DIR/custom"
+SERVICES_CONF="$FW_SCRIPT_DIR/services.conf"
+
+echo ""
+echo "Firewall Script Temp Location: $FW_SCRIPT_SRC"
 
 cat > $NETWORK_CONF << EOP
 #!/bin/bash
-
 DNS_SERVERS="$DNS_SERVERS"
 NTP_SERVERS="$NTP_SERVERS"
+
 ZETA_CIDR_ROUTABLE="$ZETA_CIDR_ROUTABLE"
 ZETA_CIDR_NONROUTABLE="$ZETA_CIDR_NONROUTABLE"
+
 REMOTE_IPS="$REMOTE_IPS"
 REMOTE_NAMES="$REMOTE_NAMES"
+
 EDGE_NODES="$EDGE_NODES"
-EDGE_SERVICES="$EDGE_SERVICES"
+SERVICES_CONF="$SERVICES_CONF"
+
 DCOS_CIDR="$DCOS_CIDR"
 SPARTAN_CIDR="$SPARTAN_CIDR"
 DOCKER_CIDR="$DOCKER_CIDR"
 DOCKER_INTERFACE="$DOCKER_INTERFACE"
+
 PROXY_IP="$PROXY_IP"
 PROXY_PORT="$PROXY_PORT"
 ALLOW_DIRECT_WEB="$ALLOW_DIRECT_WEB"
 
+FW_SCRIPT_DIR="$FW_SCRIPT_DIR"
+FW_SCRIPT_SRC="$FW_SCRIPT_SRC"
+FW_SCRIPT_TMP_DIR="$FW_SCRIPT_TMP_DIR"
+FW_SCRIPT_TMP="$FW_SCRIPT_TMP"
+FW_SCRIPT_DST="$FW_SCRIPT_DST"
+FW_CUSTOM_DIR="$FW_CUSTOM_DIR"
+
+FW_FIRST_RUN="0"
 NETWORK_LOCKED="1"
 EOP
 
