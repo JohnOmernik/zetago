@@ -90,7 +90,7 @@ function _fuseremove() {
         REM_CMD="dpkg --purge --force-all"
     elif [ "$INST_DIST" == "rh" ]; then
         REM_CLIENT=""
-        REM_POSIX= ""
+        REM_POSIX=""
         REM_CMD=""
     fi
 
