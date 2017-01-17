@@ -39,6 +39,8 @@ function _prepinstall() {
     if [ "$ALL" == "1" ]; then
         RUN_NODES="$NODES"
     else
+        # Add the Host to the list of nodes if it doesn't exist
+        addtoconfvar "$HOST" " " "NODES" "$PREP_CONF"
         RUN_NODES="$HOST"
     fi
 

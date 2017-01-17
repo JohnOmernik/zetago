@@ -2,7 +2,8 @@
 #
 # libcommon
 #
-# Functions for common use
+#
+# addtoconfvar - Take a new value and check a specific confvar if it exists, if it doesn't, remove it
 #
 # initconf - Load a conf and/or replace it. Used when the scripts assume a conf does not exist and needs to have it created
 #
@@ -14,6 +15,57 @@
 #
 # getpass - Request a password from the User 
 # --------------------------------------------
+
+#
+# function addtoconfvar
+#
+# Adds a value to a configuration file variable
+#
+# Arguments
+# $1 - the new value to add
+# $2 - Separator to use between values
+# $3 - The Variable name to add the new value to (no $)
+# $4 - The CONF File to search for the variable
+# $5 - Make changes without confirmation (Set this to 1 to be UNATTENDED)
+#
+function addtoconfvar(){
+
+    NEWVAL=$1
+    SEPARATOR=$2
+    CONF_VAR=$3
+    CONF_FILE=$4
+    UNATTEND=$5
+
+    VARLINE=$(cat $CONF_FILE|grep "$CONF_VAR")
+    if [ "$VARLINE" == "" ]; then
+        go.log WARN "Variables $CONF_VAR not found in $CONF_FILE - No changes made"
+    else
+        CHKVAL=$(echo "$VARLINE"|grep "$NEWVAL")
+        if [ "$CHKVAL" != "" ]; then
+            go.log WARN "Value $NEWVAL already exists in $CONF_VAR in $CONF_FILE - No Changes Made"
+        else
+            NEWLINE=$(echo "$VARLINE"|sed -e -i "s/\"$/${SEPARATOR}${NEWVAL}\"/")
+            if [ "$UNATTEND" == "1" ]; then
+                REPLACE="Y"
+            else
+                echo "The old CONF line in $CONF_FILE is:"
+                echo ""
+                echo "$VARLINE"
+                echo ""
+                echo "The Replacement CONF line in $CONF_FILE proposed is:"
+                echo ""
+                echo "$NEWLINE"
+                echo ""
+                read -e -p "Do you wish to replace the old CONF line with the new in $CONF_FILE? (Y/N): " -i "N" REPLACE
+            fi
+            if [ "$REPLACE" == "Y" ]; then
+                @go.log INFO "Updating $CONF_FILE variable $CONF_VAR with $NEWVAL"
+                sed -i "s/.*$CONF_VAR.*/$NEWLINE/g" $CONF_FILE
+            fi
+        fi
+    fi
+}
+
 #
 # function initconf
 # This function is a simple tool that will look for a conf file, and if it's found and not locked, or not found, instead of exiting, will run through a conf creation process
@@ -28,6 +80,7 @@
 #
 # There is one argument, the path to the conf.
 #
+
 
 function initconf(){
 
