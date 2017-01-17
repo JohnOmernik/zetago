@@ -29,8 +29,7 @@ function _fuseremove() {
     UNATTEND="0"
     NODE_HOST=""
 
-    for i in "$@"
-        do
+    for i in "$@"; do
         case $i in
             -u)
             UNATTEND="1"
@@ -77,7 +76,7 @@ function _fuseremove() {
         read -p "Continue with Removal? " -e -i "N" CONT
     else
         CONT="Y"
-
+    fi
     if [ "$CONT" != "Y" ]; then
         @go.log FATAL "FUSE removal on $NODE_HOST aborted by user"
     fi
