@@ -40,8 +40,6 @@ for RESOLVER in $DNS_RESOLVERS; do
     RESOLVERS="${RESOLVERS}- $RESOLVER"
 done
 
-
-
 cat > /tmp/config.yaml << EOF
 ---
 bootstrap_url: http://$BOOTSTRAP_NODE:$BOOTSTRAP_PORT
@@ -66,6 +64,19 @@ EOF
 scp /tmp/config.yaml $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
 rm /tmp/config.yaml
 
-ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && sudo docker pull nginx && curl -O https://downloads.dcos.io/dcos/stable/dcos_generate_config.sh && sudo bash dcos_generate_config.sh && sudo docker run -d -p ${BOOTSTRAP_PORT}:80 -v ${BOOTSTRAP_LOC}/genconf/serve:/usr/share/nginx/html:ro nginx"
+
+CHK=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && ls dcos_generate_config.sh")
+
+if [ "$CHK" != "" ]; then
+    read -e -p "There appears to be a dcos_generate_config.sh already on the Bootstrap node in the bootstrap location. Do you wish to re-download? Answer N to use existing (Y/N): " -i "N" DL
+else
+    DL="Y"
+fi
+
+if [ "$DL" == "Y" ]; then
+    ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && curl -O https://downloads.dcos.io/dcos/stable/dcos_generate_config.sh"
+fi
+
+ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && sudo docker pull nginx &&  sudo bash dcos_generate_config.sh && sudo docker run -d -p ${BOOTSTRAP_PORT}:80 -v ${BOOTSTRAP_LOC}/genconf/serve:/usr/share/nginx/html:ro nginx"
 
 @go.log INFO "Bootstrap is running and available at http://$BOOTSTRAP_NODE:$BOOTSTRAP_PORT"
