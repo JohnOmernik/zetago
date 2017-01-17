@@ -44,8 +44,12 @@ function addtoconfvar(){
         if [ "$CHKVAL" != "" ]; then
             go.log WARN "Value $NEWVAL already exists in $CONF_VAR in $CONF_FILE - No Changes Made"
         else
-            NEWSTR="${SEPARATOR}${NEWVAL}"
-            echo "$NEWSTR"
+            CHKEMP=$(echo "$VARLINE"|grep "\"\"")
+            if [ "$CHKEMP" == ""]; then
+                NEWSTR="${SEPARATOR}${NEWVAL}"
+            else
+                NEWSTR="${NEWVAL}"
+            fi
             NEWLINE=$(echo "$VARLINE"|sed -r "s/\"$/${NEWSTR}\"/g"|sed -r "s/ {2,}/ /g")
             if [ "$UNATTEND" == "1" ]; then
                 REPLACE="Y"
