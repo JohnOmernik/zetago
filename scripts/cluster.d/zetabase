@@ -28,12 +28,23 @@ function _zetabase() {
 
     @go.log INFO "Checking default hbase and apps volumes in MapR and removing if exists"
     if [ -d "/mapr/$CLUSTERNAME/hbase" ]; then
-        maprapi "/volume/remove?name=mapr.hbase"
-        sudo rm -rf /mapr/$CLUSTERNAME/hbase
+        @go.log WARN "Found /mapr/$CLUSTERNAME/hbase  Should we remove?"
+        read -e -p "Remove /hbase? (Y/N): " -i "Y" RMHBASE
+        if [ "$RMHBASE" == "Y" ]; then
+            maprapi "/volume/remove?name=mapr.hbase"
+            sudo rm -rf /mapr/$CLUSTERNAME/hbase
+        fi
     fi
     if [ -d "/mapr/$CLUSTERNAME/apps" ]; then
+        @go.log WARN "Removing default mapr.apps volume if it exists"
         maprapi "/volume/remove?name=mapr.apps"
-        sudo rm -rf /mapr/$CLUSTERNAME/apps
+        if [ -d "/mapr/$CLUSTERNAME/apps" ]; then
+            @go.log WARN "/mapr/$CLUSTERNAME/apps still exists, should we delete? This can be a dangerous operation if you have information /apps"
+            read -e -p "Try full removal of /mapr/$CLUSTERNAME/apps? (Y/N): " -i "N" FORCERM
+            if [ "$FORCERM" == "Y" ]; then
+                sudo rm -rf /mapr/$CLUSTERNAME/apps
+            fi
+        fi
     fi
 
     @go.log INFO "Checking for and creating if not existing, home directories for mapr and $IUSER users"
