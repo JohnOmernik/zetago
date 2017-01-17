@@ -13,37 +13,9 @@ echo "This process will ask a series of questions in order to create a dcos.conf
 echo "The configuration will be located: $DCOS_CONF"
 echo "-----------------------------------"
 echo ""
-echo "ip-detect"
-echo "---------"
-echo "DCOS and zeta itself requires that each node provide an IP address using a predictable interface"
-echo "To that end, this creates a ip-detect script that should work to pull that IP address"
-echo "This script is located at $IP_DETECT and uses the following list to walk through interfaces, the first one not being blank it returns:"
-echo ""
-echo "$INTERFACE_LIST"
 
-cat > $IP_DETECT << EOF
-#!/bin/bash
-. /etc/profile
-INTS="$INTERFACE_LIST"
+./zeta dcos createipdetect "$IP_DETECT"
 
-for INT in \$INTS; do
-#    echo "Interface: \$INT"
-    T=\$(ip addr|grep "\$INT")
-    if [ "\$T" != "" ]; then
-        MEIP=\$(ip addr show \$INT | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
-        echo \$MEIP
-        break
-    fi
-done
-EOF
-chmod +x $IP_DETECT
-echo "Running it on this node, ip-detect prodices this as a result:"
-echo ""
-$IP_DETECT
-echo ""
-echo "If nothing is returned, or the returned result is incorrect, please edit $IP_DETECT manually, if this is not working, Zeta install will fail"
-echo ""
-echo ""
 echo "---------------------------------------------"
 echo "config.yaml"
 echo "This next section will create a config.yaml for the DCOS install"
