@@ -46,7 +46,7 @@ function addtoconfvar(){
         else
             NEWSTR="${SEPARATOR}${NEWVAL}"
             echo "$NEWSTR"
-            NEWLINE=$(echo "$VARLINE"|sed -r "s/\"$/${NEWSTR}\"/g")
+            NEWLINE=$(echo "$VARLINE"|sed -r "s/\"$/${NEWSTR}\"/g"|sed -r "s/ {2,}/ /g")
             if [ "$UNATTEND" == "1" ]; then
                 REPLACE="Y"
             else

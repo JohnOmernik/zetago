@@ -56,19 +56,43 @@ function _dcos_install() {
             @go.log FATAL "User choose to cancel DCOS Install"
         fi
     fi
-
-
-    if [ "$ALL" == "1" ]; then
-        RUN_NODES="$INTERNAL_NODES"
-    else
-        RUN_NODES="$HOST"
-    fi
-
     BSTEST=$(curl -s http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT})
 
     if [ "$BSTEST" == "" ]; then
         @go.log FATAL "Bootstrap node does not appear up or is inaccessible at http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}"
     fi
+
+
+    if [ "$ALL" == "1" ]; then
+        RUN_NODES="$INTERNAL_NODES"
+    else
+        scp -o StrictHostKeyChecking=no $IP_DETECT $HOST:/tmp/ip-detect > /dev/null 2>&1
+        INTERNAL=$(ssh -o StrictHostKeyChecking=no $HOST "/tmp/ip-detect")
+        addtoconfvar "$INTERNAL" " " "INTERNAL_NODES" "$DCOS_CONF"
+        addtoconfvar "$INTERNAL" " " "AGENT_NODES" "$DCOS_CONF"
+
+        echo "You are looking to add the host: $HOST (Internal IP: $INTERNAL)"
+        echo "This node has already been added to the internal host list"
+        echo "Since we cannot add masters at this time, Do you wish to install this as a slave_public node? (Answering anything except Y will do a standard agent install)"
+        echo ""
+        read -e -p "Install $INTERNAL with slave_public role? (Y/N): " -i "N" SPUBLIC
+
+        if [ "$SPUBLIC" == "Y" ]; then
+            addtoconfvar "$INTERNAL" " " "PUBLIC_NODES" "$DCOS_CONF"
+            echo ""
+            echo "Since we added this to PUBLIC_NODES, it's HIGHLY recommened you add this to the EDGE_NODES in $NETWORK_CONF"
+            read -e -p "Add to EDGE_NODES in $NETWORK_CONF? (Y/N): " -i "Y" SEDGE
+            if [ "$SEDGE" == "Y" ]; then
+                @go.log INFO "Adding to EDGE_NODES in $NETWORK_CONF"
+                addtoconfvar "$INTERNAL" " " "EDGE_NODES" "$NETWORK_CONF"
+            else
+                @go.log WARN "NODE $INTERNAL Added to Public nodes in $DCOS_CONF but not to EDGE_NODES in $NETWORK_CONF"
+            fi
+        fi
+        sourceconf "$DCOS_CONF"
+        RUN_NODES="$HOST"
+    fi
+
 
 
 
@@ -105,9 +129,10 @@ function _dcos_install() {
     echo ""
 
     DCOSTEST=""
+    MASTERIP=$(echo "$MASTER_NODES"|cut -d" " -f1)
+    DCOSTEST=$(curl -s http://$MASTERIP)
     while [ "$DCOSTEST" == "" ]; do
         sleep 10
-        MASTERIP=$(echo "$MASTER_NODES"|cut -d" " -f1)
         DCOSTEST=$(curl -s http://$MASTERIP)
         @go.log INFO "Waiting 10 seconds to check for presense of master DCOS running at http://$MASTERIP (Internal address)"
     done
@@ -131,7 +156,9 @@ function _dcos_install() {
     echo ""
     @go.log INFO "DCOS Agents Initiated on all Agents"
     @go.log WARN 'Once Nodes are up an running please run: ./zeta network deployfw -f="Post DCOS FW Install"'
-
+    if [ "$ALL" != "1" ]; then
+        ./zeta network deployfw -f="DCOS install onto $INTERNAL"
+    fi
 }
 
 _dcos_install "$@"
