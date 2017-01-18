@@ -47,8 +47,10 @@ for INT in \$INTS; do
     T=\$(ip addr|grep "\$INT")
     if [ "\$T" != "" ]; then
         MEIP=\$(ip addr show \$INT | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
-        echo \$MEIP
-        break
+        if [ "\$MEIP" != "" ]; then
+            echo \$MEIP
+            break
+        fi
     fi
 done
 EOF
