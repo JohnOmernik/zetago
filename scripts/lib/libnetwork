@@ -70,7 +70,7 @@ function haproxylabel() {
         if [ "$ATYPE" == "EDGE" ]; then
             EDGE="1"
             if [ "$EDGE_PORTS" == "" ]; then
-                EDGE_PORTS="$APORTS"
+                EDGE_PORTS="$APORT"
             else
                 EDGE_PORTS="${EDGE_PORTS} $APORT"
             fi
@@ -84,15 +84,16 @@ function haproxylabel() {
     done
     IFS=$OLDIFS
     if [ "$EDGE" == "0" ]; then
-        OUTLABEL=""
+        OUTLABEL="\"HA_EDGE_CONF\":\"0\","
     else
         OUTLABEL="\"HAPROXY_GROUP\":\"EDGE\","$'\n'
         if [ "$NON_EDGE_PORTS" != "" ]; then
             for P in $NON_EDGE_PORTS; do
-                OUTLABEL="${OUTLABEL}\"HAPROXY_$P_FRONTEND_HEAD\": \"\","$'\n'
-                OUTLABEL="${OUTLABEL}\"HAPROXY_$P_BACKEND_GLUE\": \"\","$'\n'
+                OUTLABEL="${OUTLABEL}\"HAPROXY_${P}_FRONTEND_HEAD\": \"\","$'\n'
+                OUTLABEL="${OUTLABEL}\"HAPROXY_${P}_BACKEND_GLUE\": \"\","$'\n'
             done
         fi
+        OUTLABEL="${OUTLABEL}\"HA_EDGE_CONF\":\"1\","
     fi
     eval $RESULT="'$OUTLABEL'"
 
