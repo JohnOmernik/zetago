@@ -79,10 +79,10 @@ EOF
     echo "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
     for HOST in $MYHOSTS; do
 
-        scp -q -i ${OUT_KEY} ./bin/system_type.sh ${IUSER}@${HOST}:/home/${IUSER}/system_type.sh
-        scp -q -i ${OUT_KEY} $PREP_SCRIPT ${IUSER}@${HOST}:$REM_LOC
+        scp -q -i ${OUT_KEY} ./bin/system_type.sh ${IUSER}@${HOST}:/home/${IUSER}/system_type.sh 2> /dev/null
+        scp -q -i ${OUT_KEY} $PREP_SCRIPT ${IUSER}@${HOST}:$REM_LOC 2> /dev/null
         if [ "$?" == "0" ]; then
-            ssh -i ${OUT_KEY} ${IUSER}@${HOST} "$REM_LOC $HOST"
+            ssh -i ${OUT_KEY} ${IUSER}@${HOST} "$REM_LOC $HOST" 2> /dev/null
         else
             printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$HOST" "false" "-" "-" "-" "-" "-"
         fi
