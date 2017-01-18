@@ -12,7 +12,7 @@ APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${A
 APP_CERT_LOC="${APP_HOME}/certs"
 
 @go.log INFO "Checking for presense of Mattermost DB"
-CUR_DB_STATUS=$(./zeta cluster marathon getinfo $APP_MAR_DB_ID $MARATHON_SUBMIT)
+CUR_DB_STATUS=$(./zeta cluster marathon getinfo $APP_MAR_DB_ID "ALL" $MARATHON_SUBMIT)
 DBEXISTS=$(echo $CUR_DB_STATUS|grep "does not exist")
 if [ "$DBEXISTS" != "" ]; then
     @go.log INFO "Mattermost DB Does not exist - Submitting and restarting for optimal performace"
@@ -42,7 +42,7 @@ echo ""
 
 
 @go.log INFO "Checking for presense of Mattermost APP Server"
-CUR_APP_STATUS=$(./zeta cluster marathon getinfo $APP_MAR_APP_ID $MARATHON_SUBMIT)
+CUR_APP_STATUS=$(./zeta cluster marathon getinfo $APP_MAR_APP_ID "ALL" $MARATHON_SUBMIT)
 APPEXISTS=$(echo $CUR_APP_STATUS|grep "does not exist")
 
 if [ "$APPEXISTS" != "" ]; then
@@ -66,7 +66,7 @@ echo ""
 
 @go.log INFO "Checking for presense of Mattermost APP Server"
 
-CUR_WEB_STATUS=$(./zeta cluster marathon getinfo $APP_MAR_WEB_ID $MARATHON_SUBMIT)
+CUR_WEB_STATUS=$(./zeta cluster marathon getinfo $APP_MAR_WEB_ID "ALL" $MARATHON_SUBMIT)
 WEBEXISTS=$(echo $CUR_WEB_STATUS|grep "does not exist")
 
 if [ "$WEBEXISTS" != "" ]; then

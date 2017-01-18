@@ -143,14 +143,14 @@ function _openldapperf() {
     fi
 
     MARID="shared/openldap"
-    CURHOST=$(./zeta cluster marathon getinfo "$MARID" "$MARATHON_SUBMIT" "host")
+    CURHOST=$(./zeta cluster marathon getinfo "$MARID" "host" "$MARATHON_SUBMIT")
     @go.log INFO "Open LDAP Currenting running on host: $CURHOST - Stopping"
     ./zeta cluster marathon scale "$MARID" "0" "$MARATHON_SUBMIT" "1"
 
     @go.log INFO "Open LDAP Instance Stopped - Restarting"
     ./zeta cluster marathon scale "$MARID" "1" "$MARATHON_SUBMIT" "1"
 
-    NEWHOST=$(./zeta cluster marathon getinfo "shared/openldap" "$MARATHON_SUBMIT" "host")
+    NEWHOST=$(./zeta cluster marathon getinfo "shared/openldap" "host" "$MARATHON_SUBMIT")
     @go.log INFO "Open LDAP Instance Restarted - Now running on $NEWHOST"
 
 

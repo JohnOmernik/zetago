@@ -3,22 +3,29 @@
 # marathon getinfo
 # This takes two arguments
 # - Marathon ID
-# - MARATHON Submit URL
-# - Optional field name to return (default is to return whole ugly json)
+# - Field name to return Pass ALL to get whole ugly json (Required)
+# - Optional MARATHON Submit URL
 #
-# Example: ./zeta cluster marathon getinfo myrole/myapp http://marathon.mesos:8080/v2/apps hostname
+# Example: ./zeta cluster marathon getinfo myrole/myapp hostname http://marathon.mesos:8080/v2/apps
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+
 
 function _marathon_getinfo() {
-
-
     MARID=$1
-    MARATHON_URL=$2
-    FIELDNAME=$3
-
+    FIELDNAME=$2
+    MARATHON_URL=$3
+    if [ "$MARATHON_URL" == "" ]; then
+        @go.log WARN "No MARATHON_URL provided using cluster default in $CLUSTER_CONF"
+        MARATHON_URL="$MARATHON_SUBMIT"
+    fi
     FULL_URL="${MARATHON_URL}/${MARID}"
     FULLRESULT=$(curl -s -X GET $FULL_URL/tasks)
 
-    if [ "$FIELDNAME" != "" ]; then
+    if [ "$FIELDNAME" != "ALL" ]; then
         # I think we should learn jq here
         RESULT=$(echo "$FULLRESULT"|grep -o -P "\"${FIELDNAME}\":\"[^\"]+\""|cut -d":" -f2|sed "s/\"//g")
     else
