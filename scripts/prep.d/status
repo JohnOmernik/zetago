@@ -65,7 +65,7 @@ UP="true"
 SUDO_CHK=\$(sudo whoami)
 SYS_TYPE=\$(/home/${IUSER}/system_type.sh)
 DCK_VERS=\$(sudo docker info 2> /dev/null|grep "Server Version")
-EXT_IP=\$(curl -s icanhazip.com)
+EXT_IP=\$1
 
 printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "\$EXT_IP" "\$HNAME" "\$UP" "\$SUDO_CHK" "\$KERNEL" "\$SYS_TYPE" "\$DCK_VERS"
 
@@ -82,7 +82,7 @@ EOF
         scp -q -i ${OUT_KEY} ./bin/system_type.sh ${IUSER}@${HOST}:/home/${IUSER}/system_type.sh
         scp -q -i ${OUT_KEY} $PREP_SCRIPT ${IUSER}@${HOST}:$REM_LOC
         if [ "$?" == "0" ]; then
-            ssh -i ${OUT_KEY} ${IUSER}@${HOST} $REM_LOC
+            ssh -i ${OUT_KEY} ${IUSER}@${HOST} "$REM_LOC $HOST"
         else
             printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$HOST" "false" "-" "-" "-" "-" "-"
         fi

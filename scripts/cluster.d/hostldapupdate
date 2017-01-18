@@ -175,6 +175,7 @@ sudo /etc/init.d/nscd restart
 sudo service nslcd restart
 sudo /etc/init.d/mapr-posix-client-basic restart
 sudo service dcos-mesos-slave restart
+sudo service dcos-mesos-slave-public restart
 elif [ "\$INST_TYPE" == "rh_centos" ]; then
    echo "Needs work"
 else
