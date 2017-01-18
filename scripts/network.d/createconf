@@ -10,8 +10,6 @@ echo "This Conf Creation will make the network configuration script for Zeta."
 echo ""
 
 
-DNS_RESOLVERS="192.168.0.10"
-
 TDNS=$(echo "$DNS_RESOLVERS"|tr " " ",")
 
 if [ "$TDNS" != "" ]; then
