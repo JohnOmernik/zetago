@@ -102,6 +102,10 @@ EOF
         @go.log FATAL "Failed to get Port for usershell instance $PSTR"
     fi
 
+    APP_HA_PROXY=""
+
+    haproxylabel "APP_HA_PROXY" "$APP_PORTSTR"
+
 
     APP_MAR_ID="${APP_ROLE}/${APP_ID}/${APP_USER}usershell"
 
@@ -164,6 +168,7 @@ cat > $APP_MAR_FILE << EOM
   "cmd": "sed -i \"s/Port 22/Port ${APP_PORT}/g\" /etc/ssh/sshd_config && /usr/sbin/sshd -D",
   "instances": 1,
   "labels": {
+   $APP_HA_PROXY
    "CONTAINERIZER":"Docker"
   },
   ${APP_PORT_LIST}

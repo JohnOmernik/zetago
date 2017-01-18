@@ -41,6 +41,9 @@ else
     @go.log FATAL "Failed to get Port for Drill $PSTR"
 fi
 
+nonbridgeports "APP_PORT_LIST" "${APP_WEB_PORTSTR}~${APP_USER_PORTSTR}-${APP_BIT_PORTSTR}"
+haproxylabel "APP_HA_PROXY" "${APP_WEB_PORTSTR}~${APP_USER_PORTSTR}-${APP_BIT_PORTSTR}"
+
 echo ""
 echo "Resources"
 read -e -p "Please enter the amount of Heap Space per Drillbit: " -i "4G" APP_HEAP_MEM
@@ -54,8 +57,6 @@ read -e -p "How many drillbits should we start by default: " -i "1" APP_CNT
 echo ""
 
 
-
-nonbridgeports "APP_PORT_LIST" "${APP_WEB_PORTSTR}~${APP_USER_PORTSTR}-${APP_BIT_PORTSTR}"
 
 ##########
 # Do instance specific things: Create Dirs, copy start files, make executable etc
@@ -344,6 +345,7 @@ cat > ${APP_MAR_FILE} << EOF4
 "mem": ${APP_MEM},
 "instances": ${APP_CNT},
 "labels": {
+    $APP_HA_PROXY
     "PRODUCTION_READY":"True",
     "ZETAENV":"${APP_ROLE}",
     "CONTAINERIZER":"Mesos"
