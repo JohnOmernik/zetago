@@ -80,7 +80,7 @@ sed -i "s/# maxmemory <bytes>/maxmemory ${APP_REDIS_MEM}mb/g" ${APP_CONF_FILE}
 sed -i "s/# maxmemory-policy noeviction/maxmemory-policy volatile-lru/g" ${APP_CONF_FILE}
 
 @go.log WARN "Setting the append only file"
-sed -i "s/appendonly no/appendonly yes/g" ${APP_CONFIG_FILE}
+sed -i "s/appendonly no/appendonly yes/g" ${APP_CONF_FILE}
 
 
 cat  > ${APP_HOME}/lock/run.sh << EOL2
