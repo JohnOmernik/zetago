@@ -85,8 +85,8 @@ sed -i "s/appendonly no/appendonly yes/g" ${APP_CONF_FILE}
 
 cat  > ${APP_HOME}/lock/run.sh << EOL2
 #!/bin/bash
-chmod +x /entrypoint.sh
-/docker-entrypoint.sh redis-server /conf/redis.conf
+chmod +x /usr/local/bin/docker-entrypoint.sh
+/usr/local/bin/docker-entrypoint.sh redis-server /conf/redis.conf
 EOL2
 
 chmod +x ${APP_HOME}/lock/run.sh
