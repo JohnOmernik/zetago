@@ -6,7 +6,7 @@ APP_VER="3.2"
 APP_GIT_BASE="https://github.com/docker-library"
 APP_GIT_REPO="redis"
 
-APP_IMG_NAME="mongo"
+APP_IMG_NAME="redis"
 APP_IMG_TAG="$APP_VER"
 
 APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
