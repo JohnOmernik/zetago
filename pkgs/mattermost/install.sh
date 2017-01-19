@@ -7,7 +7,21 @@ echo ""
 echo ""
 echo "Information related to the Mattermost DB Server:"
 echo ""
-read -e -p "Please enter the PostGres DB port to use use with mattermost: " -i "30480" APP_DB_PORT
+
+SOME_COMMENTS="Postgres port for Mattermost"
+PORTSTR="CLUSTER:tcp:30480:${APP_ROLE}:${APP_ID}:$SOME_COMMENTS"
+getport "CHKADD" "$SOME_COMMENTS" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_DB_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_DB_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
+fi
+
+bridgeports "APP_DB_PORT_JSON", "5432", "$APP_DB_PORTSTR"
+
+
 echo ""
 read -e -p "Please enter the amount of CPU to limit the Postgres instance for MM to: " -i "2.0" APP_DB_CPU
 echo ""
@@ -24,16 +38,45 @@ getpass "$APP_DB_USER" APP_DB_PASS
 echo ""
 echo "Information related to Application Server:"
 echo ""
-read -e -p "Please enter a port for the mattermost application server: " -i "30481" APP_APP_PORT
-echo ""
+
+SOME_COMMENTS="Application port for Mattermost"
+PORTSTR="CLUSTER:tcp:30481:${APP_ROLE}:${APP_ID}:$SOME_COMMENTS"
+getport "CHKADD" "$SOME_COMMENTS" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_APP_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_APP_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
+fi
+
+bridgeports "APP_APP_PORT_JSON", "80", "$APP_APP_PORTSTR"
+
+
+
+
 read -e -p "Please enter the amount of CPU to limit the MM app server: " -i "2.0" APP_APP_CPU
 echo ""
 read -e -p "Please enter the amount of Memory to limit the MM app server: " -i "2048" APP_APP_MEM
 echo ""
 echo "Information related to Web Server:"
 echo ""
-read -e -p "Please enter a https port to use with mattermost: " -i "30483" APP_HTTPS_PORT
-echo ""
+
+SOME_COMMENTS="HTTPS port for Mattermost"
+PORTSTR="CLUSTER:tcp:30483:${APP_ROLE}:${APP_ID}:$SOME_COMMENTS"
+getport "CHKADD" "$SOME_COMMENTS" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_HTTPS_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_HTTPS_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
+fi
+
+bridgeports "APP_HTTPS_PORT_JSON", "443", "$APP_HTTPS_PORTSTR"
+
+
+
 read -e -p "Please enter the amount of CPU to limit the MM web server: " -i "2.0" APP_WEB_CPU
 echo ""
 read -e -p "Please enter the amount of Memory to limit the MM web server: " -i "2048" APP_WEB_MEM
@@ -42,6 +85,9 @@ echo "Using direct IPs for networking"
 APP_DOMAIN_ROOT="marathon.slave.mesos"
 
 
+haproxylabel "APP_DB_HA_PROXY" "${APP_DB_PORTSTR}"
+haproxylabel "APP_APP_HA_PROXY" "${APP_APP_PORTSTR}"
+haproxylabel "APP_HTTPS_HA_PROXY" "${APP_HTTPS_PORTSTR}"
 
 
 APP_MAR_APP_FILE="${APP_HOME}/marathon_app.json"
@@ -119,6 +165,7 @@ cat > $APP_MAR_DB_FILE << EOD
   "mem": ${APP_DB_MEM},
   "instances": 1,
   "labels": {
+    $APP_DB_HA_PROXY
    "CONTAINERIZER":"Docker"
   },
   "ports": [],
@@ -128,7 +175,7 @@ cat > $APP_MAR_DB_FILE << EOD
       "image": "${APP_IMG_DB}",
       "network": "BRIDGE",
       "portMappings": [
-        { "containerPort": 5432, "hostPort": ${APP_DB_PORT}, "servicePort": 0, "protocol": "tcp"}
+        ${APP_DB_PORT_JSON}
       ]
     },
     "volumes": [
@@ -149,6 +196,7 @@ cat > $APP_MAR_APP_FILE << EOA
   "mem": ${APP_APP_MEM},
   "instances": 1,
   "labels": {
+   $APP_APP_HA_PROXY
    "CONTAINERIZER":"Docker"
   },
   "env": {
@@ -162,7 +210,7 @@ cat > $APP_MAR_APP_FILE << EOA
       "image": "${APP_IMG_APP}",
       "network": "BRIDGE",
       "portMappings": [
-        { "containerPort": 80, "hostPort": ${APP_APP_PORT}, "servicePort": 0, "protocol": "tcp"}
+        $APP_APP_PORT_JSON
       ]
     },
     "volumes": [
@@ -183,6 +231,7 @@ cat > $APP_MAR_WEB_FILE << EOW
   "mem": ${APP_WEB_MEM},
   "instances": 1,
   "labels": {
+   $APP_HTTPS_HA_PROXY
    "CONTAINERIZER":"Docker"
   },
   "env": {
@@ -197,7 +246,7 @@ cat > $APP_MAR_WEB_FILE << EOW
       "image": "${APP_IMG_WEB}",
       "network": "BRIDGE",
       "portMappings": [
-        { "containerPort": 443, "hostPort": ${APP_HTTPS_PORT}, "servicePort": 0, "protocol": "tcp"}
+        ${APP_HTTPS_PORT_JSON}
       ]
     },
     "volumes": [

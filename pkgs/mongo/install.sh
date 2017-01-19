@@ -10,14 +10,25 @@ read -e -p "Please enter the max cache size (this should be under the Marathon a
 echo ""
 read -e -p "Please enter the Marathon Memory limit to use with mongo: " -i "2560" APP_MEM
 echo ""
-read -e -p "Please enter a port to use with mongo: " -i "30122" APP_PORT
-echo ""
 
 
+
+PORTSTR="CLUSTER:tcp:30122:${APP_ROLE}:${APP_ID}:Port for MongoDB $APP_ID"
+getport "CHKADD" "Mongo Port" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME instance $APP_ID with $PSTR"
+fi
+
+
+bridgeports "APP_PORT_JSON", "27017", "$APP_PORTSTR"
+haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 
 
 APP_MAR_FILE="${APP_HOME}/marathon.json"
-
 APP_DATA_DIR="$APP_HOME/mongo_data"
 APP_CONFDB_DIR="$APP_HOME/mongo_configdb"
 APP_CONF_DIR="$APP_HOME/mongo_conf"
@@ -155,6 +166,7 @@ cat > $APP_MAR_FILE << EOL
   "mem": ${APP_MEM},
   "instances": 1,
   "labels": {
+   $APP_HA_PROXY
    "CONTAINERIZER":"Docker"
   },
   "ports": [],
@@ -164,7 +176,7 @@ cat > $APP_MAR_FILE << EOL
       "image": "${APP_IMG}",
       "network": "BRIDGE",
       "portMappings": [
-        { "containerPort": 27017, "hostPort": ${APP_PORT}, "servicePort": 0, "protocol": "tcp"}
+        $APP_PORT_JSON
       ]
     },
     "volumes": [

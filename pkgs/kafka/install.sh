@@ -5,8 +5,24 @@
 # $APP Specific
 echo "The next step will walk through instance defaults for ${APP_ID}"
 echo ""
-read -e -p "Please enter a port to use with kafka-mesos: " -i "21000" APP_PORT
-echo ""
+
+SOME_COMMENTS="Ports for kafka-mesos API"
+PORTSTR="CLUSTER:tcp:21000:${APP_ROLE}:${APP_ID}:$SOME_COMMENTS"
+
+getport "CHKADD" "$SOME_COMMENTS" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
+fi
+
+nonbridgeports "APP_PORT_LIST" "${APP_PORTSTR}"
+haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
+
+
+
 read -e -p "Please enter the CPU shares to use with the kafka-mesos scheduler: " -i "1.0" APP_CPU
 echo ""
 read -e -p "Please enter the Marathon Memory limit to use with kafka-mesos scheduler: " -i "768" APP_MEM
@@ -73,6 +89,10 @@ export ZETA_${APP_ID}_ZK="${ZETA_ZKS}/${APP_ID}"
 export ZETA_${APP_ID}_API_PORT="${APP_PORT}"
 EOL1
 
+
+
+nonbridgeports "APP_PORT_LIST" "${APP_PORTSTR}"
+haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 cat > $APP_MAR_FILE << EOL
 {
   "id": "${APP_MAR_ID}",
@@ -81,7 +101,9 @@ cat > $APP_MAR_FILE << EOL
   "mem": ${APP_MEM},
   "cmd": "export PATH=\`pwd\`/jre/bin:\$PATH && cd kafka-mesos && ./kafka-mesos.sh scheduler ../kafka-mesos.properties",
   "user": "${APP_USER}",
+  $APP_PORT_LIST
   "labels": {
+   $APP_HA_PROXY
    "CONTAINERIZER":"Mesos"
   },
   "env": {

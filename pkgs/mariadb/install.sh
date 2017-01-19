@@ -5,10 +5,23 @@
 # $APP Specific
 echo "The next step will walk through instance defaults for ${APP_ID}"
 echo ""
-echo "You need a port to run MariaDB on"
-echo ""
-read -e -p "Please enter a port to use with mariadb: " -i "30306" APP_PORT
-echo ""
+
+SOME_COMMENTS="Port for MariaDB"
+PORTSTR="CLUSTER:tcp:30306:${APP_ROLE}:${APP_ID}:$SOME_COMMENTS"
+getport "CHKADD" "$SOME_COMMENTS" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
+fi
+
+bridgeports "APP_PORT_JSON", "$APP_PORT", "$APP_PORTSTR"
+haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
+
+
+
 read -e -p "Please enter the CPU shares to use with $APP_NAME: " -i "1.0" APP_CPU
 echo ""
 read -e -p "Please enter the Marathon Memory limit to use with $APP_NAME: " -i "2048" APP_MEM
@@ -42,6 +55,7 @@ cat > $APP_MAR_FILE << EOL
   "mem": $APP_MEM,
   "instances": 1,
   "labels": {
+   $APP_HA_PROXY
    "CONTAINERIZER":"Docker"
   },
   "container": {
@@ -50,7 +64,7 @@ cat > $APP_MAR_FILE << EOL
       "image": "${APP_IMG}",
       "network": "BRIDGE",
       "portMappings": [
-        { "containerPort": 3306, "hostPort": ${APP_PORT}, "servicePort": 0, "protocol": "tcp"}
+        $APP_PORT_JSON
       ]
     },
   "volumes": [

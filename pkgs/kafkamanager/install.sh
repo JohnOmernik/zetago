@@ -5,7 +5,22 @@
 echo "The next step will walk through instance defaults for ${APP_ID}"
 echo ""
 echo ""
-read -e -p "Please enter a http port to use with $APP_NAME: " -i "26666" APP_PORT
+
+
+SOME_COMMENTS="Port for kafka-manager http"
+PORTSTR="CLUSTER:tcp:26666:${APP_ROLE}:${APP_ID}:$SOME_COMMENTS"
+getport "CHKADD" "$SOME_COMMENTS" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
+fi
+
+bridgeports "APP_PORT_JSON", "9000", "$APP_PORTSTR"
+haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
+
 echo ""
 read -e -p "Please enter the CPU shares to use with $APP_NAME: " -i "1.0" APP_CPU
 echo ""
@@ -32,19 +47,19 @@ cat > $APP_MAR_FILE << EOL
   "cmd": "cd $APP_VER_DIR && bin/kafka-manager",
   "instances": $APP_CNT,
   "labels": {
+   ${APP_HA_PROXY}
    "CONTAINERIZER":"Docker"
   },
   "env": {
     "ZK_HOSTS": "$ZETA_ZKS"
   },
-  "ports": [],
   "container": {
     "type": "DOCKER",
     "docker": {
       "image": "${APP_IMG}",
       "network": "BRIDGE",
       "portMappings": [
-        { "containerPort": 9000, "hostPort": ${APP_PORT}, "servicePort": 0, "protocol": "tcp"}
+        $APP_PORT_JSON
       ]
     }
   }

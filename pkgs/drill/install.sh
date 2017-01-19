@@ -346,8 +346,6 @@ cat > ${APP_MAR_FILE} << EOF4
 "instances": ${APP_CNT},
 "labels": {
     $APP_HA_PROXY
-    "PRODUCTION_READY":"True",
-    "ZETAENV":"${APP_ROLE}",
     "CONTAINERIZER":"Mesos"
 },
 "env": {
