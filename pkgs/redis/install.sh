@@ -13,7 +13,7 @@ APP_REDIS_MEM=$((APP_MEM-128))
 echo ""
 echo "The Redis memory limit will be $APP_REDIS_MEM"
 echo ""
-echo "Do you wish to require a password for your redis server? (Y/N): " -i "Y" REQ_PASS
+read -e -p "Do you wish to require a password for your redis server? (Y/N): " -i "Y" REQ_PASS
 echo ""
 if [ "$REQ_PASS" == "Y" ]; then
     getpass "redisserver" APP_PASS
