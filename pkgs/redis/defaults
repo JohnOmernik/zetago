@@ -1,0 +1,4 @@
+#!/bin/bash
+
+DEF_APP_VERS="redis-3.2.vers"
+REC_DIR="zeta"
