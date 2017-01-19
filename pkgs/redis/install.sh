@@ -35,7 +35,7 @@ else
 fi
 
 
-bridgeports "APP_PORT_JSON", "6379", "$APP_PORTSTR"
+bridgeports "APP_PORT_JSON" "6379" "$APP_PORTSTR"
 haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 
 
@@ -66,7 +66,7 @@ EOL1
 
 # Update config file for redis
 
-cp ./pks/redis/redis_conf.template ${APP_CONF_FILE}
+cp ./pkgs/redis/redis_conf.template ${APP_CONF_FILE}
 
 sed -i "s@dir ./@dir /data@g" ${APP_CONF_FILE} # Update the data dir location from ./ to /data (inside the container)
 
