@@ -6,15 +6,26 @@ echo "The next step will walk through instance defaults for ${APP_ID}"
 echo ""
 read -e -p "Please enter the CPU shares to use with $APP_NAME: " -i "2.0" APP_CPU
 echo ""
-read -e -p "Please enter the max cache size (this should be under the Marathon amount (Which is specified in MB) and this  specified in GB: " -i "2" APP_MEM_CACHE
+echo "For Redis memory, we will take the Marathon Memory limit and subtract 128mb from it for head room"
 echo ""
-read -e -p "Please enter the Marathon Memory limit to use with mongo: " -i "2560" APP_MEM
+read -e -p "Please enter the Marathon Memory limit to use with $APP_NAME: " -i "2048" APP_MEM
+APP_REDIS_MEM=$((APP_MEM-128))
 echo ""
+echo "The Redis memory limit will be $APP_REDIS_MEM"
+echo ""
+read -e -p "Do you wish to require a password for your redis server? (Y/N): " -i "Y" REQ_PASS
+echo ""
+if [ "$REQ_PASS" == "Y" ]; then
+    getpass "redisserver" APP_PASS
+else
+    APP_PASS=""
+fi
 
 
 
-PORTSTR="CLUSTER:tcp:30122:${APP_ROLE}:${APP_ID}:Port for MongoDB $APP_ID"
-getport "CHKADD" "Mongo Port" "$SERVICES_CONF" "$PORTSTR"
+SOME_COMMENTS="Port for Redis Server"
+PORTSTR="CLUSTER:tcp:22122:${APP_ROLE}:${APP_ID}:$SOME_COMMENTS"
+getport "CHKADD" "$SOME_COMMENTS" "$SERVICES_CONF" "$PORTSTR"
 
 if [ "$CHKADD" != "" ]; then
     getpstr "MYTYPE" "MYPROTOCOL" "APP_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
@@ -24,26 +35,24 @@ else
 fi
 
 
-bridgeports "APP_PORT_JSON", "27017", "$APP_PORTSTR"
+bridgeports "APP_PORT_JSON" "6379" "$APP_PORTSTR"
 haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 
 
 APP_MAR_FILE="${APP_HOME}/marathon.json"
-APP_DATA_DIR="$APP_HOME/mongo_data"
-APP_CONFDB_DIR="$APP_HOME/mongo_configdb"
-APP_CONF_DIR="$APP_HOME/mongo_conf"
-APP_LOG_DIR="$APP_HOME/mongo_logs"
+APP_DATA_DIR="$APP_HOME/data"
+APP_CONF_DIR="$APP_HOME/conf"
+APP_CONF_FILE="${APP_CONF_DIR}/redis.conf"
+APP_LOG_DIR="$APP_HOME/logs"
 APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 
 
 mkdir -p $APP_DATA_DIR
 mkdir -p $APP_CONF_DIR
-mkdir -p $APP_CONFDB_DIR
 mkdir -p $APP_LOG_DIR
 mkdir -p ${APP_HOME}/lock
 sudo chmod 770 $APP_DATA_DIR
 sudo chmod 770 $APP_CONF_DIR
-sudo chmod 770 $APP_CONFDB_DIR
 sudo chmod 770 $APP_LOG_DIR
 
 
@@ -52,38 +61,34 @@ cat > $APP_ENV_FILE << EOL1
 export ZETA_${APP_NAME}_${APP_ID}_PORT="${APP_PORT}"
 EOL1
 
-cat > ${APP_CONF_DIR}/mongod.conf << EOL5
-systemLog:
-   destination: file
-   verbosity: 1
-   timeStampFormat: iso8601-utc
-   path: /data/log/mongod.log
-   logAppend: true
-storage:
-   dbPath: /data/db
-   engine: wiredTiger
-   directoryPerDB: true
-   journal:
-      enabled: true
-   wiredTiger:
-      engineConfig:
-         cacheSizeGB: $APP_MEM_CACHE
-operationProfiling:
-   slowOpThresholdMs: 100
-   mode: off # Set to slowOp to check things out
-processManagement:
-   fork: false
-net:
-   port: 27017
-setParameter:
-   enableLocalhostAuthBypass: false
-EOL5
+
+
+
+# Update config file for redis
+
+cp ./pkgs/redis/redis_conf.template ${APP_CONF_FILE}
+
+sed -i "s@dir ./@dir /data@g" ${APP_CONF_FILE} # Update the data dir location from ./ to /data (inside the container)
+
+if [ "$APP_PASS" != "" ]; then
+    sed -i "s/# requirepass foobared/requirepass $APP_PASS/g" ${APP_CONF_FILE}
+fi
+sed -i "s/# maxmemory <bytes>/maxmemory ${APP_REDIS_MEM}mb/g" ${APP_CONF_FILE}
+
+@go.log WARN "Setting the maxmemory policy to volitile-lru - please adjust in $APP_CONF_FILE if needed"
+
+sed -i "s/# maxmemory-policy noeviction/maxmemory-policy volatile-lru/g" ${APP_CONF_FILE}
+
+@go.log WARN "Setting the append only file"
+sed -i "s/appendonly no/appendonly yes/g" ${APP_CONF_FILE}
+
 
 cat  > ${APP_HOME}/lock/run.sh << EOL2
 #!/bin/bash
-chmod +x /entrypoint.sh
-/entrypoint.sh --config /data/conf/mongod.conf
+chmod +x /usr/local/bin/docker-entrypoint.sh
+/usr/local/bin/docker-entrypoint.sh redis-server /conf/redis.conf
 EOL2
+
 chmod +x ${APP_HOME}/lock/run.sh
 
 cat > ${APP_HOME}/lock/lockfile.sh << EOL3
@@ -180,10 +185,9 @@ cat > $APP_MAR_FILE << EOL
       ]
     },
     "volumes": [
-      { "containerPath": "/data/db", "hostPath": "${APP_DATA_DIR}", "mode": "RW" },
-      { "containerPath": "/data/configdb", "hostPath": "${APP_CONFDB_DIR}", "mode": "RW" },
-      { "containerPath": "/data/conf", "hostPath": "${APP_CONF_DIR}", "mode": "RO" },
-      { "containerPath": "/data/log", "hostPath": "${APP_LOG_DIR}", "mode": "RW" },
+      { "containerPath": "/data", "hostPath": "${APP_DATA_DIR}", "mode": "RW" },
+      { "containerPath": "/conf", "hostPath": "${APP_CONF_DIR}", "mode": "RO" },
+      { "containerPath": "/log", "hostPath": "${APP_LOG_DIR}", "mode": "RW" },
       { "containerPath": "/lock", "hostPath": "${APP_HOME}/lock", "mode": "RW" }
     ]
 

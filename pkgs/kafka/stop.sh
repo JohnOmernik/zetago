@@ -2,7 +2,7 @@
 
 
 
- CUR_STATUS=$(./zeta cluster marathon getinfo $APP_MAR_ID $MARATHON_SUBMIT)
+ CUR_STATUS=$(./zeta cluster marathon getinfo $APP_MAR_ID "ALL" $MARATHON_SUBMIT)
  EXISTS=$(echo $CUR_STATUS|grep "does not exist")
 
 

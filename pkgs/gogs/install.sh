@@ -33,6 +33,8 @@ fi
 bridgeports "APP_SSH_JSON" "22" "$APP_SSH_PORTSTR"
 bridgeports "APP_HTTPS_JSON" "$APP_HTTPS_PORT" "$APP_HTTPS_PORTSTR"
 
+haproxylabel "APP_HA_PROXY" "${APP_SSH_PORTSTR}~${APP_HTTPS_PORTSTR}"
+
 
 
 read -e -p "Please enter the CPU shares to use with $APP_NAME: " -i "1.0" APP_CPU
@@ -129,6 +131,7 @@ cat > $APP_MAR_FILE << EOL
   "mem": ${APP_MEM},
   "instances": 1,
   "labels": {
+    $APP_HA_PROXY
    "CONTAINERIZER":"Docker"
   },
   "ports": [],

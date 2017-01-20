@@ -8,7 +8,16 @@ sourceconf "$DCOS_CONF"
 
 echo "This Conf Creation will make the network configuration script for Zeta."
 echo ""
-DNS_SERVERS="198.51.100.1,192.168.100.2,198.51.100.3"
+
+
+TDNS=$(echo "$DNS_RESOLVERS"|tr " " ",")
+
+if [ "$TDNS" != "" ]; then
+    DNS_SERVERS="198.51.100.1,192.168.100.2,198.51.100.3,${TDNS}"
+else
+    DNS_SERVERS="198.51.100.1,192.168.100.2,198.51.100.3"
+fi
+
 echo "The DCOS DNS Servers are $DNS_SERVERS"
 echo "You should not need to add additional DNS Servers."
 echo ""

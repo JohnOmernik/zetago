@@ -5,7 +5,26 @@
 echo "The next step will walk through instance defaults for ${APP_ID}"
 echo ""
 
-read -e -p "Please enter the service port for the ${APP_ID} instance of ${APP_NAME}: " -i "28101" APP_PORT
+SOME_COMMENTS="Port for kafka rest api port"
+PORTSTR="CLUSTER:tcp:28101:${APP_ROLE}:${APP_ID}:$SOME_COMMENTS"
+getport "CHKADD" "$SOME_COMMENTS" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
+fi
+
+bridgeports "APP_PORT_JSON", "$APP_PORT", "$APP_PORTSTR"
+haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
+
+
+
+
+
+
+
 
 read -e -p "Please enter the memory limit for the ${APP_ID} instance of ${APP_NAME}: " -i "768" APP_MEM
 
@@ -99,6 +118,7 @@ EOU
 
 chmod +x ${APP_CONF_DIR}/runrest.sh
 
+
 cat > $APP_MAR_FILE << EOL
 {
   "id": "${APP_MAR_ID}",
@@ -107,6 +127,7 @@ cat > $APP_MAR_FILE << EOL
   "cmd":"/app/${APP_VER_DIR}/etc/kafka-rest/runrest.sh && /app/${APP_VER_DIR}/bin/kafka-rest-start /conf_new/kafka-rest.properties",
   "instances": ${APP_CNT},
   "labels": {
+   $APP_HA_PROXY
    "CONTAINERIZER":"Docker"
   },
   "container": {
@@ -115,7 +136,7 @@ cat > $APP_MAR_FILE << EOL
       "image": "${APP_IMG}",
       "network": "BRIDGE",
       "portMappings": [
-        { "containerPort": ${APP_PORT}, "hostPort": ${APP_PORT}, "servicePort": 0, "protocol": "tcp"}
+        $APP_PORT_JSON
       ]
     },
   "volumes": [

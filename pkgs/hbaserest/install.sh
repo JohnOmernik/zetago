@@ -29,7 +29,7 @@ fi
 
 bridgeports "APP_INFO_PORT_JSON", "8005", "$APP_INFO_PORTSTR"
 bridgeports "APP_PORT_JSON", "8000", "$APP_PORTSTR"
-
+haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}~${APP_INFO_PORTSTR}"
 
 
 
@@ -193,7 +193,8 @@ cat > $APP_MAR_FILE << EOF
   "instances": 1,
   "cmd":"su -c /$APP_VER_DIR/conf/docker_start.sh ${APP_USER}",
   "labels": {
-   "PRODUCTION_READY":"True", "CONTAINERIZER":"Docker", "ZETAENV":"${APP_ROLE}"
+   $APP_HA_PROXY
+   "CONTAINERIZER":"Docker"
   },
   "env": {
     "HBASE_HOME": "/${APP_VER_DIR}",
@@ -209,7 +210,7 @@ cat > $APP_MAR_FILE << EOF
       "image": "${APP_IMG}",
       "network": "BRIDGE",
       "portMappings": [
-        ${APP_PORT_JSON}.
+        ${APP_PORT_JSON},
         ${APP_INFO_PORT_JSON}
       ]
     },

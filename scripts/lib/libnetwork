@@ -38,6 +38,67 @@ function createedgerules() {
     eval $RESULT="'$OUTPUT'"
 }
 
+
+#
+# function haproxylabel - Return labels for an app to interact with haproxy in marathon-lb based on port selection
+#
+# Arguments:
+# $1 - Return value
+# $2 - All Port Strings  delimited by ~
+#
+function haproxylabel() {
+
+    local RESULT=$1
+    local PSTRS=$2
+    local OUTLABEL=""
+    local EDGE="0"
+    EDGE_PORTS=""
+    NON_EDGE_PORTS=""
+
+    OLDIFS=$IFS
+    IFS="~"
+    for PSTR in $PSTRS; do
+
+        local ATYPE=""
+        local AROTOCOL=""
+        local APORT=""
+        local AROLE=""
+        local AAPP_ID=""
+        local ACOMMENTS=""
+        getpstr "ATYPE" "APROTOCOL" "APORT" "AROLE" "AAPP_ID" "ACOMMENTS" "$PSTR"
+
+        if [ "$ATYPE" == "EDGE" ]; then
+            EDGE="1"
+            if [ "$EDGE_PORTS" == "" ]; then
+                EDGE_PORTS="$APORT"
+            else
+                EDGE_PORTS="${EDGE_PORTS} $APORT"
+            fi
+        else
+            if [ "$NON_EDGE_PORTS" == "" ]; then
+                NON_EDGE_PORTS="$APORT"
+            else
+                NON_EDGE_PORTS="${NON_EDGE_PORTS} $APORT"
+            fi
+        fi
+    done
+    IFS=$OLDIFS
+    if [ "$EDGE" == "0" ]; then
+        OUTLABEL="\"HA_EDGE_CONF\":\"0\","
+    else
+        OUTLABEL="\"HAPROXY_GROUP\":\"EDGE\","$'\n'
+        if [ "$NON_EDGE_PORTS" != "" ]; then
+            for P in $NON_EDGE_PORTS; do
+                OUTLABEL="${OUTLABEL}\"HAPROXY_${P}_FRONTEND_HEAD\": \"\","$'\n'
+                OUTLABEL="${OUTLABEL}\"HAPROXY_${P}_BACKEND_GLUE\": \"\","$'\n'
+            done
+        fi
+        OUTLABEL="${OUTLABEL}\"HA_EDGE_CONF\":\"1\","
+    fi
+    eval $RESULT="'$OUTLABEL'"
+
+}
+
 #
 # function bridgeports() - Returns only the portion of the docker string that is hostPort or Service port
 #

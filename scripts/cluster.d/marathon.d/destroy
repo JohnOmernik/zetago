@@ -7,12 +7,28 @@
 # - Optional Wait for Deployment to finish - Put 1 if you want to wait
 #
 # Example: ./zeta cluster marathon delete myrole/myapp http://marathon.mesos:8080/v2/apps
-function _marathon_delete() {
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
 
+function _marathon_delete() {
 
     MARID=$1
     MARATHON_URL=$2
-    WAIT=$3
+    if [ "$MARATHON_URL" != "" ]; then
+        if [ "$MARATHON_URL" == "1" ]; then
+            WAIT="1"
+            MARATHON_URL=""
+        else
+            WAIT=$3
+        fi
+    fi
+
+    if [ "$MARATHON_URL" == "" ]; then
+        @go.log WARN "No MARATHON_URL provided using cluster default in $CLUSTER_CONF"
+        MARATHON_URL="$MARATHON_SUBMIT"
+    fi
 
     MARATHON_DEP="http://$MARATHON_HOST/v2/deployments"
 
@@ -20,7 +36,6 @@ function _marathon_delete() {
 
     DEP_ID=$(echo $OUT|grep -P -o "deploymentId\":\"[^\"]+\""|cut -f2 -d":"|sed "s/\"//g")
     if [ "$DEP_ID" != "" ]; then
-
         if [ "$WAIT" == "1" ]; then
             @go.log INFO "Waiting for app destroy request on ID $MARID to finish deployment with ID $DEP_ID"
 

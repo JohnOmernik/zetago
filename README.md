@@ -30,7 +30,7 @@ This other repos may continue to get updates until they are completely folded in
 1. Get some master nodes
     - No extra disk needed. min 32 GB of ram, rec 64. A 3 node quorum of masters running 64 GB of ram can scale to the 10s of thousands of agent nodes
     - A good amount of disk space - at least a TB 
-    - 1 Units work well. 
+    - 1U Units work well. 
 2. Get some agent nodes
     - Since we are doing storage, we like ensuring good specs. 
         - At least 2 Octo-Core (with hyperthreading) processors

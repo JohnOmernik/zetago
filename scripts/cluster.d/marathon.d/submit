@@ -6,11 +6,28 @@
 # MARATHON Submit URL
 #
 # Example: ./zeta cluster marathon submit /path/to/myfile.json http://marathon.mesos:8080/v2/apps
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+
 function _marathon_submit() {
 
     MARFILE=$1
     MARATHON_URL=$2
-    WAIT=$3
+    if [ "$MARATHON_URL" != "" ]; then
+        if [ "$MARATHON_URL" == "1" ]; then
+            WAIT="1"
+            MARATHON_URL=""
+        else
+            WAIT="$3"
+        fi
+    fi
+
+    if [ "$MARATHON_URL" == "" ]; then
+        @go.log WARN "No MARATHON_URL provided using cluster default in $CLUSTER_CONF"
+        MARATHON_URL="$MARATHON_SUBMIT"
+    fi
 
     MARATHON_DEP="http://$MARATHON_HOST/v2/deployments"
 
