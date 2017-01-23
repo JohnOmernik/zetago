@@ -4,6 +4,50 @@
 
 @go.log INFO "Unpacking TGZ File to Instance Root"
 tar zxf $APP_PKG_DIR/$APP_TGZ -C $APP_HOME
+mkdir -p $APP_HOME/sparklogs
+
+@go.log INFO "Checking for Active CLDB"
+
+CLDBS=$(echo "$ZETA_CLDBS"|tr "," " ")
+
+for C in $CLDBS; do
+    OUT=$(hadoop fs -ls maprfs://$C/ 2> /dev/null)
+    if [ "$OUT" != "" ]; then
+        CLDB="$C"
+        break
+    fi
+done
+if [ "$CLDB" == "" ]; then
+    @go.log FATAL "Could not determine CLDB"
+fi
+
+
+
+SOME_COMMENTS="Port for Spark History Server"
+PORTSTR="CLUSTER:tcp:23501:${APP_ROLE}:${APP_ID}:$SOME_COMMENTS"
+getport "CHKADD" "$SOME_COMMENTS" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
+fi
+
+bridgeports "APP_PORT_JSON", "$APP_PORT", "$APP_PORTSTR"
+haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
+
+
+read -e -p "Please enter the memory limit for the ${APP_ID} instance of ${APP_NAME}: " -i "1280" APP_MEM
+
+read -e -p "Please enter the cpu limit for the ${APP_ID} instance of ${APP_NAME}: " -i "1.0" APP_CPU
+APP_CNT="1"
+
+cat > ${APP_ENV_FILE} << EOL1
+#!/bin/bash
+export ZETA_${APP_ID}__HISTORY_PORT="${APP_PORT}"
+EOL1
+
 
 
 @go.log INFO "Creating a Docker Run file for $APP_NAME instance $APP_ID"
@@ -87,9 +131,65 @@ spark.mesos.executor.docker.image $APP_IMG
 
 spark.home  /spark
 
+spark.eventLog.enabled true
+spark.eventLog.dir maprfs://$CLDB/$APP_DIR/$APP_ROLE/$APP_ID/sparklogs
+
 spark.mesos.executor.docker.volumes ${APP_HOME}/${APP_VER_DIR}:/spark:ro,/opt/mapr:/opt/mapr:ro,/opt/mesosphere:/opt/mesosphere:ro
 
+spark.history.fs.cleaner.enabled    true
+
+spark.history.fs.cleaner.interval   1d
+
+spark.history.fs.cleaner.maxAge 7d
+
+spark.history.fs.logDirectory maprfs://$CLDB/$APP_DIR/$APP_ROLE/$APP_ID/sparklogs
+
+
 EOC
+
+cat > $APP_MAR_FILE << EOM
+{
+  "id": "${APP_MAR_ID}",
+  "cpus": $APP_CPU,
+  "mem": $APP_MEM,
+  "cmd":"",
+  "instances": ${APP_CNT},
+  "labels": {
+   $APP_HA_PROXY
+   "CONTAINERIZER":"Docker"
+  },
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "${APP_IMG}",
+      "network": "BRIDGE",
+      "portMappings": [
+        $APP_PORT_JSON
+      ]
+    },
+  "volumes": [
+      {
+        "containerPath": "/spark",
+        "hostPath": "${APP_HOME}/${APP_VER_DIR}",
+        "mode": "RO"
+      },
+      {
+        "containerPath": "/opt/mapr",
+        "hostPath": "/opt/mapr",
+        "mode": "RO"
+      },
+      {
+        "containerPath": "/opt/mesosphere",
+        "hostPath": "/opt/mesophere",
+        "mode": "RO"
+      }
+    ]
+  }
+}
+
+EOM
+
+
 
 echo ""
 echo "Spark Instance $APP_ID is installed at $APP_HOME"
@@ -100,4 +200,9 @@ echo "2. cd /spark"
 echo "3. bin/pyspark"
 echo ""
 echo "This is a basic/poc install, changes can be made via the conf files"
+echo ""
+echo ""
+echo "In addition, you can start the spark history server by running:"
+echo ""
+echo "$ ./zeta package start ${APP_HOME}/$APP_ID.conf"
 echo ""
