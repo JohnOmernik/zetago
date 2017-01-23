@@ -19,7 +19,7 @@ else
     @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
 fi
 
-bridgeports "APP_DB_PORT_JSON", "5432", "$APP_DB_PORTSTR"
+bridgeports "APP_DB_PORT_JSON" "5432" "$APP_DB_PORTSTR"
 
 
 echo ""
@@ -50,7 +50,7 @@ else
     @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
 fi
 
-bridgeports "APP_APP_PORT_JSON", "80", "$APP_APP_PORTSTR"
+bridgeports "APP_APP_PORT_JSON" "80" "$APP_APP_PORTSTR"
 
 
 
@@ -73,7 +73,7 @@ else
     @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
 fi
 
-bridgeports "APP_HTTPS_PORT_JSON", "443", "$APP_HTTPS_PORTSTR"
+bridgeports "APP_HTTPS_PORT_JSON" "443" "$APP_HTTPS_PORTSTR"
 
 
 

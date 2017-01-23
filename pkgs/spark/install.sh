@@ -34,7 +34,7 @@ else
     @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
 fi
 
-bridgeports "APP_PORT_JSON", "$APP_PORT", "$APP_PORTSTR"
+bridgeports "APP_PORT_JSON" "$APP_PORT" "$APP_PORTSTR"
 haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 
 

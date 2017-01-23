@@ -27,8 +27,8 @@ else
 fi
 
 
-bridgeports "APP_INFO_PORT_JSON", "8005", "$APP_INFO_PORTSTR"
-bridgeports "APP_PORT_JSON", "8000", "$APP_PORTSTR"
+bridgeports "APP_INFO_PORT_JSON" "8005" "$APP_INFO_PORTSTR"
+bridgeports "APP_PORT_JSON" "8000" "$APP_PORTSTR"
 haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}~${APP_INFO_PORTSTR}"
 
 
