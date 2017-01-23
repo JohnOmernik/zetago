@@ -41,6 +41,8 @@ haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 read -e -p "Please enter the memory limit for the history server for ${APP_ID} instance of ${APP_NAME}: " -i "1280" APP_MEM
 
 read -e -p "Please enter the cpu limit for the history server for ${APP_ID} instance of ${APP_NAME}: " -i "1.0" APP_CPU
+
+
 APP_CNT="1"
 
 cat > ${APP_ENV_FILE} << EOL1
@@ -110,7 +112,8 @@ echo ""
 echo "Resources"
 read -e -p "Please enter the amount of Memory for the Spark Driver: " -i "512m" APP_SPARK_DRIVER_MEM
 read -e -p "Please enter the amount of Memory for the Spark Executor: " -i "4096m" APP_SPARK_EXECUTOR_MEM
-
+read -e -p "What is the total max cores to use for this instance: " -i "24" APP_SPARK_MAX_CORES
+read -e -p "What is the cores per executor to use for this instance: " -i "4" APP_SPARK_CORES_PER_EXECUTOR
 
 @go.log INFO "Creating spark-defaults.conf"
 MAPRCP=$(ls -1 ${MAPR_HOME}/lib/maprfs-*|grep -v diagnostic|tr "\n" ":")
@@ -122,6 +125,8 @@ spark.master                       mesos://leader.mesos:5050
 spark.serializer                 org.apache.spark.serializer.KryoSerializer
 spark.driver.memory              $APP_SPARK_DRIVER_MEM
 spark.executor.memory            $APP_SPARK_EXECUTOR_MEM
+spark.cores.max                  $APP_SPARK_MAX_CORES
+spark.executor.cores             $APP_SPARK_CORES_PER_EXECUTOR
 
 spark.sql.hive.metastore.sharedPrefixes com.mysql.jdbc,org.postgresql,com.microsoft.sqlserver,oracle.jdbc,com.mapr.fs.shim.LibraryLoader,com.mapr.security.JNISecurity,com.mapr.fs.jni
 
