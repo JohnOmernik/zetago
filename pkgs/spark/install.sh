@@ -34,7 +34,7 @@ else
     @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
 fi
 
-bridgeports "APP_PORT_JSON" "$APP_PORT" "$APP_PORTSTR"
+bridgeports "APP_PORT_JSON" "18080" "$APP_PORTSTR"
 haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 
 
@@ -152,7 +152,7 @@ cat > $APP_MAR_FILE << EOM
   "id": "${APP_MAR_ID}",
   "cpus": $APP_CPU,
   "mem": $APP_MEM,
-  "cmd":"",
+  "cmd":"cd /spark && ./sbin/start-history-server.sh",
   "instances": ${APP_CNT},
   "labels": {
    $APP_HA_PROXY
@@ -171,7 +171,7 @@ cat > $APP_MAR_FILE << EOM
       {
         "containerPath": "/spark",
         "hostPath": "${APP_HOME}/${APP_VER_DIR}",
-        "mode": "RO"
+        "mode": "RW"
       },
       {
         "containerPath": "/opt/mapr",
