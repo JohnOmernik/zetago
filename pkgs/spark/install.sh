@@ -132,7 +132,7 @@ spark.mesos.executor.docker.image $APP_IMG
 spark.home  /spark
 
 spark.eventLog.enabled true
-spark.eventLog.dir maprfs://$CLDB/$APP_DIR/$APP_ROLE/$APP_ID/sparklogs
+spark.eventLog.dir maprfs://$CLDB/$APP_DIR/$APP_ROLE/$APP_NAME/$APP_ID/sparklogs
 
 spark.mesos.executor.docker.volumes ${APP_HOME}/${APP_VER_DIR}:/spark:ro,/opt/mapr:/opt/mapr:ro,/opt/mesosphere:/opt/mesosphere:ro
 
@@ -142,7 +142,7 @@ spark.history.fs.cleaner.interval   1d
 
 spark.history.fs.cleaner.maxAge 7d
 
-spark.history.fs.logDirectory maprfs://$CLDB/$APP_DIR/$APP_ROLE/$APP_ID/sparklogs
+spark.history.fs.logDirectory maprfs://$CLDB/$APP_DIR/$APP_ROLE/$APP_NAME/$APP_ID/sparklogs
 
 
 EOC
