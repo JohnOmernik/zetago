@@ -146,7 +146,7 @@ function getpackagebase() {
     MYRESULT=""
 
     if [ ! -d "${CORE_PKG_LOC}/${APP_NAME}" ] || [ "$SEARCH_ADD_FIRST" == "1" ]; then
-        @go.log WARN "Package: $APP_NAME not found in core package location or search additional location first selceted, checking additional package locations"
+        @go.log WARN "Package: $APP_NAME not found in core package location or search additional location first selected, checking additional package locations"
         for LOC in $ADD_PKG_LOC; do
             if [ -d "${LOC}/${APP_NAME}" ]; then
                 echo "Package $APP_NAME found in ${LOC}"
