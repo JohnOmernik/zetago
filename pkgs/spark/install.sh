@@ -158,6 +158,9 @@ cat > $APP_MAR_FILE << EOM
    $APP_HA_PROXY
    "CONTAINERIZER":"Docker"
   },
+  "env": {
+    "SPARK_NO_DAEMONIZE": "1"
+  },
   "container": {
     "type": "DOCKER",
     "docker": {
