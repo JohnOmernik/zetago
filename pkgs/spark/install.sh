@@ -38,9 +38,9 @@ bridgeports "APP_PORT_JSON" "$APP_PORT" "$APP_PORTSTR"
 haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 
 
-read -e -p "Please enter the memory limit for the ${APP_ID} instance of ${APP_NAME}: " -i "1280" APP_MEM
+read -e -p "Please enter the memory limit for the history server for ${APP_ID} instance of ${APP_NAME}: " -i "1280" APP_MEM
 
-read -e -p "Please enter the cpu limit for the ${APP_ID} instance of ${APP_NAME}: " -i "1.0" APP_CPU
+read -e -p "Please enter the cpu limit for the history server for ${APP_ID} instance of ${APP_NAME}: " -i "1.0" APP_CPU
 APP_CNT="1"
 
 cat > ${APP_ENV_FILE} << EOL1
