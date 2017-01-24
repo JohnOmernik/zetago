@@ -1,0 +1,74 @@
+#!/bin/bash
+#
+# mapr localvolume - Ensure there is a local volume on a node for tmp location
+#
+# Arguments:
+# -u - Unattended
+# -a - Run on all nodes in conf files
+# -n=%NODE%  %NODE% being the node to install on
+# -s - Get status of local volumes from conf
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+
+MYDIR=$(pwd)
+
+function _localvolume() {
+
+    ALL="0"
+    STATUS="0"
+    UNATTEND="0"
+    NODE_HOST=""
+
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            -a)
+            ALL="1"
+            ;;
+            -w)
+            STATUS="1"
+            ;;
+            "-n="*)
+            NODE_HOST="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+    if [ "$ALL" == "1" ]; then
+        if [ "$NODE_HOST" != "" ]; then
+            @go.log FATAL "-a and a node was specified (with -n) please pick one or the other"
+        fi
+        NODES="$AGENT_NODES"
+    else
+        NODES="$NODE_HOST"
+    fi
+
+
+    if [ "$NODE_HOST" == "" ] && [ "$STATUS" == "0" ]; then
+        @go.log FATAL "This script must be passed a hostname via the -n= parameter Ex: -n=node1 or -a for all nodes in conf. Or status can be requested with -s"
+    fi
+
+    if [ "$STATUS" == "1" ]; then
+        for N in $INTERNAL_NODES; do
+            VOL_NAME="mapr.$N.local""
+            VOL_MOUNT="/var/mapr/local/${N}"/local"
+
+            maprapi "/volume/info?name=${VOL_NAME}"
+        done
+    fi
+}
+
+_localvolume "$@"
