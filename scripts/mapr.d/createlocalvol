@@ -72,13 +72,13 @@ function _localvolume() {
             maprapi "/volume/info?name=${VOL_NAME}"
         done
     else
-        read -e -p "Please enter your topo root (typically /data/default-rack): " -i "/data/default-rack" TOPOROOT
+#        read -e -p "Please enter your topo root (typically /data/default-rack): " -i "/data/default-rack" TOPOROOT
         for NODE in $NODES; do
             NFS_ROOT="/mapr/$CLUSTERNAME"
             VOL_NAME="mapr.$NODE.local"
             VOL_MOUNT="/var/mapr/local/${NODE}/local"
             NFS_MOUNT="${NFS_ROOT}${VOL_MOUNT}"
-            TOPO="${TOPOROOT}/${NODE}"
+#            TOPO="${TOPOROOT}/${NODE}"
             if [ -d "${NFS_MOUNT}" ]; then
                 @go.log WARN "The directory already exists, should we try to delete before creating volume? (If the volume exists, the delete will fail and all is well"
                 read -e -p "Delete local diretory $NFS_MOUNT? (Y/N)" -i "Y" DMNT
@@ -90,7 +90,7 @@ function _localvolume() {
 
           # "maprcli volume create -name $vol -path $mountpath -replication 1 -localvolumehost $hostname -localvolumeport $mfsport -shufflevolume true -rereplicationtimeoutsec 
 
-              maprapi "/volume/create?name=${VOL_NAME}&path=${VOL_MOUNT}&replication=1&localvolumehost=${NODE}&localvolumeport=5660&shufflevolume=true&replicationtimeoutsec=300"
+              maprapi "/volume/create?name=${VOL_NAME}&path=${VOL_MOUNT}&replication=1&localvolumehost=${NODE}&localvolumeport=5660&shufflevolume=true&rereplicationtimeoutsec=300"
             echo ""
             T=""
             while [ "$T" == "" ]; do
