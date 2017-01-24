@@ -55,7 +55,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y pwgen op
 
 RUN pip install --upgrade pip
 
-RUN pip install xxhash && pip install lz4tools && pip install kafka-python && pip install requests
+RUN pip install xxhash && pip install lz4tools && pip install kafka-python && pip install requests && pip install pandas
 
 RUN mkdir /var/run/sshd
 
