@@ -51,13 +51,13 @@ function _localvolume() {
         if [ "$NODE_HOST" != "" ]; then
             @go.log FATAL "-a and a node was specified (with -n) please pick one or the other"
         fi
-        NODES="$AGENT_NODES"
+        NODES=$(echo "$INODES"|tr ";" " ")
     else
         NODES="$NODE_HOST"
     fi
 
 
-    if [ "$NODE_HOST" == "" ] && [ "$STATUS" == "0" ]; then
+    if [ "$NODES" == "" ] && [ "$STATUS" == "0" ]; then
         @go.log FATAL "This script must be passed a hostname via the -n= parameter Ex: -n=node1 or -a for all nodes in conf. Or status can be requested with -s"
     fi
 
@@ -73,7 +73,8 @@ function _localvolume() {
         done
     else
 #        read -e -p "Please enter your topo root (typically /data/default-rack): " -i "/data/default-rack" TOPOROOT
-        for NODE in $NODES; do
+        for N in $NODES; do
+            NODE=$(echo "$N"|cut -d":" -f1)
             NFS_ROOT="/mapr/$CLUSTERNAME"
             VOL_NAME="mapr.$NODE.local"
             VOL_MOUNT="/var/mapr/local/${NODE}/local"
