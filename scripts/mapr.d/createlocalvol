@@ -86,7 +86,11 @@ function _localvolume() {
                      sudo rm -rf $NFS_MOUNT
                 fi
             fi
-            maprapi "/volume/create?name=${VOL_NAME}&path=${VOL_MOUNT}&rootdirperms=775&user=mapr:fc,a,dump,restore,m,d%20${IUSER}:fc,a,dump,restore,m,d&minreplication=1&replication=1&topology=${TOPO}&mount=1"
+
+
+          # "maprcli volume create -name $vol -path $mountpath -replication 1 -localvolumehost $hostname -localvolumeport $mfsport -shufflevolume true -rereplicationtimeoutsec 
+
+              maprapi "/volume/create?name=${VOL_NAME}&path=${VOL_MOUNT}&replication=1&localvolumehost=${NODE}&localvolumeport=5660&shufflevolume=true&replicationtimeoutsec=300"
             echo ""
             T=""
             while [ "$T" == "" ]; do
