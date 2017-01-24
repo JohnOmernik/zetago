@@ -15,7 +15,7 @@ sourceconf "$MAPR_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
-
+. "$_GO_USE_MODULES" 'libmapr'
 MYDIR=$(pwd)
 
 function _localvolume() {
