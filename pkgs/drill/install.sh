@@ -57,6 +57,16 @@ read -e -p "How many drillbits should we start by default: " -i "1" APP_CNT
 echo ""
 
 
+echo ""
+echo ""
+echo "Drill requires local volumes for spill location. If you already have local volumes, great, no need to create them."
+echo "If you do not have them, please answer yes to the next question and it will create them for you"
+echo "If you are unsure, run it anyways, it won't hurt your volumes if they do exist"
+read -e -p "Try creating volumes? (Y/N): " -i "N" CVOL
+if [ "$CVOL" == "Y" ]; then
+    ./zeta mapr createlocalvols -a -u
+fi
+
 
 ##########
 # Do instance specific things: Create Dirs, copy start files, make executable etc
@@ -194,11 +204,9 @@ export DRILL_PID_DIR="${APP_HOME}/logs/pids"
 
 # MAPR Specifc Setting up a location for spill (this is a quick hacky version of what is done in the createTTVolume.sh)
 
-TOPOROOT="$APP_TOPO_ROOT"
-TOPO="\${TOPOROOT}/\${HOSTNAME}"
 
 NFSROOT="/mapr/\${CLUSTERNAME}"
-SPILLLOC="/var/mapr/local/\${HOSTNAME}/drillspill"
+SPILLLOC="/var/mapr/local/\${HOSTNAME}/drillspill/\${APP_ID}"
 
 o=\$(echo \$CALL_SCRIPT|grep sqlline)
 if [ "\$o" != "" ]; then
@@ -211,23 +219,13 @@ if [ "\$o" != "" ]; then
 else
     mkdir -p ${APP_HOME}/logs/drillbits/\$HOSTNAME
     export DRILL_LOG_DIR="${APP_HOME}/logs/drillbits/\$HOSTNAME"
-
-    export DRILL_SPILLLOC="\$SPILLLOC/\${APP_ID}"
-
-    VOLNAME="mapr.\${HOSTNAME}.local.drillspill"
+    export DRILL_SPILLLOC="\$SPILLLOC"
 
     if [ -d "\${NFSROOT}\${SPILLLOC}" ]; then
         echo "Spill Location exists: \${SPILLLOC}"
-        if [ ! -d "\${NFSROOT}\${SPILLLOC}/\${APP_ID}" ]; then
-            echo "Spill Root exists, but not individual \$APP_ID Directory. Adding."
-            mkdir -p \${NFSROOT}\${SPILLLOC}/\${APP_ID}
-        fi
     else
         echo "Need to create SPILL LOCATION: \${SPILLLOC}"
-        RUNCMD="maprcli volume create -name \${VOLNAME} -path \${SPILLLOC} -rootdirperms 775 -user mapr:fc,a,dump,restore,m,d -minreplication 1 -replication 1 -topology \${TOPO} -mount 1"
-        echo "\$RUNCMD"
-        \$RUNCMD
-        mkdir -p \${NFSROOT}\${SPILLLOC}/\${APP_ID}
+        mkdir -p \${NFSROOT}\${SPILLLOC}
     fi
 fi
 EOF
