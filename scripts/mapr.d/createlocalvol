@@ -62,9 +62,12 @@ function _localvolume() {
     fi
 
     if [ "$STATUS" == "1" ]; then
-        for N in $INTERNAL_NODES; do
-            VOL_NAME="mapr.$N.local""
-            VOL_MOUNT="/var/mapr/local/${N}"/local"
+        NODES=$(echo "$INODES"|tr ";" " ")
+
+        for N in $NODES; do
+            NODE=$(echo "$N"|cut -d":" -f1)
+            VOL_NAME="mapr.$NODE.local""
+            VOL_MOUNT="/var/mapr/local/${NODE}"/local"
 
             maprapi "/volume/info?name=${VOL_NAME}"
         done
