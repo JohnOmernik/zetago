@@ -86,7 +86,7 @@ function _localvolume() {
                      sudo rm -rf $NFS_MOUNT
                 fi
             fi
-            maprapi "/volume/create?name=${VOL_NAME}}&path=${VOL_MOUNT}&rootdirperms=775&user=mapr:fc,a,dump,restore,m,d%20${IUSER}:fc,a,dump,restore,m,d&minreplication=1&replication=1&topology=${TOPO}&mount=1"
+            maprapi "/volume/create?name=${VOL_NAME}&path=${VOL_MOUNT}&rootdirperms=775&user=mapr:fc,a,dump,restore,m,d%20${IUSER}:fc,a,dump,restore,m,d&minreplication=1&replication=1&topology=${TOPO}&mount=1"
             echo ""
             T=""
             while [ "$T" == "" ]; do
