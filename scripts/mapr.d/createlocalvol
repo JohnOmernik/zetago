@@ -34,7 +34,7 @@ function _localvolume() {
             -a)
             ALL="1"
             ;;
-            -w)
+            -s)
             STATUS="1"
             ;;
             "-n="*)
