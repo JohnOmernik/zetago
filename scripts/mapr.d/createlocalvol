@@ -81,7 +81,7 @@ function _localvolume() {
 #            TOPO="${TOPOROOT}/${NODE}"
             if [ -d "${NFS_MOUNT}" ]; then
                 @go.log WARN "The directory already exists, should we try to delete before creating volume? (If the volume exists, the delete will fail and all is well"
-                read -e -p "Delete local diretory $NFS_MOUNT? (Y/N)" -i "Y" DMNT
+                read -e -p "Delete local diretory $NFS_MOUNT? (Y/N): " -i "Y" DMNT
                 if [ "$DMNT" == "Y" ]; then
                      sudo rm -rf $NFS_MOUNT
                 fi
