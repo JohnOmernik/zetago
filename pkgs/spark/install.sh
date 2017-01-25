@@ -203,6 +203,8 @@ spark.shuffle.service.enabled true
 
 spark.network.timeout 30s
 
+spark.shuffle.io.connectionTimeout 30s
+
 spark.dynamicAllocation.enabled true
 
 spark.dynamicAllocation.maxExecutors $APP_SPARK_MAX_EXECUTORS
@@ -211,7 +213,7 @@ spark.local.dir /tmp/spark
 
 spark.history.fs.logDirectory maprfs://$CLDB/$APP_DIR/$APP_ROLE/$APP_NAME/$APP_ID/sparklogs
 
-spark.shuffle.service.port $APP_SHUFFLE_PORT
+spark.shuffle.service.port $APP_SHUF_PORT
 
 EOC
 
