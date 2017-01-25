@@ -5,7 +5,7 @@
 @go.log INFO "Unpacking TGZ File to Instance Root"
 tar zxf $APP_PKG_DIR/$APP_TGZ -C $APP_HOME
 mkdir -p $APP_HOME/sparklogs
-sudo chown -R zetadm:zeta${APP_ROLE}zeta $APP_HOME/sparklogs
+sudo chown -R $IUSER:zeta${APP_ROLE}zeta $APP_HOME/sparklogs
 
 
 @go.log INFO "Checking for Active CLDB"
