@@ -155,7 +155,8 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
 7. Yeah! MapR should be up and running, it should print a CLDB link for you to go check and see your cluster running!
 8. Now to complete MapR, running 
     - $ ./zeta mapr installfuse -u # This installs the FUSE client on all agents so it's ready for cluster installation (ZETA!)
-
+9. Create some local volumes for use in shuffle activities
+    - $ ./zeta mapr createlocalvols -a -u
 ### Cluster (Zeta) Install
 ----------
 1. The cluster.conf file was already created (the MapR install calls the cluster install script secretly)

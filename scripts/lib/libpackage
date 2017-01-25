@@ -2,9 +2,87 @@
 #
 # Functions used in package management in Zeta
 #
+##############################################
+#
+# function stopsvc - Stops a given service
+#
+# Returns 0 if stopped successfully, 1 if already stopped, and 2 if doesn't exit
+#
+# Arguments
+# $1 - The Return value 0 if the request to start or submit and start was successful. 1 if the app already existed and we did nothing
+# $2 - Marathon ID to Start
+# $3 - Marathon File to Submit/Start
+# $4 - Marathon Submit URL to use
+#
+function stopsvc(){
+
+    local RESULT=$1
+    local MAR_ID=$2
+    local MAR_FILE=$3
+    local MAR=$4
+    local RETVAL="0"
+
+    CUR_STATUS=$(./zeta cluster marathon getinfo $MAR_ID "ALL" $MAR)
+    EXISTS=$(echo $CUR_STATUS|grep "does not exist")
+    if [ "$EXISTS" == "" ]; then
+        RUNNING=$(echo $CUR_STATUS|grep "TASK_RUNNING")
+        if [ "$RUNNING" != "" ]; then
+            @go.log INFO "Scalling $MAR_ID to 0 instances"
+            ./zeta cluster marathon scale $MAR_ID 0 $MAR 1
+        else
+            @go.log WARN "$MAR_ID is already stopped"
+            RETVAL=1
+        fi
+    else
+        @go.log WARN "MAR_ID does not exist in the given Marathon $MAR"
+        RETVAL=2
+    fi
+}
 
 
 
+
+#
+# function submitstart - Starts a given service (or submits if it doesn't exist)
+#
+# Returns either a 0 (Submitted or started) or 1 (Exists and already running) via $1
+#
+# Arguments:
+# $1 - The Return value 0 if the request to start or submit and start was successful. 1 if the app already existed and we did nothing
+# $2 - Marathon ID to Start
+# $3 - Marathon File to Submit/Start
+# $4 - Marathon Submit URL to use
+#
+function submitstartsvc(){
+
+    local RESULT=$1
+    local MAR_ID=$2
+    local MAR_FILE=$3
+    local MAR=$4
+    local RETVAL="0"
+
+
+    @go.log INFO "Checking for presense of $MAR_ID"
+    CUR_STATUS=$(./zeta cluster marathon getinfo $MAR_ID "ALL" $MAR)
+    EXISTS=$(echo $CUR_STATUS|grep "does not exist")
+    if [ "$EXISTS" != "" ]; then
+        @go.log INFO "$MAR_ID Service Does not exist - Submitting"
+        ./zeta cluster marathon submit ${MAR_FILE} ${MAR} 1
+        @go.log INFO "$MAR_ID Initialization complete"
+    else
+        RUNNING=$(echo $CUR_STATUS|grep "TASK_RUNNING")
+        if [ "$RUNNING" != "" ]; then
+            @go.log WARN "$MAR_ID Already exists and is running"
+            REVAL="1"
+        else
+            @go.log INFO "$MAR_ID exists, but not running - Starting"
+            NUM_INSTS=$(cat $MAR_FILE |grep instances|cut -d":" -f2|sed "s/ //g"|sed "s/,//g")
+            ./zeta cluster marathon scale $MAR_ID $NUM_INSTS $MAR 1
+        fi
+    fi
+
+    eval $RESULT="'$RETVAL'"
+}
 
 #
 # function checkdocker
