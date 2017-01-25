@@ -216,9 +216,9 @@ spark.shuffle.service.port $APP_SHUFFLE_PORT
 EOC
 
 
-cat > $APP_SHUF_MAR << EOQ
+cat > $APP_MAR_SHUF_FILE << EOQ
 {
-  "id": "${APP_SHUF_MAR_ID}",
+  "id": "${APP_MAR_SHUF_ID}",
   "cpus": $APP_SHUF_CPU,
   "mem": $APP_SHUF_MEM,
   "cmd":"cd /spark && ./sbin/start-mesos-shuffle-service.sh",
@@ -265,8 +265,6 @@ cat > $APP_SHUF_MAR << EOQ
     ]
   }
 }
-
-
 EOQ
 
 cat > $APP_MAR_HIST_FILE << EOM
