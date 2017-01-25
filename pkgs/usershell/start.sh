@@ -153,7 +153,7 @@ EOS
     nonbridgeports "APP_PORT_LIST" "${APP_PORTSTR}"
 
     if [ -d "$SPARK_PKG_HOME" ]; then
-        SPARK_HOME_SHORT=$(ls -1 ${SPARK_PKG_HOME}|grep -v "run\.sh"|grep -v "${PKG_ID}\.conf"|grep -v "sparklogs")
+        SPARK_HOME_SHORT=$(ls -1 ${SPARK_PKG_HOME}|grep "spark"|grep -v "${PKG_ID}\.conf"|grep -v "sparklogs")
         SPARK_HOME="${SPARK_PKG_HOME}/$SPARK_HOME_SHORT"
 
         echo "Using $SPARK_HOME for spark home"
