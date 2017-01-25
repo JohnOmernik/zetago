@@ -147,9 +147,16 @@ export HADOOP_HOME="$HADOOP_HOME"
 
 HNAME=\$(hostname -f)
 APP_ID="$APP_ID"
-TMP_LOC="/mapr/$CLUSTERNAME/var/mapr/local/\$HNAME/spark/\$APP_ID"
-mkdir -p \$TMP_LOC
+TMP_LOC="/mapr/$CLUSTERNAME/var/mapr/local/\$HNAME/local/spark/\$APP_ID"
+echo "TMP_LOC: \$TMP_LOC"
+if [ ! -d "\$TMP_LOC" ]; then
+    mkdir -p \$TMP_LOC
+    chown -R $IUSER:zeta${APP_ROLE}zeta \$TMP_LOC
+fi
 ln -s \$TMP_LOC /tmp/spark
+
+ls -ls /mapr/$CLUSTERNAME/var/mapr/local/\$HNAME/local/spark
+
 
 export HADOOP_CONF_DIR=\${HADOOP_HOME}/etc/hadoop
 MAPR_HADOOP_CLASSPATH=\`\${HADOOP_HOME}/bin/hadoop classpath\`:\`ls \$MAPR_HOME/lib/slf4j-log*\`:
