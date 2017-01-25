@@ -148,10 +148,12 @@ export HADOOP_HOME="$HADOOP_HOME"
 HNAME=\$(hostname -f)
 APP_ID="$APP_ID"
 TMP_LOC="/mapr/$CLUSTERNAME/var/mapr/local/\$HNAME/local/spark/\$APP_ID"
-echo "TMP_LOC: \$TMP_LOC"
-if [ ! -d "\$TMP_LOC" ]; then
+ME=\$(whoami)
+if [ "\$ME" == "root" ]; then
+    echo "TMP_LOC: \$TMP_LOC"
     mkdir -p \$TMP_LOC
     chown -R $IUSER:zeta${APP_ROLE}zeta \$TMP_LOC
+    chmod -R 775 \$TMP_LOC
 fi
 ln -s \$TMP_LOC /tmp/spark
 
