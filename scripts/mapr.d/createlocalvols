@@ -1,0 +1,104 @@
+#!/bin/bash
+#
+# mapr localvolume - Ensure there is a local volume on a node for tmp location
+#
+# Arguments:
+# -u - Unattended
+# -a - Run on all nodes in conf files
+# -n=%NODE%  %NODE% being the node to install on
+# -s - Get status of local volumes from conf
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$MAPR_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+. "$_GO_USE_MODULES" 'libmapr'
+MYDIR=$(pwd)
+
+function _localvolume() {
+
+    ALL="0"
+    STATUS="0"
+    UNATTEND="0"
+    NODE_HOST=""
+
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            -a)
+            ALL="1"
+            ;;
+            -s)
+            STATUS="1"
+            ;;
+            "-n="*)
+            NODE_HOST="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+    if [ "$ALL" == "1" ]; then
+        if [ "$NODE_HOST" != "" ]; then
+            @go.log FATAL "-a and a node was specified (with -n) please pick one or the other"
+        fi
+        NODES=$(echo "$INODES"|tr ";" " ")
+    else
+        NODES="$NODE_HOST"
+    fi
+
+    if [ "$NODES" == "" ] && [ "$STATUS" == "0" ]; then
+        @go.log FATAL "This script must be passed a hostname via the -n= parameter Ex: -n=node1 or -a for all nodes in conf. Or status can be requested with -s"
+    fi
+
+    if [ "$STATUS" == "1" ]; then
+        NODES=$(echo "$INODES"|tr ";" " ")
+        for N in $NODES; do
+            NODE=$(echo "$N"|cut -d":" -f1)
+            VOL_NAME="mapr.$NODE.local""
+            VOL_MOUNT="/var/mapr/local/${NODE}"/local"
+
+            maprapi "/volume/info?name=${VOL_NAME}"
+        done
+    else
+        for N in $NODES; do
+            NODE=$(echo "$N"|cut -d":" -f1)
+            NFS_ROOT="/mapr/$CLUSTERNAME"
+            VOL_NAME="mapr.$NODE.local"
+            VOL_MOUNT="/var/mapr/local/${NODE}/local"
+            NFS_MOUNT="${NFS_ROOT}${VOL_MOUNT}"
+            if [ -d "${NFS_MOUNT}" ]; then
+                @go.log WARN "The directory already exists, should we try to delete before creating volume? (If the volume exists, the delete will fail and all is well"
+                if [ "$UNATTEND" == "1" ]; then
+                    DMNT="Y"
+                else
+                    read -e -p "Delete local diretory $NFS_MOUNT? (Y/N): " -i "Y" DMNT
+                fi
+                if [ "$DMNT" == "Y" ]; then
+                     sudo rm -rf $NFS_MOUNT
+                fi
+            fi
+
+            maprapi "/volume/create?name=${VOL_NAME}&path=${VOL_MOUNT}&replication=1&localvolumehost=${NODE}&localvolumeport=5660&shufflevolume=true&rereplicationtimeoutsec=300"
+            echo ""
+            T=""
+            while [ "$T" == "" ]; do
+                sleep 1
+                T=$(ls -1 /mapr/$CLUSTERNAME/var/mapr/local|grep "$NODE")
+            done
+            sudo chown mapr:$IUSER $NFS_MOUNT
+            sudo chmod 775 $NFS_MOUNT
+        done
+    fi
+}
+
+_localvolume "$@"

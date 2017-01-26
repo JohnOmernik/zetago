@@ -24,7 +24,7 @@ else
 fi
 
 
-bridgeports "APP_PORT_JSON", "27017", "$APP_PORTSTR"
+bridgeports "APP_PORT_JSON" "27017" "$APP_PORTSTR"
 haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 
 

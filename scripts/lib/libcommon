@@ -15,6 +15,64 @@
 #
 # getpass - Request a password from the User 
 # --------------------------------------------
+#
+
+#
+# function parseproxy() - Take a proxy string are parse it into host, port, user, and password 
+#
+# Arguments
+# $1 - The proxy string
+# $2 The variable to put the host into
+# $3 The variable to put the port into
+# $4 The variable to put the username into
+# $5 The variable to put the password into
+#
+function parseproxy(){
+
+    PROXSTR=$1
+
+    local HOST_RESULT=$2
+    local PORT_RESULT=$3
+    local USER_RESULT=$4
+    local PASS_RESULT=$5
+
+
+    CREDS="0"
+    PROTO="http://"
+
+    if [[ $PROXSTR == "https"* ]]; then
+        PROTO="https://"
+    else
+        PROTO="http://"
+    fi
+
+    if [[ $PROXSTR == *"@"* ]]; then
+        CREDS="1"
+    else
+        CREDS="0"
+    fi
+
+    if [ "$CREDS" == "1" ]; then
+        USTR=$(echo "$PROXSTR"|cut -d"@" -f1|sed "s@$PROTO@@g")
+        P_USER=$(echo "$USTR"|cut -d":" -f1)
+        P_PASS=$(echo "$USTR"|cut -d":" -f2)
+        HOSTPORT=$(echo "$PROXSTR"|cut -d"@" -f2)
+    else
+        HOSTPORT=$(echo "$PROXSTR"|sed "s@$PROTO@@g")
+        P_USER=""
+        P_PASS=""
+    fi
+
+    P_HOST=$(echo "$HOSTPORT"|cut -d":" -f1)
+    P_PORT=$(echo "$HOSTPORT"|cut -d":" -f2)
+
+    eval $HOST_RESULT="'$P_HOST'"
+    eval $PORT_RESULT="'$P_PORT'"
+    eval $USER_RESULT="'$P_USER'"
+    eval $PASS_RESULT="'$P_PASS'"
+}
+
+
 
 #
 # function addtoconfvar

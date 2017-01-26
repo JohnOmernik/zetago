@@ -21,11 +21,11 @@ if [ "$BUILD" == "Y" ]; then
     TMP_IMG="zeta/kafkabuild"
 
     if [ "$ZETA_DOCKER_PROXY" != "" ]; then
-        P_HOST=$(echo $ZETA_DOCKER_PROXY|cut -f2 -d":"|sed "s@//@@")
-        P_PORT=$(echo $ZETA_DOCKER_PROXY|cut -f3 -d":")
-        #echo "Proxy Host: $P_HOST"
-        #echo "Proxy Port: $P_PORT"
-        DOCKERLINE="ENV JAVA_OPTS -Dhttp.proxyHost=$P_HOST -Dhttp.proxyPort=$P_PORT -Dhttps.proxyHost=$P_HOST -Dhttps.proxyPort=$P_PORT"
+        parseproxy "$ZETA_DOCKER_PROXY" "M_HOST" "M_PORT" "M_USER" "M_PASS"
+        DOCKERLINE="ENV JAVA_OPTS -Dhttp.proxyHost=$M_HOST -Dhttp.proxyPort=$M_PORT -Dhttps.proxyHost=$M_HOST -Dhttps.proxyPort=$M_PORT"
+        if [ "$M_USER" != "" ]; then
+            DOCKERLINE="$DOCKERLINE -Dhttp.proxyUser=$M_USER -Dhttp.proxyPassword=$M_PASS -Dhttps.proxyUser=$M_USER -Dhttps.proxyPassword=$M_PASS"
+        fi
     else
         DOCKERLINE=""
     fi
