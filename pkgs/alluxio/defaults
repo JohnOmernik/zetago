@@ -1,4 +1,4 @@
 #!/bin/bash
 
-DEF_APP_VERS="mongo-3.4.vers"
+DEF_APP_VERS="alluxio_v1.4.0.vers"
 REC_DIR="zeta"
