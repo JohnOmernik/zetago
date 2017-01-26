@@ -90,11 +90,13 @@ APP_HIST_CNT="1"
 echo ""
 echo "Spark Resources"
 echo ""
-read -e -p "Please enter the Max number of executors: " -i "10" APP_SPARK_MAX_EXECUTORS
+read -e -p "Please enter the Max number of dynamic executors: " -i "10" APP_SPARK_MAX_EXECUTORS
 read -e -p "Please enter the amount of Memory for the Spark Driver: " -i "512m" APP_SPARK_DRIVER_MEM
 read -e -p "Please enter the amount of Memory for the Spark Executor: " -i "4096m" APP_SPARK_EXECUTOR_MEM
 read -e -p "What is the total max cores to use for this instance: " -i "24" APP_SPARK_MAX_CORES
 read -e -p "What is the cores per executor to use for this instance: " -i "4" APP_SPARK_CORES_PER_EXECUTOR
+read -e -p "What is the minimim number of executors for this instance: " -i "1" APP_SPARK_MIN_EXECUTORS
+read -e -p "What is the initial number of executors for this instance: " -i "1" APP_SPARK_INIT_EXECUTORS
 
 
 cat > ${APP_ENV_FILE} << EOL1
@@ -191,38 +193,30 @@ spark.executor.cores             $APP_SPARK_CORES_PER_EXECUTOR
 spark.sql.hive.metastore.sharedPrefixes com.mysql.jdbc,org.postgresql,com.microsoft.sqlserver,oracle.jdbc,com.mapr.fs.shim.LibraryLoader,com.mapr.security.JNISecurity,com.mapr.fs.jni
 
 spark.executor.extraClassPath   ${YARNCP}:${MAPRCP}
+spark.network.timeout 15s
 
 spark.mesos.executor.docker.image $APP_IMG
-
-spark.home  /spark
-
-spark.eventLog.enabled true
-
-spark.eventLog.dir maprfs://$CLDB/$APP_DIR/$APP_ROLE/$APP_NAME/$APP_ID/sparklogs
-
 spark.mesos.executor.docker.volumes ${APP_HOME}/${APP_VER_DIR}:/spark:ro,/opt/mapr:/opt/mapr:ro,/opt/mesosphere:/opt/mesosphere:ro,/mapr/$CLUSTERNAME/var/mapr/local:/mapr/$CLUSTERNAME/var/mapr/local:rw
 
-spark.history.fs.cleaner.enabled    true
-
-spark.history.fs.cleaner.interval   1d
-
-spark.history.fs.cleaner.maxAge 7d
-
-spark.shuffle.service.enabled true
-
-spark.network.timeout 30s
-
-spark.shuffle.io.connectionTimeout 30s
-
-spark.dynamicAllocation.enabled true
-
-spark.dynamicAllocation.maxExecutors $APP_SPARK_MAX_EXECUTORS
-
+spark.home  /spark
 spark.local.dir /tmp/spark
 
+spark.eventLog.enabled true
+spark.eventLog.dir maprfs://$CLDB/$APP_DIR/$APP_ROLE/$APP_NAME/$APP_ID/sparklogs
+spark.history.fs.cleaner.enabled    true
+spark.history.fs.cleaner.interval   1d
+spark.history.fs.cleaner.maxAge 7d
 spark.history.fs.logDirectory maprfs://$CLDB/$APP_DIR/$APP_ROLE/$APP_NAME/$APP_ID/sparklogs
 
+spark.shuffle.service.enabled true
+spark.shuffle.io.connectionTimeout 10s
 spark.shuffle.service.port $APP_SHUF_PORT
+
+spark.dynamicAllocation.enabled true
+spark.dynamicAllocation.minExecutors $APP_SPARK_MIN_EXECUTORS
+spark.dynamicAllocation.initialExecutors $APP_SPARK_INIT_EXECUTORS
+spark.dynamicAllocation.maxExecutors $APP_SPARK_MAX_EXECUTORS
+spark.dynamicAllocation.executorIdleTimeout 60s
 
 EOC
 
