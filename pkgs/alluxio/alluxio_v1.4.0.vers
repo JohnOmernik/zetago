@@ -12,7 +12,7 @@ if [ "$BUILD" == "Y" ]; then
 
 cat > ./Dockerfile << EOF
 FROM ${ZETA_DOCKER_REG_URL}/buildbase_mapr
-RUN apt-get update && apt-get install -y maven
+RUN apt-get update && apt-get install -y openjdk-8-jdk maven
 CMD ["/bin/bash"
 EOF
     MAPR_VERS=$(ls -1 /opt/mapr/lib|grep hadoop-yarn-common|sed "s/hadoop-yarn-common-//g"|sed "s/\.jar//g")
@@ -32,6 +32,7 @@ EOB
     cd ..
     sudo docker run -v=$CURDIR:/app -it --rm $TMP_IMG /app/build.sh
     sudo docker rmi -f $TMP_IMG
+    sudo chown -R $IUSER:$IUSER ./alluxio
     tar zcf ./$APP_TGZ ./alluxio
     mv $APP_TGZ $APP_PKG_DIR/
 fi
