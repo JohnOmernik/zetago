@@ -52,7 +52,7 @@ If you have a on-prem cluster where having a large node dedicated to a special r
 That is the fundamental difference, if you don't want to have "public" nodes as defined by DCOS, then leave the public prompt in the DCOS config creation blank, and instead specify edge nodes manually in the network configuration.  If you specify public nodes in the DCOS config, it will auto populate the suggested node in the network config. 
 
 
-### Get initial Repo
+### Get initial Repo - Note this prep will not work from a mac.  Please run from a linux host to start... 
 ----------
 1. Clone https://github.com/JohnOmernik/zetago
 2. $ cd zetago
