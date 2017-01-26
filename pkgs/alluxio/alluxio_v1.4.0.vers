@@ -50,7 +50,7 @@ if [ -f "/app/settings.xml" ]; then
     cp /app/settings.xml /root/.m2/
 fi
 
-mvn install -DskipTests -Pspark -Dhadoop.version=$MAPR_VERS
+mvn install -DskipTests -Pmesos -Pspark -Dhadoop.version=$MAPR_VERS
 EOB
     chmod +x ./build.sh
 
