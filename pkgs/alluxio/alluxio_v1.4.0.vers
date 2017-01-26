@@ -13,15 +13,43 @@ if [ "$BUILD" == "Y" ]; then
 cat > ./Dockerfile << EOF
 FROM ${ZETA_DOCKER_REG_URL}/buildbase_mapr
 RUN apt-get update && apt-get install -y openjdk-8-jdk maven
-CMD ["/bin/bash"
+CMD ["/bin/bash"]
 EOF
     MAPR_VERS=$(ls -1 /opt/mapr/lib|grep hadoop-yarn-common|sed "s/hadoop-yarn-common-//g"|sed "s/\.jar//g")
 
     sudo docker build -t $TMP_IMG .
     CURDIR=$(pwd)
+
+    if [ "$ZETA_DOCKER_PROXY" != "" ]; then
+        parseproxy "$ZETA_DOCKER_PROXY" "M_HOST" "M_PORT" "M_USER" "M_PASS"
+
+cat > ./settings.xml << EOI
+<settings>
+  <proxies>
+   <proxy>
+      <id>myproxy</id>
+      <active>true</active>
+      <protocol>http</protocol>
+      <host>${M_HOST}</host>
+      <port>${M_PORT}</port>
+      <username>${M_USER}</username>
+      <password>${M_PASS}</password>
+      <nonProxyHosts>${DOCKER_NOPROXY}</nonProxyHosts>
+    </proxy>
+  </proxies>
+</settings>
+EOI
+    fi
+
 cat > ./build.sh << EOB
 #!/bin/bash
 cd /app/alluxio
+
+if [ -f "/app/settings.xml" ]; then
+    mkdir -p /root/.m2
+    cp /app/settings.xml /root/.m2/
+fi
+
 mvn install -DskipTests -Pspark -Dhadoop.version=$MAPR_VERS
 EOB
     chmod +x ./build.sh
