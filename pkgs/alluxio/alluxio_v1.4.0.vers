@@ -1,0 +1,37 @@
+#!/bin/bash
+
+APP_VER="v1.4.0"
+
+APP_GIT_BASE="https://github.com/alluxio"
+APP_GIT_REPO="alluxio"
+APP_TGZ="alluxio-$APP_VER.tgz"
+REQ_APP_IMG_NAME="buildbase_mapr"
+
+if [ "$BUILD" == "Y" ]; then
+    TMP_IMG="zeta/alluxbuild"
+
+cat > ./Dockerfile << EOF
+FROM ${ZETA_DOCKER_REG_URL}/buildbase_mapr
+RUN apt-get install -y maven
+CMD ["/bin/bash"
+EOF
+    MAPR_VERS=$(ls -1 /opt/mapr/lib|grep hadoop-yarn-common|sed "s/hadoop-yarn-common-//g"|sed "s/\.jar//g")
+
+    sudo docker build -t $TMP_IMG .
+    CURDIR=$(pwd)
+cat > ./build.sh << EOB
+#!/bin/bash
+cd /app/alluxio
+mvn install -DskipTests -Dhadoop.version=$MAPR_VERS
+EOB
+    chmod +x ./build.sh
+
+    git clone ${APP_GIT_BASE}/${APP_GIT_REPO}
+    cd $APP_GIT_REPO
+    git checkout $APP_VER
+    cd ..
+    sudo docker run -v=$CURDIR:/app -it --rm $TMP_IMG /app/build.sh
+    sudo docker rmi -f $TMP_IMG
+    tar zcf ./$APP_TGZ ./alluxio
+    mv $APP_TGZ $APP_PKG_DIR/
+fi
