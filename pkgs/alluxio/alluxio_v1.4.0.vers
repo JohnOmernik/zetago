@@ -22,7 +22,7 @@ EOF
 cat > ./build.sh << EOB
 #!/bin/bash
 cd /app/alluxio
-mvn install -DskipTests -Dhadoop.version=$MAPR_VERS
+mvn install -DskipTests -Pspark -Dhadoop.version=$MAPR_VERS
 EOB
     chmod +x ./build.sh
 
