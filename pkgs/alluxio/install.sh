@@ -10,6 +10,9 @@ APP_MAR_MASTER_ID="${APP_ROLE}/${APP_ID}/aluxmaster"
 APP_MAR_WORKER_ID="${APP_ROLE}/${APP_ID}/aluxworker"
 
 
+@go.log FATAL "This is not done yet" 
+
+
 @go.log INFO "Counting active agent nodes with MapR"
 NODES=$(echo "$INODES"|tr ";" " ")
 APP_SHUF_CNT=0
