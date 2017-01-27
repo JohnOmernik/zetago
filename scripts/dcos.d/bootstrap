@@ -13,11 +13,11 @@ if [ "$FW_FIRST_RUN" != "1" ]; then
 fi
 
 
-ssh -o StrictHostKeyChecking=no $BOOTSTRAP_NODE "mkdir -p $BOOTSTRAP_LOC/genconf"
+ssh $BOOTSTRAP_NODE "mkdir -p $BOOTSTRAP_LOC/genconf"
 
 ./zeta dcos createipdetect "$IP_DETECT" "1"
 
-CHKIP=$(ssh -o StrictHostKeyChecking=no $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && cd genconf && ls ip-detect")
+CHKIP=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && cd genconf && ls ip-detect")
 
 if [ "$CHKIP" == "" ]; then
     scp ./conf/ip-detect $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
