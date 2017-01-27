@@ -13,9 +13,9 @@ echo ""
 TDNS=$(echo "$DNS_RESOLVERS"|tr " " ",")
 
 if [ "$TDNS" != "" ]; then
-    DNS_SERVERS="198.51.100.1,192.168.100.2,198.51.100.3,${TDNS}"
+    DNS_SERVERS="198.51.100.1,198.51.100.2,198.51.100.3,${TDNS}"
 else
-    DNS_SERVERS="198.51.100.1,192.168.100.2,198.51.100.3"
+    DNS_SERVERS="198.51.100.1,198.51.100.2,198.51.100.3"
 fi
 
 echo "The DCOS DNS Servers are $DNS_SERVERS"
