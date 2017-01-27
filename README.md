@@ -19,7 +19,6 @@ This other repos may continue to get updates until they are completely folded in
 ----------
 1. Get an Amazon AWS Account. Upload a keypair (without a password) so you have one accessible to use for your cluster. 
 2. Spin up 5 hosts (I used m3.xlarge) running Ubuntu 16.04 (For now)
-2(b). To ensure you have a host to start everything, start up one more node than you intend for your cluster. If you intend 1 master, and 4 agents, start 6 nodes. Use the 6th node as you jump box for setup. This node can be shutdown once you start connecting to your cluster init_node. 
 3. Note the subnet (Mine was 172.31.0.0/16) - If you are unclear here, you may need to create your own subnet for testing. All nodes, but be able to talk to all nodes (via security policy) on all ports
 4. On the Add storage, the two disks is correct, but up up the root volume to be 50 GB instead of 8
 5. Security Group - SSH (22) from anywhere, All traffic from your subnet (mine was 172.31.0.0/16) and All traffic from your IP (we will change this later, once we get the node firewalls up, we will open this to world to keep things easier to manage)
@@ -125,7 +124,9 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
     - It also provides the Master UI Address (as well as exhibitor)
     - The Master will take some time to come up, it checks this, and doesn't install agents until after the master is healthy.
 7. Check the UI for DCOS and once all your agents are connected, rerun the firewall now that DCOS is deployed. $ ./zeta network deployfw -f="Post DCOS Firewall Deploy"
-
+    - Note, if you are on an unstable IP and instead of specifying remote admin machines, you instead opted for open to the world SSH. UIs are a bit tricky.
+    - One option is to connect via ssh and use a remote socks proxy. ssh -D8080 user@clusterip  to connect then set your browser to use a SOCKS proxy at -d8080.
+    - The other option is to just add your IP to the ./conf/network.conf file and redeploy the firewall. 
 ### MapR Install
 ----------
 1. Once DCOS is is up and running and the Agents properly appear in the UI its time for MapR
