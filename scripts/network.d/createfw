@@ -139,6 +139,7 @@ else
     MYIP="NOSERVICES"
 fi
 
+REMOTE_ALL_SSH="$REMOTE_ALL_SSH"
 DNS_SERVERS="$DNS_SERVERS"
 NTP_SERVERS="$NTP_SERVERS"
 ZETA_CIDR_ROUTABLE="$ZETA_CIDR_ROUTABLE"
@@ -236,6 +237,10 @@ iptables -A INPUT -s \$DOCKER_CIDR -j ACCEPT
 iptables -A INPUT -s \$DNS_SERVERS -p udp --dport 53 -j ACCEPT
 iptables -A INPUT -s \$DNS_SERVERS -p tcp --dport 53 -j ACCEPT
 iptables -A INPUT -s \$REMOTE_ADM_IPS -j logaccept
+if [ "\$REMOTE_ALL_SSH" == "Y" ]; then
+    iptables -A INPUT -p tcp --dport 22 -j logaccept
+fi
+
 echo "Importing Custom Global INPUT Rules"
 $ALL_INPUT
 

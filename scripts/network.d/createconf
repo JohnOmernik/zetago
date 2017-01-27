@@ -27,7 +27,7 @@ read -e -p "Enter NTP Servers for outbound access, or leave blank: " NTP_SERVERS
 echo ""
 echo "Using CIDR Notation (such as 192.168.0.0/24) Please enter the CIDR for the routable addresses on each node (only one)"
 echo ""
-read -e -p "Zeta Routable addressess (CIDR): " -i "192.168.0.0/24"  ZETA_CIDR_ROUTABLE
+read -e -p "Zeta Routable addressess (CIDR): " -i "172.31.0.0/16"  ZETA_CIDR_ROUTABLE
 echo ""
 echo "If you have additional interfaces that are non-routable (for node-to-node communication) Please enter the addresses here. If you have more than one, just enter with commans in between: Example: 192.168.1.0/24,192.168.2.0/24"
 echo ""
@@ -49,13 +49,18 @@ echo "Docker Interface: $DOCKER_INTERFACE"
 echo "Please enter a list of static IP addresses used for remote administration. These IPs should be comma separated"
 echo ""
 read -e -p "Static IPs of remote admin IP machines: " REMOTE_IPS
-
+echo ""
 echo "You may also provide a list of machine names to attempt to look up in order to add to the remote IPs list. This list should be comma separated as well and resolveable from the cluster"
 echo "This list does not have to include machine that have static IPs and already included above, this list is for remote admin boxes with dynamic IPs that could change quite a bit"
 echo ""
 read -e -p "List of remote admin machine names: " REMOTE_NAMES
 echo ""
-
+echo "in addition to full access for remote machines just specified, you can also choose to allow full access from the world to port 22 for SSH"
+echo "There are benefits and risks to this, please choose wisely, the default is N (More secure) but if your remote machine IP changes alot, it can make it so you can't access your cluster"
+echo "If your IP changes quite a bit, you may want to answer yes here"
+echo ""
+read -e -p "Allow access to port 22 (SSH) to the world in addition to remote IPs? (Y/N): " -i "N" REMOTE_ALL_SSH
+echo ""
 if [ "$DOCKER_PROXY" != "" ]; then
     PROXY_HOST=$(echo $DOCKER_PROXY|sed "s@https://@@g"|sed "s@http://@@g"|grep -o -P "(^|@)([^:]+)"|sed "s/@//g")
     PROXY_PORT=$(echo $DOCKER_PROXY|sed "s@https://@@g"|sed "s@http://@@g"|cut -d":" -f2)
@@ -114,6 +119,7 @@ ZETA_CIDR_NONROUTABLE="$ZETA_CIDR_NONROUTABLE"
 
 REMOTE_IPS="$REMOTE_IPS"
 REMOTE_NAMES="$REMOTE_NAMES"
+REMOTE_ALL_SSH="$REMOTE_ALL_SSH"
 
 EDGE_NODES="$EDGE_NODES"
 SERVICES_CONF="$SERVICES_CONF"
