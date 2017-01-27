@@ -19,6 +19,7 @@ This other repos may continue to get updates until they are completely folded in
 ----------
 1. Get an Amazon AWS Account. Upload a keypair (without a password) so you have one accessible to use for your cluster. 
 2. Spin up 5 hosts (I used m3.xlarge) running Ubuntu 16.04 (For now)
+    - Note: Nodes must have at least 16GB of ram, and at least one extra disk (other than OS disk) for MapR Services to install.
 3. Note the subnet (Mine was 172.31.0.0/16) - If you are unclear here, you may need to create your own subnet for testing. All nodes, but be able to talk to all nodes (via security policy) on all ports
 4. On the Add storage, the two disks is correct, but up up the root volume to be 50 GB instead of 8
 5. Security Group - SSH (22) from anywhere, All traffic from your subnet (mine was 172.31.0.0/16) and All traffic from your IP (we will change this later, once we get the node firewalls up, we will open this to world to keep things easier to manage)
