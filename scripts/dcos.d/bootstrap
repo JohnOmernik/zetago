@@ -17,7 +17,7 @@ ssh $BOOTSTRAP_NODE "mkdir -p $BOOTSTRAP_LOC/genconf"
 
 ./zeta dcos createipdetect "$IP_DETECT" "1"
 
-CHKIP=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && cd genconf && ls ip-detect")
+CHKIP=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && cd genconf && ls ip-detect" 2> /dev/null)
 
 if [ "$CHKIP" == "" ]; then
     scp ./conf/ip-detect $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
@@ -68,7 +68,7 @@ ssh_user: ${IUSER}
 EOF
 
 
-CHKYML=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && cd genconf && ls config.yaml")
+CHKYML=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && cd genconf && ls config.yaml" 2> /dev/null)
 if [ "$CHKYML" == "" ]; then
     scp /tmp/config.yaml $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
 else
@@ -76,7 +76,7 @@ else
 fi
 rm /tmp/config.yaml
 
-CHK=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && ls dcos_generate_config.sh")
+CHK=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && ls dcos_generate_config.sh" 2> /dev/null)
 
 if [ "$CHK" != "" ]; then
     read -e -p "There appears to be a dcos_generate_config.sh already on the Bootstrap node in the bootstrap location. Do you wish to re-download? Answer N to use existing (Y/N): " -i "N" DL
@@ -88,7 +88,7 @@ if [ "$DL" == "Y" ]; then
     ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && curl -O https://downloads.dcos.io/dcos/stable/dcos_generate_config.sh"
 fi
 
-CHKGENCONF=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && ls *.tar")
+CHKGENCONF=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && ls *.tar" 2> /dev/null)
 if [ "$CHKGENCONF" == "" ]; then
     ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && sudo docker pull nginx && sudo bash dcos_generate_config.sh"
 else
