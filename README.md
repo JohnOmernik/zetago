@@ -17,13 +17,15 @@ This other repos may continue to get updates until they are completely folded in
 
 ### Initial Prep and Instance launch (AWS version, we can do other versions and even use APIs for this later)
 ----------
-1. Get an Amazon AWS Account. Upload a keypair so you have one accessible to use for your cluster. 
+1. Get an Amazon AWS Account. Upload a keypair (without a password) so you have one accessible to use for your cluster. 
 2. Spin up 5 hosts (I used m3.xlarge) running Ubuntu 16.04 (For now)
-3. Note the subnet (Mine was 172.31.0.0/16)
+2(b). To ensure you have a host to start everything, start up one more node than you intend for your cluster. If you intend 1 master, and 4 agents, start 6 nodes. Use the 6th node as you jump box for setup. This node can be shutdown once you start connecting to your cluster init_node. 
+3. Note the subnet (Mine was 172.31.0.0/16) - If you are unclear here, you may need to create your own subnet for testing. All nodes, but be able to talk to all nodes (via security policy) on all ports
 4. On the Add storage, the two disks is correct, but up up the root volume to be 50 GB instead of 8
-5. Security Group - SSH (22) from anywhere, All traffic from 172.31.0.0/16 (or your subnet) and All traffic from your IP (we will change this later, once we get the node firewalls up, we will open this to world to keep things easier to manage)
+5. Security Group - SSH (22) from anywhere, All traffic from your subnet (mine was 172.31.0.0/16) and All traffic from your IP (we will change this later, once we get the node firewalls up, we will open this to world to keep things easier to manage)
 6. Launch with the prv key you intend to use from the initial node prep in "Prep Cluster" below
-
+7. Pick a node, upload the private key from step 1 and connect to this node. 
+8. Go to "Get Initial Repo"
 
 ### Initial Prep - On Prem
 ----------
@@ -39,9 +41,9 @@ This other repos may continue to get updates until they are completely folded in
         - 8 or more "Storage" drives. Faster equates to better storage in your cluster
         - Networking: We like upping this as much as possible. 4 10Gbps Copper, bonded into two HA pairs.  One for the main Zeta (Routable) subnet and another for fast disk backchannel
     - Aim for at least 5 nodes to start with. 
+3. You must go to each node and have an account that is accessible by a SSH keypair (with no password), and has passwordless sudo rights. After install, you can deprivilege this account.  Goto "Get Initial Repo"
 
-
-### Initial Prep - Edge Nodes vs. Public 
+### Notes: Initial Prep - Edge Nodes vs. Public 
 ----------
 Public nodes in DCOS run with the "slave_public" role. That means taks will not run on them unless explicitly told to. This works great when you want to have a public node that is your edge node, and provides a hop point into your cluster than you can control 
 
@@ -52,9 +54,10 @@ If you have a on-prem cluster where having a large node dedicated to a special r
 That is the fundamental difference, if you don't want to have "public" nodes as defined by DCOS, then leave the public prompt in the DCOS config creation blank, and instead specify edge nodes manually in the network configuration.  If you specify public nodes in the DCOS config, it will auto populate the suggested node in the network config. 
 
 
-### Get initial Repo - Note this prep will not work from a mac.  Please run from a linux host to start... 
+### Get initial Repo - Note this prep will not work from a mac.  Please run from a linux host to start (See aws note about start node)
 ----------
 1. Clone https://github.com/JohnOmernik/zetago
+1b. Ensure your priv key you used to start the nodes is on the box you are doing the prep from.  
 2. $ cd zetago
 
 ### Prep Cluster
@@ -64,7 +67,8 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
     - The Initial user list is a list of users the scripts try to connect to the nodes.  If you need to add to the default list just make is space separated
     - the Key is the key that is used to connect to the instance the first time. This will change after we prep the nodes. 
     - Passwords for the zetaadm (IUSER) and mapr users. Pretty clean cut. 
-    - Space separated list of nodes to connect to. These are the IPs that the scripts will connect to initially to do the setup. If on prem, they may be internal IPs, if AWS they may be external.
+    - Space separated list of nodes to connect to. These are the IPs that the scripts will connect to initially to do the setup. If on prem, they may be internal IPs, if AWS they may be external depending on where you prepping from.
+      - On AWS if you are connecting to a node and doing all prep from there, use the internal AWS IPs. If you are using an off AWS Network linux box to do the initial prep, use the External IPs to AWS.
     - Initial node is the node that will be used to complete the zeta install. just pick one of the nodes in the previous list
     - Interface check list: This is just the list and order of interfaces we check for "internal" IPs. This should be ok to leave as is, unless you want to add or reorder for your env
     - All conf info is in ./conf/prep.conf
@@ -74,13 +78,14 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
     - $ ./zeta prep -l # This locks the conf, so it doesn't prompt you every time. It asks you to use the prep.conf again and then confirms the locking. Now it will assume the conf is correct. 
 3. Your conf is created, reviewed, and locked, the next step is to prep the nodes.
     - $ ./zeta prep install -a -u # This installs the prep on all nodes (-a) and does so unattended (-u) however it will prompt you for the version file to use... (Just use the default 1.0.0 by hitting enter)
+    - If you are running from one of the nodes, then just wait until your connection drops. This will be your node rebooting. When complete, connect back to the same node with your initial user. From here, you should connect to your initial node (You should be able to get to that node by cd zetago; ./zeta prep # It wil give you instructions on which node you picked and how to connect. 
 4. Once this completes, you can check the status of the nodes by running $ ./zeta prep status  Once all nodes are running with Docker, you can proceed to the next steps. 
 5. Also, to get the SSH command to connect to the initial nodes, type ./zeta prep at anytime
 
 ### Connect to cluster
 ----------
-1. Once the ./zeta prep status command returns docker installed on all nodes it's time to switch the context. Instead of running commands using ./zeta from your machine, you will be connecting to the initial node (specidfied in the config) and running all remaining commands from there
-    - You can get the exact SSH command to connect to the initial node by typing ./zeta prep on your machine, it will show you the SSH command to connect to the initial node. 
+1. Once the ./zeta prep status command returns docker installed on all nodes it's time to switch the context. Instead of running commands using ./zeta from your machine and user, you will be connecting to the initial node (specidfied in the config) and running all remaining commands from there
+    - You can get the exact SSH command to connect to the initial node by typing ./zeta prep on your machine, it will show you the SSH command to connect to the initial node with zetaadm (IUSER). 
 2. To get the SSH command to use, just type ./zeta prep and it will show you the SSH command to connect to the initial node
 3. Once connected to the inital node run $ cd zetago  # All commands will start from here
 

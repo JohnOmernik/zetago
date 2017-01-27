@@ -80,6 +80,11 @@ echo ""
 echo "DNS Resolution"
 echo "This is needed for external DNS resolution, defaults are examples from an AWS region, please enure the resolve it correct for your installation"
 echo ""
+echo "For assistance, here is your /etc/resolv.conf:"
+echo ""
+cat /etc/resolv.conf
+echo ""
+echo ""
 read -e -p "Space separated list of DNS resolver IPs: " -i "172.31.0.2" DNS_RESOLVERS
 echo ""
 read -e -p "DNS Search base: " -i "us-west-2.compute.internal" DNS_SEARCH
