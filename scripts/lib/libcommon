@@ -2,6 +2,7 @@
 #
 # libcommon
 #
+# parseproxy - Parse the proxy variables into component pieces
 #
 # addtoconfvar - Take a new value and check a specific confvar if it exists, if it doesn't, remove it
 #

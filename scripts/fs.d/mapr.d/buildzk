@@ -14,6 +14,9 @@ sourceconf "$MAPR_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
+checkapi "https://fsdocker-shared.marathon.slave.mesos:5000/v2" 3
+
+
 function _build_zk() {
 
     UNATTEND="0"
