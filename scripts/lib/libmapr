@@ -56,7 +56,7 @@ function mapr_volnamebymount(){
     else
         VOLNAME=""
     fi
-    eval $RESETUL="'$VOLNAME'"
+    eval $RESULT="'$VOLNAME'"
     #{"timestamp":1485892034121,"timeofday":"2017-01-31 07:47:14.121 GMT+0000","status":"OK","total":1,"data":[{"volumename":"mapr.hbase"}]}
 }
 #
