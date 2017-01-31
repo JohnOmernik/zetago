@@ -36,7 +36,7 @@ function fs_mkvol(){
         @go.log WARN "Volume Creation did not work - Result: $RETCODE - try again?"
         read -e -p "Try Again? (Y/N): " -i "Y" TRY
         if [ "$TRY" == "Y" ]; then
-            maprapi "RETCODE" "RETOUT" "/volume/create?name=${VNAME}&path=${HDFSPATH}&rootdirperms=${ROOTPERMS}&${MAPR_DEFAULT}"
+            maprapi "RETCODE" "RETOUT" "/volume/create?name=${VNAME}&path=${HDFSPATH}&rootdirperms=${ROOTPERMS}&user=${MAPR_DEFAULT}"
         else
             @go.log WARN "User home vol creation failed"
         fi
