@@ -30,21 +30,23 @@ function fs_mkvol(){
 
     MAPR_DEFAULT="${IUSER}:fc,a,dump,restore,m,d%20${FSUSER}:fc,a,dump,restore,m,d&ae=$FSUSER"
 
-    maprapi "RETCODE" "/volume/create?name=${VNAME}&path=${HDFSPATH}&rootdirperms=${ROOTPERMS}&${MAPR_DEFAULT}"
+    maprapi "RETCODE" "RETOUT" "/volume/create?name=${VNAME}&path=${HDFSPATH}&rootdirperms=${ROOTPERMS}&${MAPR_DEFAULT}"
 
     while [ "$RETCODE" != "0" ]; do
-        @go.log WARN "Volume Creation did not work try again?"
+        @go.log WARN "Volume Creation did not work - Result: $RETCODE - try again?"
         read -e -p "Try Again? (Y/N): " -i "Y" TRY
         if [ "$TRY" == "Y" ]; then
-            maprapi "RETCODE" "/volume/create?name=${VNAME}&path=${HDFSPATH}&rootdirperms=${ROOTPERMS}&${MAPR_DEFAULT}"
+            maprapi "RETCODE" "RETOUT" "/volume/create?name=${VNAME}&path=${HDFSPATH}&rootdirperms=${ROOTPERMS}&${MAPR_DEFAULT}"
         else
             @go.log WARN "User home vol creation failed"
         fi
     done
-    while [ ! -d "$FUSEPATH" ]; do
-       @go.log INFO "Waiting for $FUSEPATH sync"
-    done
-
+    if [ "$RETCODE" == "0" ]; then
+        while [ ! -d "$FUSEPATH" ]; do
+            sleep 1
+           @go.log INFO "Waiting for $FUSEPATH sync"
+        done
+    fi
     eval $RESULT="'$RETCODE'"
 
 }
