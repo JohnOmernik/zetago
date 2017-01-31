@@ -30,7 +30,7 @@ function fs_mkvol(){
 
     MAPR_DEFAULT="${IUSER}:fc,a,dump,restore,m,d%20${FSUSER}:fc,a,dump,restore,m,d&ae=$FSUSER"
 
-    maprapi "RETCODE" "RETOUT" "/volume/create?name=${VNAME}&path=${HDFSPATH}&rootdirperms=${ROOTPERMS}&${MAPR_DEFAULT}"
+    maprapi "RETCODE" "RETOUT" "/volume/create?name=${VNAME}&path=${HDFSPATH}&rootdirperms=${ROOTPERMS}&user=${MAPR_DEFAULT}"
 
     while [ "$RETCODE" != "0" ]; do
         @go.log WARN "Volume Creation did not work - Result: $RETCODE - try again?"
