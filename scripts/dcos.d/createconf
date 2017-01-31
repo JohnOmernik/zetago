@@ -10,7 +10,7 @@ IP_DETECT="./conf/ip-detect"
 ME=$(whoami)
 
 if [ "$ME" != "$IUSER" ]; then
-    @go.log FATAL "Currentling running as $ME. Scripts need to be run as $IUSER. Please connect to the init node as $IUSER via $ ssh -i $OUTKEY $IUSER@$INIT_NODE"
+    @go.log FATAL "Currentling running as $ME. Scripts need to be run as $IUSER. Please connect to the init node as $IUSER via $ ssh -i $OUT_KEY $IUSER@$INIT_NODE"
 fi
 
 
