@@ -19,20 +19,20 @@
 function fs_rmdir(){
 
     local RESULT=$1
-    local PATH=$2
+    local DPATH=$2
 
     FUSEPATH=""
     HDFSPATH=""
-
-    CHK=$(echo "$PATH"|grep "$CLUSTERMOUNT")
+    echo "DPATH: $DPATH
+    CHK=$(echo "$DPATH"|grep "$CLUSTERMOUNT")
     if [ "$CHK" != "" ]; then
         @go.log INFO "$CLUSTERMOUNT found in DIR to delete, assuming FUSE Path provided"
-        FUSEPATH="$PATH"
-        HDFSPATH=$(echo "PATH"|sed "s@$CLUSTERMOUNT@@g")
+        FUSEPATH="$DPATH"
+        HDFSPATH=$(echo "$DPATH"|sed "s@$CLUSTERMOUNT@@g")
     else
         @go.log INFO "$CLUSTERMOUNT not found in DIR, assuming HDFS Path provided"
-        FUSEPATH="${CLUSTERMOUNT}${PATH}"
-        HDFSPATH="$PATH"
+        FUSEPATH="${CLUSTERMOUNT}${DPATH}"
+        HDFSPATH="$DPATH"
     fi
     mapr_volnamebymount "VOL_NAME" "$HDFSPATH"
 
