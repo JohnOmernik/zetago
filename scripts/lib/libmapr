@@ -106,7 +106,7 @@ EOCRED
         @go.log INFO "MAPR API Success: Command: $CMD - Results $CURL_RESULT"
     fi
 
-    eval $RETCODE="'$RT''
+    eval $RETCODE="'$RT'"
     eval $RESULT="'$CURL_RESULT'"
     rm $TFILE
 }
