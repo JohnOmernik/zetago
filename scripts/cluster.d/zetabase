@@ -38,7 +38,7 @@ function _zetabase() {
 
    @go.log INFO "Checking for and creating if not existing, home directories for $FSUSER and $IUSER users"
     UNAMES="$FSUSER $IUSER"
-    for U in $NAMES; do
+    for U in $UNAMES; do
         if [ ! -d "$CLUSTERMOUNT/user/$U" ]; then
             @go.log INFO "User Directory for $U not found: Creating"
             fs_mkvol "RETCODE" "/user/$U" "user.$U" "770"
