@@ -6,6 +6,7 @@
 
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
 sourceconf "$FS_CONF"
 sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
