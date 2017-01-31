@@ -32,8 +32,8 @@ function _zetabase() {
     fs_prepbase
 
 
-    if [ ! -d "$CLUSTERROOT/user" ]; then
-        mkdir -p $CLUSTERROOT/user # Just a need a directory here
+    if [ ! -d "$CLUSTERMOUNT/user" ]; then
+        mkdir -p $CLUSTERMOUNT/user # Just a need a directory here
     fi
 
    @go.log INFO "Checking for and creating if not existing, home directories for $FSUSER and $IUSER users"
@@ -62,6 +62,7 @@ function _zetabase() {
         sudo chmod -R 750 $CLUSTERMOUNT/$DIR
     done
 
+    exit 0
     #####################################################
     # Create base Zeta Key Store locations
     # the kstore directory under zeta is used to house zeta specific configuration data, as well as zeta specific clusterwide information
