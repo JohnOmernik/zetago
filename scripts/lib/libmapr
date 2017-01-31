@@ -1,16 +1,79 @@
 #!/bin/bash
 #
-# Mapr helper fuctions for use with Zeta
+# Mapr Provider library for use with Zeta
+#
+##### The Following functions are required to have implementations to work with Zeta
+#
+#
+#
+#
+#
 #
 
+#
+#  Remove a directory by mountpoint. This is specifically important for FS implementation that use mount points as directories (where you can't just delete the directory via FUSE)
+#  This should remove the directory wether it's a volume or not (if it's nots, just rm) and it will do based on the fuse base or not
+#  $1 Result
+#  $2 Path to directory to remove (Fuse Path, /CLUSTERBASE/CLUSTERNAME/PATH/TO/DIR or just /PATH/TO/DIR)
+
+function fs_rmdir() {
+
+    local RESULT=$1
+    local PATH=$2
+
+    FUSEPATH=""
+    HDFSPATH=""
+
+    CHK=$(echo "$PATH"|grep "$CLUSTERMOUNT")
+    if [ "$CHK" != "" ]; then
+        @go.log INFO "$CLUSTERMOUNT found in DIR to delete, assuming FUSE Path provided"
+        FUSEPATH="$PATH"
+        HDFSPATH=$(echo "PATH"|sed "s@$CLUSTERMOUNT@@g")
+    else
+        @go.log INFO "$CLUSTERMOUNT not found in DIR, assuming HDFS Path provided
+        FUSEPATH="${CLUSTERMOUNT}${PATH}"
+        HDFSPATH="$PATH"
+    fi
+    mapr_volnamebymount "VOL_NAME" "$HDFSPATH"
+
+    # To get the volume name, we 
+
+
+
+}
+
+
+
+################################ The Following are provider specific functions that are not required by Zeta
+function mapr_volnamebymount(){
+    local RESULT=$1
+    local HDFSP=$2
+
+    maprapi "APIRET" "APIOUT" "/volume/list?filter=%5B=%3D%3D${HDFSP}%5D&columns=n"
+
+    if [ "$APIRET" == "0" ]; then
+        echo "Success"
+    fi
+    echo "$APIOUT"
+
+
+}
+
+#
+#
+# maprapi - Sets up the MapR API calls based on creds
+#
+# Arguments
+# $1 Retcode (0 for success 1 for failre)
+# $2 Result
+# $3 CMD to run
+#
 function maprapi(){
     #Base is https://HOST/rest"
     # CMD should be like "/volume/remove?name=mapr.hbase"
-    CMD=$1
-    RETRIES="$2"
-    if [ "$RETRIES" == "" ]; then
-        RETRIES="1"
-    fi
+    local RETCODE=$1
+    local RESULT=$2
+    local CMD=$3
 
     HOST=$(echo $CLDBS|cut -d"," -f1|cut -d":" -f1)
 
@@ -19,6 +82,8 @@ function maprapi(){
     mkdir -p ./tmp
 
     TFILE="./tmp/netrc.tmp"
+
+    RT="0"
 
     touch $TFILE
     chown ${IUSER}:${IUSER} $TFILE
@@ -32,24 +97,16 @@ EOCRED
     CURL_GET_BASE="/opt/mesosphere/bin/curl -k -s --netrc-file $TFILE $BASE_REST"
 
     CURL_RESULT=$(${CURL_GET_BASE}${CMD})
-    ATTEMPT="1"
     ERR_RESULT=$(echo $CURL_RESULT|grep "ERROR")
+
     if [ "$ERR_RESULT" != "" ]; then
         @go.log WARN "MAPR API Failure: Command $CMD - Result: $CURL_RESULT"
-        while [ "$ATTEMPT" -lt "$RETRIES" ] && [ "$ERR_RESULT" != "" ]; do
-            @go.log WARN "Attempt to create home directory failed, trying again after 30 seconds"
-            sleep 30
-            CURL_RESULT=$(${CURL_GET_BASE}${CMD})
-            ATTEMPT=$(( $ATTEMPT + 1 ))
-            ERR_RESULT=$(echo $CURL_RESULT|grep "ERROR")
-            @go.log WARN "Previous attempts failed: On Attempt $ATTEMPT this is the result of $CMD - $CURL_RESULT"
-        done
+        RT="1"
     else
-        @go.log INFO "MAPR API Success: Command: $CMD - Result: $CURL_RESULT"
-
+        @go.log INFO "MAPR API Success: Command: $CMD - Results $CURL_RESULT"
     fi
 
-
+    eval $RETCODE="'$RT''
+    eval $RESULT="'$CURL_RESULT'"
     rm $TFILE
-
 }

@@ -13,7 +13,9 @@ sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
-. "$_GO_USE_MODULES" 'libmapr'
+
+FS_LIB="lib${FS_PROVIDER}"
+. "$_GO_USE_MODULES" $FS_LIB
 
 function _zetabase() {
 
@@ -32,10 +34,15 @@ function _zetabase() {
         @go.log WARN "Found /mapr/$CLUSTERNAME/hbase  Should we remove?"
         read -e -p "Remove /hbase? (Y/N): " -i "Y" RMHBASE
         if [ "$RMHBASE" == "Y" ]; then
-            maprapi "/volume/remove?name=mapr.hbase"
-            sudo rm -rf /mapr/$CLUSTERNAME/hbase
+            fs_rmdir "RETVAL" "$CLUSTERMOUNT/hbase"
+            fs_rmdir "RETVAL" "/hbase"
+#            maprapi "/volume/remove?name=mapr.hbase"
+#            sudo rm -rf /mapr/$CLUSTERNAME/hbase
         fi
     fi
+
+    exit 0
+
     if [ -d "/mapr/$CLUSTERNAME/apps" ]; then
         @go.log WARN "Removing default mapr.apps volume if it exists"
         maprapi "/volume/remove?name=mapr.apps"
