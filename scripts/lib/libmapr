@@ -35,7 +35,7 @@ function fs_rmdir(){
         HDFSPATH="$DPATH"
     fi
     mapr_volnamebymount "VOL_NAME" "$HDFSPATH"
-
+    echo "The volumne name for $HDFSPATH is $VOL_NAME"
     # To get the volume name, we
 
 
@@ -52,9 +52,12 @@ function mapr_volnamebymount(){
     maprapi "APIRET" "APIOUT" "/volume/list?filter=%5Bp%3D%3D${HDFSP}%5D&columns=n"
 
     if [ "$APIRET" == "0" ]; then
-        echo "Success"
+        VOLNAME=$(echo "$APIOUT"|grep -P -o "volumename\":\"[$^\"]\"|cut -d":" -f2|sed "s/\"//g")
+    else
+        VOLNAME=""
     fi
-    echo "$APIOUT"
+    eval $RESETUL="'$VOLNAME'"
+    #{"timestamp":1485892034121,"timeofday":"2017-01-31 07:47:14.121 GMT+0000","status":"OK","total":1,"data":[{"volumename":"mapr.hbase"}]}
 }
 #
 #
