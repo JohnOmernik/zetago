@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Move the tmp ZetaCA to the final location in /mapr
+# Move the tmp ZetaCA to the final location in /CLUSTERBASE
 # This script only needs to be run once and will ensure the CA moves to a more HA form. 
 #
 
@@ -21,13 +21,13 @@ function _finalzetaca() {
         @go.log FATAL "Must use ${IUSER} user"
     fi
 
-    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+    . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
 
 
-    NEW_APP_LOC="/mapr/$CLUSTERNAME/zeta/shared/zetaca"
+    NEW_APP_LOC="$CLUSTERMOUNT/zeta/shared/zetaca"
 
     echo ""
-    echo "This script updates and moves the currently running zetaca to be running from the MapR Filesystem"
+    echo "This script updates and moves the currently running zetaca to be running from the Shared Filesystem"
     echo ""
     DEF_OLD_APP_LOC="/home/${IUSER}/zetaca"
 
@@ -74,8 +74,8 @@ function _finalzetaca() {
     cp -R ${OLD_APP_LOC}/CA/* ${NEW_APP_LOC}/CA/
     cp ${OLD_APP_LOC}/gen_java_keystore.sh ${NEW_APP_LOC}/
     cp ${OLD_APP_LOC}/gen_server_cert.sh ${NEW_APP_LOC}/
-    cp ${OLD_APP_LOC}/zetaca_env.sh /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/
-    MAR_FILE="/mapr/$CLUSTERNAME/zeta/shared/zetaca/marathon.json"
+    cp ${OLD_APP_LOC}/zetaca_env.sh $CLUSTERMOUNT/zeta/kstore/env/env_shared/
+    MAR_FILE="$CLUSTERMOUNT/zeta/shared/zetaca/marathon.json"
 
     APP_IMG="${ZETA_DOCKER_REG_URL}/zetaca"
 
