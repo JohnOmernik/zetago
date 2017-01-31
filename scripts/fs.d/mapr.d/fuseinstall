@@ -198,7 +198,7 @@ EOL1
     ssh $NODE_HOST "echo \". /opt/mapr/conf/env.sh\"|sudo tee -a /opt/mapr/initscripts/mapr-posix-client-basic"
 
     ssh $NODE_HOST "sudo sed -i '/# Look for installed JDK/ i . \${BASEMAPR}/conf/env.sh' /opt/mapr/initscripts/mapr-fuse"
-    ssh $NODE_HOST "sudo sed -i 's@fuse\.mount\.point=/mapr@fuse.mount.point=/$CLUSTERBASE@g' /opt/mapr/conf/fuse.conf
+    ssh $NODE_HOST "sudo sed -i 's@fuse\.mount\.point=/mapr@fuse.mount.point=/$CLUSTERBASE@g' /opt/mapr/conf/fuse.conf"
     ssh $NODE_HOST "sudo /etc/init.d/mapr-posix-client-basic start"
     echo "NFS Mount: "
     ssh $NODE_HOST "ls -ls $CLUSTERMOUNT"
