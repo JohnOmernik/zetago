@@ -49,14 +49,13 @@ function mapr_volnamebymount(){
     local RESULT=$1
     local HDFSP=$2
 
-    maprapi "APIRET" "APIOUT" "/volume/list?filter=%5B=%3D%3D${HDFSP}%5D&columns=n"
+    maprapi "APIRET" "APIOUT" "/volume/list?filter=%5Bp%3D%3D${HDFSP}%5D&columns=n"
 
     if [ "$APIRET" == "0" ]; then
         echo "Success"
     fi
     echo "$APIOUT"
 }
-
 #
 #
 # maprapi - Sets up the MapR API calls based on creds
