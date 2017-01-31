@@ -15,8 +15,8 @@
 #  This should remove the directory wether it's a volume or not (if it's nots, just rm) and it will do based on the fuse base or not
 #  $1 Result
 #  $2 Path to directory to remove (Fuse Path, /CLUSTERBASE/CLUSTERNAME/PATH/TO/DIR or just /PATH/TO/DIR)
-
-function fs_rmdir() {
+#
+function fs_rmdir(){
 
     local RESULT=$1
     local PATH=$2
@@ -30,13 +30,13 @@ function fs_rmdir() {
         FUSEPATH="$PATH"
         HDFSPATH=$(echo "PATH"|sed "s@$CLUSTERMOUNT@@g")
     else
-        @go.log INFO "$CLUSTERMOUNT not found in DIR, assuming HDFS Path provided
+        @go.log INFO "$CLUSTERMOUNT not found in DIR, assuming HDFS Path provided"
         FUSEPATH="${CLUSTERMOUNT}${PATH}"
         HDFSPATH="$PATH"
     fi
     mapr_volnamebymount "VOL_NAME" "$HDFSPATH"
 
-    # To get the volume name, we 
+    # To get the volume name, we
 
 
 
@@ -55,8 +55,6 @@ function mapr_volnamebymount(){
         echo "Success"
     fi
     echo "$APIOUT"
-
-
 }
 
 #
