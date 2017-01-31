@@ -29,13 +29,16 @@ function _zetabase() {
     fi
 
 
-    @go.log INFO "Checking default hbase and apps volumes in MapR and removing if exists"
-    if [ -d "/mapr/$CLUSTERNAME/hbase" ]; then
-        @go.log WARN "Found /mapr/$CLUSTERNAME/hbase  Should we remove?"
+    @go.log INFO "Checking default hbase and apps volumes and removing if exists"
+    if [ -d "$CLUSTERMOUNT/hbase" ]; then
+        @go.log WARN "Found $CLUSTERMOUNT/hbase  Should we remove?"
         read -e -p "Remove /hbase? (Y/N): " -i "Y" RMHBASE
         if [ "$RMHBASE" == "Y" ]; then
-            fs_rmdir "RETVAL" "$CLUSTERMOUNT/hbase"
-            fs_rmdir "RETVAL" "/hbase"
+            fs_rmdir "RETCODE" "$CLUSTERMOUNT/hbase"
+            echo "Retval: $RETCODE"
+            fs_rmdir "RETVAL" "RET" "/hbase"
+            echo "Retval: $RETCODE"
+
 #            maprapi "/volume/remove?name=mapr.hbase"
 #            sudo rm -rf /mapr/$CLUSTERNAME/hbase
         fi
