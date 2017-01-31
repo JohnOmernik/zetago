@@ -174,7 +174,7 @@ sudo sed -i "s/compat/compat ldap/g" /etc/nsswitch.conf
 
 sudo /etc/init.d/nscd restart
 sudo service nslcd restart
-sudo /etc/init.d/mapr-posix-client-basic restart
+sudo $FS_PROVIDER_FUSE_SVC restart
 sudo service dcos-mesos-slave restart
 sudo service dcos-mesos-slave-public restart
 elif [ "\$INST_TYPE" == "rh_centos" ]; then

@@ -50,6 +50,10 @@ for N in $AGENT_NODES; do
     H=$(ssh $N "hostname -f")
     AGENT_HOSTS="${AGENT_HOSTS}$N - $H"$'\n'
 done
+
+
+FS_PROVIDER_FUSE_SVC="/etc/init.d/mapr-posix-client-basic"
+
 echo ""
 echo "$AGENT_HOSTS"
 echo ""
@@ -228,6 +232,8 @@ export ZK_QUORUM_PORT="$ZK_QUORUM_PORT"
 export NFS_NODES="$NFS_NODES"
 export MAPR_CONF_OPTS=""
 export SUBNETS="$SUBNETS"
+
+export FS_PROVIDER_FUSE_SVC="$FS_PROVIDER_FUSE_SVC"
 
 export MAPR_VERS="$MAPR_VERS"
 export FS_MAPR_LOCKED="1"
