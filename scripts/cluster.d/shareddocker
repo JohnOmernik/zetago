@@ -30,7 +30,7 @@ function _shareddocker() {
         @go.log FATAL "$DOCKER_IMAGE_LOC already exists. Please remove volume and/or delete the directory prior to installing Shared Docker Registry"
     else
         mkdir -p $CLUSTERMOUNT/zeta/shared/dockerregv2
-        fs_mkvol "RETCODE" "/zeta/shared/dockerregv2" "zeta.shared.dockerregv2" "775"
+        fs_mkvol "RETCODE" "$DOCKER_IMAGE_LOC" "zeta.shared.dockerregv2" "775"
         sudo chown ${IUSER}:${IUSER} $DOCKER_IMAGE_LOC
     fi
 
