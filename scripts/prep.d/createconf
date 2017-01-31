@@ -35,9 +35,10 @@ echo "It will be stored at $OUT_KEY and its public key will be stored at $OUT_KE
 echo "These values will be saved in the conf for use as well"
 echo ""
 IUSER_UID="2500"
-FS_UID="2000"
+FSUSER_UID="2000"
 IUSER="zetaadm" # The Main User for Zeta
 FSUSER="mapr"   # The filesystem user for Zeta
+
 
 echo "-----------------------------------"
 echo "The UID for the IUSER user will be $IUSER_UID and the UID for the filesystem user will be $FS_UID"

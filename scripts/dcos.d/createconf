@@ -7,6 +7,13 @@ sourceconf "$PREP_CONF"
 
 IP_DETECT="./conf/ip-detect"
 
+ME=$(whoami)
+
+if [ "$ME" != "$IUSER" ]; then
+    @go.log FATAL "Currentling running as $ME. Scripts need to be run as $IUSER. Please connect to the init node as $IUSER via $ ssh -i $OUTKEY $IUSER@$INIT_NODE"
+fi
+
+
 echo ""
 echo "-----------------------------------"
 echo "This process will ask a series of questions in order to create a dcos.conf script for gettings nodes ready for Zeta"
