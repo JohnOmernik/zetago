@@ -36,7 +36,7 @@ function _zetabase() {
         if [ "$RMHBASE" == "Y" ]; then
             fs_rmdir "RETCODE" "$CLUSTERMOUNT/hbase"
             echo "Retval: $RETCODE"
-            fs_rmdir "RETVAL" "RET" "/hbase"
+            fs_rmdir "RETCODE" "/hbase"
             echo "Retval: $RETCODE"
 
 #            maprapi "/volume/remove?name=mapr.hbase"
