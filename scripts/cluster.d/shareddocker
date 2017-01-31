@@ -39,8 +39,8 @@ function _shareddocker() {
 
     echo "We use the MapR Bootstrap Docker Registry to host the Shared Docker Registry"
 
-    sudo docker tag registry:2 ${DOCKER_REG_URL}/dockerregv2
-    sudo docker push ${DOCKER_REG_URL}/dockerregv2
+    sudo docker tag registry:2 ${FS_DOCKER_REG_URL}/dockerregv2
+    sudo docker push ${FS_DOCKER_REG_URL}/dockerregv2
 
 
 
@@ -97,7 +97,7 @@ cat > $MARFILE << EOF
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "${DOCKER_REG_URL}/dockerregv2",
+      "image": "${FS_DOCKER_REG_URL}/dockerregv2",
       "network": "BRIDGE",
       "portMappings": [
         { "containerPort": 5000, "hostPort": ${NEW_DOCKER_REG_PORT}, "servicePort": 0, "protocol": "tcp"}
