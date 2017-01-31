@@ -52,7 +52,7 @@ function mapr_volnamebymount(){
     maprapi "APIRET" "APIOUT" "/volume/list?filter=%5Bp%3D%3D${HDFSP}%5D&columns=n"
 
     if [ "$APIRET" == "0" ]; then
-        VOLNAME=$(echo "$APIOUT"|grep -P -o "volumename\":\"[$^\"]\"|cut -d":" -f2|sed "s/\"//g")
+        VOLNAME=$(echo "$APIOUT"|grep -P -o "volumename\":\"[^\"]\""|cut -d":" -f2|sed "s/\"//g")
     else
         VOLNAME=""
     fi
