@@ -63,7 +63,6 @@ function _zetabase() {
         sudo chmod -R 750 $CLUSTERMOUNT/$DIR
     done
 
-    exit 0
     #####################################################
     # Create base Zeta Key Store locations
     # the kstore directory under zeta is used to house zeta specific configuration data, as well as zeta specific clusterwide information
