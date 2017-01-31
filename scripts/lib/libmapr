@@ -23,7 +23,7 @@ function fs_rmdir(){
 
     FUSEPATH=""
     HDFSPATH=""
-    echo "DPATH: $DPATH
+    echo "DPATH: $DPATH"
     CHK=$(echo "$DPATH"|grep "$CLUSTERMOUNT")
     if [ "$CHK" != "" ]; then
         @go.log INFO "$CLUSTERMOUNT found in DIR to delete, assuming FUSE Path provided"
