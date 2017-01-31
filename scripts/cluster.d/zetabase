@@ -31,9 +31,11 @@ function _zetabase() {
     # Run FS Provider specific prep (cleaning) 
     fs_prepbase
 
-
+    @go.log INFO "Creating Base Home Directory"
     if [ ! -d "$CLUSTERMOUNT/user" ]; then
-        mkdir -p $CLUSTERMOUNT/user # Just a need a directory here
+        sudo mkdir -p $CLUSTERMOUNT/user # Just a need a directory here
+        sudo chown -R ${IUSER}:2501 $CLUSTERMOUNT/user
+        chmod -R 750 $CLUSTERMOUNT/user
     fi
 
    @go.log INFO "Checking for and creating if not existing, home directories for $FSUSER and $IUSER users"
@@ -47,7 +49,6 @@ function _zetabase() {
             @go.log INFO "User directory for $U found"
         fi
     done
-
 
     @go.log INFO "Creating root directories for your zeta cluster"
     ROOTS=$(echo $ROOT_DIRS|tr "," " ")
