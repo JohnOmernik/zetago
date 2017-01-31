@@ -13,7 +13,8 @@ sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
 
-. "$_GO_USE_MODULES" 'libmapr'
+FS_LIB="lib${FS_PROVIDER}"
+. "$_GO_USE_MODULES" $FS_LIB
 
 function _shareddocker() {
 
@@ -23,18 +24,13 @@ function _shareddocker() {
         @go.log FATAL "Must use ${IUSER} user"
     fi
 
-    DOCKER_IMAGE_LOC="/mapr/$CLUSTERNAME/zeta/shared/dockerregv2/images"
+    DOCKER_IMAGE_LOC="$CLUSTERMOUNT/zeta/shared/dockerregv2/images"
 
     if [ -d "$DOCKER_IMAGE_LOC" ]; then
         @go.log FATAL "$DOCKER_IMAGE_LOC already exists. Please remove volume and/or delete the directory prior to installing Shared Docker Registry"
     else
-        mkdir -p /mapr/$CLUSTERNAME/zeta/shared/dockerregv2
-        maprapi "/volume/create?name=zeta.shared.dockerregv2&path=/zeta/shared/dockerregv2/images&rootdirperms=775&user=${IUSER}:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=${IUSER}"
-        T=""
-        while [ "$T" == "" ]; do
-            sleep 1
-            T=$(ls -1 /mapr/$CLUSTERNAME/zeta/shared/dockerregv2|grep images)
-        done
+        mkdir -p $CLUSTERMOUNT/zeta/shared/dockerregv2
+        fs_mkvol "RETCODE" "/zeta/shared/dockerregv2" "zeta.shared.dockerregv2" "775"
         sudo chown ${IUSER}:${IUSER} $DOCKER_IMAGE_LOC
     fi
 
@@ -61,7 +57,7 @@ function _shareddocker() {
     NEW_DOCKER_REG_HOST="dockerregv2-shared.marathon.slave.mesos"
     ZETA_DOCKER_REG_URL="${NEW_DOCKER_REG_HOST}:${NEW_DOCKER_REG_PORT}"
 
-cat > /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/dockerregv2.sh << EOL
+cat > $CLUSTERMOUNT/zeta/kstore/env/env_shared/dockerregv2.sh << EOL
 
 export ZETA_DOCKER_REG_HOST="$NEW_DOCKER_REG_HOST"
 export ZETA_DOCKER_REG_PORT="$NEW_DOCKER_REG_PORT"
@@ -70,10 +66,10 @@ export ZETA_DOCKER_REG_URL="\${ZETA_DOCKER_REG_HOST}:\${ZETA_DOCKER_REG_PORT}"
 EOL
 
 
-    sudo chmod +x /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/dockerregv2.sh
+    sudo chmod +x $CLUSTERMOUNT/zeta/kstore/env/env_shared/dockerregv2.sh
 
     APP_NAME="docker"
-    APP_CERT_LOC="/mapr/$CLUSTERNAME/zeta/shared/dockerregv2/certs"
+    APP_CERT_LOC="$CLUSTERMOUNT/zeta/shared/dockerregv2/certs"
     sudo mkdir -p ${APP_CERT_LOC}
     sudo chown ${IUSER}:root ${APP_CERT_LOC}
     sudo chmod 770 ${APP_CERT_LOC}
@@ -82,7 +78,7 @@ EOL
     . /home/${IUSER}/zetaca/zetaca_env.sh
     . /home/${IUSER}/zetaca/gen_server_cert.sh
 
-    MARFILE="/mapr/$CLUSTERNAME/zeta/shared/dockerregv2/dockerregv2.shared.marathon"
+    MARFILE="$CLUSTERMOUNT/zeta/shared/dockerregv2/dockerregv2.shared.marathon"
 
 cat > $MARFILE << EOF
 {
