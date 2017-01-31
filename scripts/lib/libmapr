@@ -4,11 +4,51 @@
 #
 ##### The Following functions are required to have implementations to work with Zeta
 #
+# fs_rmdir
+# fs_prepbase
+# fs_mkdir
 #
 #
+
+
+#
+# fs_mkdir
 #
 #
-#
+function fs_mkvol(){
+    local RESULT=$1
+    local VPATH=$2
+    local VNAME=$3
+    local ROOTPERMS=$4
+
+
+    if [ "$ROOTPERMS" == "" ]; then
+        ROOTPERMS="775"
+    fi
+
+    getpaths "FUSEPATH" "HDFSPATH" "$VPATH"
+
+    MAPR_DEFAULT="${IUSER}:fc,a,dump,restore,m,d%20${FSUSER}:fc,a,dump,restore,m,d&ae=$FSUSER"
+
+    maprapi "RETCODE" "/volume/create?name=${VNAME}&path=${HDFSPATH}&rootdirperms=${ROOTPERMS}&${MAPR_DEFAULT}"
+
+    while [ "$RETCODE" != "0" ]; do
+        @go.log WARN "Volume Creation did not work try again?"
+        read -e -p "Try Again? (Y/N): " -i "Y" TRY
+        if [ "$TRY" == "Y" ]; then
+            maprapi "RETCODE" "/volume/create?name=${VNAME}&path=${HDFSPATH}&rootdirperms=${ROOTPERMS}&${MAPR_DEFAULT}"
+        else
+            @go.log WARN "User home vol creation failed"
+        fi
+    done
+    while [ ! -d "$FUSEPATH" ]; do
+       @go.log INFO "Waiting for $FUSEPATH sync"
+    done
+
+    eval $RESULT="'$RETCODE'"
+
+}
+
 
 #
 #  Remove a directory by mountpoint. This is specifically important for FS implementation that use mount points as directories (where you can't just delete the directory via FUSE)
@@ -21,24 +61,48 @@ function fs_rmdir(){
     local RESULT=$1
     local DPATH=$2
 
-    FUSEPATH=""
-    HDFSPATH=""
-    echo "DPATH: $DPATH"
-    CHK=$(echo "$DPATH"|grep "$CLUSTERMOUNT")
-    if [ "$CHK" != "" ]; then
-        @go.log INFO "$CLUSTERMOUNT found in DIR to delete, assuming FUSE Path provided"
-        FUSEPATH="$DPATH"
-        HDFSPATH=$(echo "$DPATH"|sed "s@$CLUSTERMOUNT@@g")
-    else
-        @go.log INFO "$CLUSTERMOUNT not found in DIR, assuming HDFS Path provided"
-        FUSEPATH="${CLUSTERMOUNT}${DPATH}"
-        HDFSPATH="$DPATH"
-    fi
+
+    getpaths "FUSEPATH" "HDFSPATH" "$DPATH"
+
     mapr_volnamebymount "VOL_NAME" "$HDFSPATH"
-    echo "The volumne name for $HDFSPATH is $VOL_NAME"
-    # To get the volume name, we
+
+    maprapi "APIRET" "APIOUT" "/volume/remove?name=${VOL_NAME}"
+
+    if [ "$APIRET" != "0" ]; then
+        @go.log WARN "fs_rmdir error: $API_OUT"
+    fi
+
+    if [ -d "$FUSEPATH" ]; then
+        @go.log WARN "Error removing MapR Volume - It may not have existed, doing an RM of the path"
+        sudo rm -rf $FUSEPATH
+    fi
+    RETSTR="0"
+    if [ -d "$FUSEPATH" ]; then
+        @go.log WARN "We attempted to remove $FUSEPATH - $HDFSPATH but it still exists"
+        RETSTR="1"
+    fi
+    eval $RESULT="'$RETSTR'"
+}
 
 
+
+function fs_prepbase(){
+
+   @go.log INFO "Checking default hbase and apps volumes and removing if exists"
+    if [ -d "$CLUSTERMOUNT/hbase" ]; then
+        @go.log WARN "Found $CLUSTERMOUNT/hbase  Should we remove?"
+        read -e -p "Remove /hbase? (Y/N): " -i "Y" RMHBASE
+        if [ "$RMHBASE" == "Y" ]; then
+            fs_rmdir "RETCODE" "$CLUSTERMOUNT/hbase"
+        fi
+    fi
+    if [ -d "$CLUSTERMOUNT/apps" ]; then
+        @go.log WARN "Found $CLUSTERMOUNT/apps should we remove?"
+        read -e -p  "Remove /apps (on a fresh install, answer yes) (Y/N): " -i "Y" RMAPPS
+        if [ "$RMAPPS" == "Y" ]; then
+            fs_rmdir "RETCODE" "$CLUSTERMOUNT/apps"
+        fi
+    fi
 
 }
 
@@ -57,7 +121,6 @@ function mapr_volnamebymount(){
         VOLNAME=""
     fi
     eval $RESULT="'$VOLNAME'"
-    #{"timestamp":1485892034121,"timeofday":"2017-01-31 07:47:14.121 GMT+0000","status":"OK","total":1,"data":[{"volumename":"mapr.hbase"}]}
 }
 #
 #
