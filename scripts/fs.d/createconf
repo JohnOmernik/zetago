@@ -15,7 +15,7 @@ fi
 
 
 echo "What file system provider do you wish to use for Zeta?"
-read -e -p "Filesystem provider" -i "mapr" FS_PROVIDER
+read -e -p "Filesystem provider: " -i "mapr" FS_PROVIDER
 if [ ! -d "./vers/$FS_PROVIDER" ]; then
     @go.log FATAL "Chosen filesystem provider $FS_PROVIDER does not exist in .vers"
 fi
@@ -26,7 +26,7 @@ echo "This is ONLY for fs based containers"
 echo "It will be named fsdocker-shared.marathon.slave.mesos by default, only change this name if you understand what that means"
 echo "Which name do you wish to give this docker registry instance?"
 echo ""
-read -e -p "FS Docker Registry Host: " -i "maprdocker-shared.marathon.slave.mesos" FS_DOCKER_REG_HOST
+read -e -p "FS Docker Registry Host: " -i "fsdocker-shared.marathon.slave.mesos" FS_DOCKER_REG_HOST
 echo ""
 read -e -p "Which port should the FS Docker register run on (we recommend 5000): " -i "5000" FS_DOCKER_REG_PORT
 echo ""

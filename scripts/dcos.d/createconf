@@ -80,7 +80,7 @@ echo "$SOME_NODES"
 echo ""
 read -e -p "Please enter a list of public node(s) using space to separate (Internal IPs) (Optional, just hit enter for none): " PUBLIC_NODES
 echo ""
-echo "Please enter a cluster name - This will match the clustername in MapR as well"
+echo "Please enter a cluster name"
 echo ""
 read -e -p "Cluster name: " -i "mydcos" CLUSTERNAME
 echo ""
