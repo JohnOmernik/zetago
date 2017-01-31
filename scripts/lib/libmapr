@@ -43,7 +43,8 @@ function fs_mkvol(){
     if [ "$RETCODE" == "0" ]; then
         while [ ! -d "$FUSEPATH" ]; do
             sleep 1
-           @go.log INFO "Waiting for $FUSEPATH sync"
+            sudo chown -R ${IUSER}:${IUSER} $FUSEPATH 2> /dev/null
+            @go.log INFO "Waiting for $FUSEPATH sync"
         done
     fi
     eval $RESULT="'$RETCODE'"
