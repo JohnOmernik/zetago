@@ -9,6 +9,7 @@ sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
 sourceconf "$FS_CONF"
 sourceconf "$CLUSTER_CONF"
+echo "This step requires the zetaca. If it's not installed, it will fail here.  To resolve, run ./zeta cluster zetaca install"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
 ME=$(whoami)

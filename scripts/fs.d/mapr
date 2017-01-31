@@ -8,6 +8,7 @@ sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
 sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 function _mapr() {
 
     LOCK="0"
@@ -32,7 +33,6 @@ function _mapr() {
     echo ""
     echo "Commands to use with fs mapr:"
     echo ""
-    echo "./zeta fs mapr maprdocker - Install the mapr docker registry"
     echo "./zeta fs mapr buildzk - Build the MapR ZK image"
     echo "./zeta fs mapr buildmapr - Build the MapR MapR image"
     echo "./zeta fs mapr installzk - Deploy and run the ZK image on all nodes per the mapr.conf file"
