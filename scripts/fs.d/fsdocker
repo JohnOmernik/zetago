@@ -1,13 +1,13 @@
 #!/bin/bash
-# 
-# mapr maprdocker - Install MapR Docker Registry for Zeta
+#
+# fs fsdocker - Install FS Docker Registry for Zeta
 #
 #
 
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
@@ -19,7 +19,6 @@ fi
 
 REG_IP=$(./conf/ip-detect)
 
-
 echo "You are running on the Docker registry on $REG_IP is this correct?"
 
 read -e -p "Install on $REG_IP?  " -i "Y" INSTALL_HERE
@@ -28,8 +27,10 @@ if [ "$INSTALL_HERE" != "Y" ]; then
     @go.log FATAL "Not Installing"
 fi
 
+FSDOCKER_ROOT="/opt/fsdocker"
 
-DOCKER_IMAGE_LOC="/opt/maprdocker/images"
+DOCKER_IMAGE_LOC="${FSDOCKER_ROOT}/images"
+
 if [ -d "$DOCKER_IMAGE_LOC" ]; then
     @go.log FATAL "Docker image directory already exists at $DOCKER_IMAGE_LOC - Exiting"
 fi
@@ -42,25 +43,25 @@ APP_IMG="zeta/registry:2"
 sudo docker pull registry:2
 sudo docker tag registry:2 $APP_IMG
 
-@go.log INFO "Creating Certs for maprdocker"
-APP_NAME="maprdocker"
-APP_CERT_LOC="/opt/maprdocker/dockercerts"
+@go.log INFO "Creating Certs for fsdocker"
+APP_NAME="fsdocker"
+APP_CERT_LOC="${FSDOCKER_ROOT}/dockercerts"
 
 sudo mkdir -p ${APP_CERT_LOC}
 sudo chown ${IUSER}:root ${APP_CERT_LOC}
 sudo chmod 770 ${APP_CERT_LOC}
-CN_GUESS="maprdocker-mapr-shared.marathon.slave.mesos"
+CN_GUESS="fsdocker-shared.marathon.slave.mesos"
 . /home/${IUSER}/zetaca/zetaca_env.sh
 . /home/${IUSER}/zetaca/gen_server_cert.sh
 
 
 
-PORTSTR="CLUSTER:tcp:${DOCKER_REG_PORT}:shared:maprdocker:Bootstrap Docker Registry"
+PORTSTR="CLUSTER:tcp:${FS_DOCKER_REG_PORT}:shared:fsdocker:FS Bootstrap Docker Registry"
 
-getport "CHKADD" "Port for MapR Bootstrap Docker Registry " "$SERVICES_CONF" "$PORTSTR" "1"
+getport "CHKADD" "Port for FS Bootstrap Docker Registry " "$SERVICES_CONF" "$PORTSTR" "1"
 
 if [ "$CHKADD" != "" ]; then
-    @go.log INFO "$DOCKER_REG_PORT added to services port for the CLUSTER"
+    @go.log INFO "$FS_DOCKER_REG_PORT added to services port for the CLUSTER"
 else
     @go.log FATAL "Adding Porting to services failed $PSTR"
 fi
@@ -68,10 +69,10 @@ fi
 
 @go.log INFO "Creating Marathon file"
 mkdir -p ./conf/marathon_files
-MARATHON_FILE="./conf/marathon_files/maprdocker.marathon"
+MARATHON_FILE="./conf/marathon_files/fsdocker.marathon"
 cat > ${MARATHON_FILE} << EOF
 {
-  "id": "shared/mapr/maprdocker",
+  "id": "shared/fsdocker",
   "cpus": 1,
   "mem": 1024,
   "instances": 1,
@@ -90,7 +91,7 @@ cat > ${MARATHON_FILE} << EOF
       "image": "$APP_IMG",
       "network": "BRIDGE",
       "portMappings": [
-        { "containerPort": 5000, "hostPort": ${DOCKER_REG_PORT}, "servicePort": 0, "protocol": "tcp"}
+        { "containerPort": 5000, "hostPort": ${FS_DOCKER_REG_PORT}, "servicePort": 0, "protocol": "tcp"}
       ]
     },
     "volumes": [
@@ -101,8 +102,9 @@ cat > ${MARATHON_FILE} << EOF
 }
 EOF
 
-@go.log INFO "Submitting MapR Docker Reg to Marathon"
+@go.log INFO "Submitting FS Docker Reg to Marathon"
+
 ./zeta cluster marathon submit "$MARATHON_FILE" "$MARATHON_SUBMIT" 1
 
 
-@go.log INFO "MapR Docker Registry Running at maprdocker-mapr-shared.marathon.slave.mesos"
+@go.log INFO "FS Docker Registry Running at fsdocker-shared.marathon.slave.mesos"

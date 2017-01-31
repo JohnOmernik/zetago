@@ -92,12 +92,12 @@ function _build_zk() {
         DOCKER_PATCH=""
     fi
 
-    MAPR_CRED="mapr:$MAPR_PASS"
-    ZETA_CRED="${IUSER}:$ZETAADM_PASS"
+    FSUSER_CRED="${FSUSER}:$FSUSER_PASS"
+    IUSER_CRED="${IUSER}:$IUSER_PASS"
 
 
     BUILD_TMP="./tmp/zkdocker"
-
+    MYDIR=$(pwd)
     rm -rf $BUILD_TMP
     mkdir -p $BUILD_TMP
 
@@ -120,7 +120,7 @@ function _build_zk() {
 
 cat > $BUILD_TMP/runzkdocker.sh << EOL3
 #!/bin/bash
-su -c "/opt/mapr/zookeeper/zookeeper-3.4.5/bin/zkServer.sh start-foreground" mapr
+su -c "/opt/mapr/zookeeper/zookeeper-3.4.5/bin/zkServer.sh start-foreground" $FSUSER
 EOL3
 
 cat > $BUILD_TMP/Dockerfile << EOL
@@ -133,13 +133,13 @@ $DOCKER_LINE4
 $DOCKER_LINE5
 $DOCKER_LINE6
 
-RUN adduser --disabled-login --gecos '' --uid=2500 ${IUSER}
-RUN adduser --disabled-login --gecos '' --uid=2000 mapr
+RUN adduser --disabled-login --gecos '' --uid=${IUSER_UID} ${IUSER}
+RUN adduser --disabled-login --gecos '' --uid=${FSUSER_UID} ${FSUSER}
 
-RUN echo "$MAPR_CRED"|chpasswd
-RUN echo "$ZETA_CRED"|chpasswd
+RUN echo "$FSUSER_CRED"|chpasswd
+RUN echo "$IUSER_CRED"|chpasswd
 
-RUN usermod -a -G root mapr && usermod -a -G root ${IUSER} && usermod -a -G adm mapr && usermod -a -G adm ${IUSER} && usermod -a -G disk mapr && usermod -a -G disk ${IUSER}
+RUN usermod -a -G root ${FSUSER} && usermod -a -G root ${IUSER} && usermod -a -G adm ${FSUSER} && usermod -a -G adm ${IUSER} && usermod -a -G disk ${FSUSER} && usermod -a -G disk ${IUSER}
 
 RUN echo "deb $MAPR_MAIN_URL mapr optional" > /etc/apt/sources.list.d/mapr.list
 
@@ -159,15 +159,15 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --al
 
 ADD runzkdocker.sh /opt/mapr/
 
-RUN chown -R mapr:mapr /opt/mapr/zookeeper && chown mapr:root /opt/mapr/runzkdocker.sh && chmod 755 /opt/mapr/runzkdocker.sh
+RUN chown -R $FSUSER:$FSUSER /opt/mapr/zookeeper && chown $FSUSER:root /opt/mapr/runzkdocker.sh && chmod 755 /opt/mapr/runzkdocker.sh
 
 CMD ["/bin/bash"]
 
 EOL
     cd $BUILD_TMP
-    sudo docker build -t ${DOCKER_REG_URL}/zkdocker:$MAPR_DOCKER_TAG .
-    cd ~/zetago
-    sudo docker push ${DOCKER_REG_URL}/zkdocker:$MAPR_DOCKER_TAG
+    sudo docker build -t ${FS_DOCKER_REG_URL}/zkdocker:$MAPR_DOCKER_TAG .
+    cd $MYDIR
+    sudo docker push ${FS_DOCKER_REG_URL}/zkdocker:$MAPR_DOCKER_TAG
     rm -rf $BUILD_TMP
     @go.log INFO "Image Pushed and ready to go"
 }

@@ -189,7 +189,7 @@ function initconf(){
 function reqshared() {
     SHAREDREQS="$1"
     for REQ in $SHAREDREQS; do
-        if [ ! -d "/mapr/$CLUSTERNAME/zeta/shared/$REQ" ]; then
+        if [ ! -d "$CLUSTERMOUNT/zeta/shared/$REQ" ]; then
             @go.log FATAL "Shared service $REQ is required for this service, please install"
         fi
     done

@@ -29,3 +29,8 @@ export UBUNTU_MAPR_PATCH_BASE="http://archive.mapr.com/patches/archives/v5.2.0/u
 
 export UBUNTU_MAPR_PATCH_CLIENT_FILE="mapr-patch-client-5.2.0.39122.GA-39745.x86_64.deb"
 export UBUNTU_MAPR_PATCH_POSIX_FILE="mapr-patch-posix-client-basic-5.2.0.39122.GA-39745.x86_64.deb"
+
+
+
+
+

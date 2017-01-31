@@ -25,7 +25,7 @@ function maprapi(){
     chmod 600 $TFILE
 
 cat > $TFILE << EOCRED
-machine $HOST login mapr password $MAPR_PASS
+machine $HOST login $FSUSER password $FSUSER_PASS
 EOCRED
 
     BASE_REST="https://$WEBHOST/rest"

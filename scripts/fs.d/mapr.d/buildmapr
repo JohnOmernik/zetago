@@ -10,7 +10,7 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
@@ -92,8 +92,8 @@ function _build_mapr() {
         DOCKER_PATCH=""
     fi
 
-    MAPR_CRED="mapr:$MAPR_PASS"
-    ZETA_CRED="${IUSER}:$ZETAADM_PASS"
+    FSUSER_CRED="${FSUSER}:$FSUSER_PASS"
+    IUSER_CRED="${IUSER}:$IUSER_PASS"
 
 
     BUILD_TMP="./tmp/maprdocker"
@@ -128,7 +128,7 @@ if [ ! -f "/opt/mapr/conf/mapr-clusters.conf" ]; then
     /opt/mapr/server/mruuidgen > /opt/mapr/hostid
     cat /opt/mapr/hostid > /opt/mapr/conf/hostid.init
     sed -i 's/AddUdevRules(list/#AddUdevRules(list/' /opt/mapr/server/disksetup
-    /opt/mapr/server/configure.sh -C \${CLDBS} -Z \${ZKS} -F /opt/mapr/conf/initial_disks.txt -N \${CLUSTERNAME} -u \${MUSER} -g \${MUSER} -no-autostart \${MAPR_CONF_OPTS}
+    /opt/mapr/server/configure.sh -C \${CLDBS} -Z \${ZKS} -F /opt/mapr/conf/initial_disks.txt -N \${CLUSTERNAME} -u ${FSUSER} -g ${FSUSER} -no-autostart \${MAPR_CONF_OPTS}
 else
     echo "mapr-clusters.conf found, running warden"
     sed -i 's/AddUdevRules(list/#AddUdevRules(list/' /opt/mapr/server/disksetup
@@ -166,13 +166,13 @@ $DOCKER_LINE4
 $DOCKER_LINE5
 $DOCKER_LINE6
 
-RUN adduser --disabled-login --gecos '' --uid=2500 ${IUSER}
-RUN adduser --disabled-login --gecos '' --uid=2000 mapr
+RUN adduser --disabled-login --gecos '' --uid=${IUSER_UID} ${IUSER}
+RUN adduser --disabled-login --gecos '' --uid=${FSUSER_UID} ${FSUSER}
 
-RUN echo "$MAPR_CRED"|chpasswd
-RUN echo "$ZETA_CRED"|chpasswd
+RUN echo "$FSUSER_CRED"|chpasswd
+RUN echo "$IUSER_CRED"|chpasswd
 
-RUN usermod -a -G root mapr && usermod -a -G root ${IUSER} && usermod -a -G adm mapr && usermod -a -G adm ${IUSER} && usermod -a -G disk mapr && usermod -a -G disk ${IUSER}
+RUN usermod -a -G root ${FSUSER} && usermod -a -G root ${IUSER} && usermod -a -G adm ${FSUSER} && usermod -a -G adm ${IUSER} && usermod -a -G disk ${FSUSER} && usermod -a -G disk ${IUSER}
 
 RUN echo "deb $MAPR_MAIN_URL mapr optional" > /etc/apt/sources.list.d/mapr.list
 
@@ -204,9 +204,9 @@ EOL
 
 
     cd $BUILD_TMP
-    sudo docker build -t ${DOCKER_REG_URL}/maprdocker:$MAPR_DOCKER_TAG .
+    sudo docker build -t ${FS_DOCKER_REG_URL}/maprdocker:$MAPR_DOCKER_TAG .
     cd ~/zetago
-    sudo docker push ${DOCKER_REG_URL}/maprdocker:$MAPR_DOCKER_TAG
+    sudo docker push ${FS_DOCKER_REG_URL}/maprdocker:$MAPR_DOCKER_TAG
     rm -rf $BUILD_TMP
     @go.log INFO "maprdocker:$MAPR_DOCKER_TAG Image Pushed and ready to go"
 }

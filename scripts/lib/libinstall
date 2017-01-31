@@ -11,7 +11,7 @@ if [ "$APP_ROLE" == "" ]; then
     echo ""
     read -e -p "Which role do you wish to install $APP_NAME into on $CLUSTERNAME? " APP_ROLE
 fi
-if [ ! -d "/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}" ]; then
+if [ ! -d "$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}" ]; then
     @go.log FATAL "The role $APP_ROLE does not appear to be installed in this cluster - exiting"
 fi
 
@@ -22,11 +22,11 @@ if [ "$APP_DIR" == "" ]; then
     echo ""
     read -e -p "Which install location do you wish to use for $APP_NAME? " -i "$REC_DIR" APP_DIR
 fi
-if [ ! -d "/mapr/$CLUSTERNAME/$APP_DIR" ]; then
-    @go.log FATAL "The install directory selected for $APP_NAME does not exist at /mapr/$CLUSTERNAME/"
+if [ ! -d "$CLUSTERMOUNT/$APP_DIR" ]; then
+    @go.log FATAL "The install directory selected for $APP_NAME does not exist at $CLUSTERMOUNT/"
 fi
 
-if [ ! -d "/mapr/$CLUSTERNAME/$APP_DIR/$APP_ROLE" ]; then
+if [ ! -d "$CLUSTERMOUNT/$APP_DIR/$APP_ROLE" ]; then
    @go.log FATAL "The App role directory under $APP_DIR doesn't exist"
 fi
 
@@ -40,7 +40,7 @@ if [ "$APP_ID" == "" ]; then
     read -e -p "What is the id you wish to use for the instance of $APP_NAME? " APP_ID
 fi
 
-APP_HOME="/mapr/$CLUSTERNAME/$APP_DIR/$APP_ROLE/$APP_NAME/$APP_ID"
+APP_HOME="$CLUSTERMOUNT/$APP_DIR/$APP_ROLE/$APP_NAME/$APP_ID"
 
 if [ -d "$APP_HOME" ]; then
     @go.log FATAL "Cannot install instance of $APP_NAME at $APP_HOME because an instance already exits there"
@@ -60,13 +60,13 @@ else
     echo ""
     echo "For example, if you have a mariadb server you are installing with an APP_ID of myappmariadb, in the prod role installed to the zeta directory, the default location would be:"
     echo ""
-    echo "/mapr/$CLUSTERNAME/zeta/prod/mariadb/myappmariadb"
+    echo "$CLUSTERMOUNT/zeta/prod/mariadb/myappmariadb"
     echo ""
     echo "And the Marathon ID would be prod/myappmariadb"
     echo ""
     echo "However, in this case you want the Maria DB APP to be nested under and application named myapp in prod, under the apps directory:"
     echo ""
-    echo "/mapr/$CLUSTERNAME/apps/prod/myapp/myappmariadb"
+    echo "$CLUSTERMOUNT/apps/prod/myapp/myappmariadb"
     echo ""
     echo "Marathon location: prod/myaapp/myappmaridb"
     echo ""
@@ -111,9 +111,9 @@ else
 fi
 
 APP_MAR_FILE="$APP_HOME/marathon.json"
-APP_ROOT="/mapr/${CLUSTERNAME}/zeta/shared/${APP_NAME}"
+APP_ROOT="$CLUSTERMOUNT/zeta/shared/${APP_NAME}"
 APP_PKG_DIR="${APP_ROOT}/packages"
-APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
+APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 echo ""
 echo ""
 echo "===================================="

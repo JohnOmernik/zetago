@@ -7,7 +7,7 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
@@ -46,7 +46,7 @@ rm -f $MAPR_DEFAULTS/conf/*
 if [ ! -f "$MAPR_DEFAULTS/zk_default.tgz" ]; then
     echo "Missing zk defaults. Grabbing from a container now"
 
-    CID=$(sudo docker run -d ${DOCKER_REG_URL}/zkdocker:${MAPR_DOCKER_TAG} sleep 15)
+    CID=$(sudo docker run -d ${FS_DOCKER_REG_URL}/zkdocker:${MAPR_DOCKER_TAG} sleep 15)
 
     sudo docker cp ${CID}:/opt/mapr/zookeeper/zookeeper-3.4.5/conf $MAPR_DEFAULTS
     sudo chown ${IUSER}:${IUSER} $MAPR_DEFAULTS/conf/*
@@ -109,7 +109,7 @@ maxClientCnxns=100
 #autopurge interval - 24 hours
 autopurge.purgeInterval=24
 #superuser to allow zk nodes delete
-superUser=$MUSER
+superUser=$FSUSER
 #readuser to allow read zk info for authenticated clients
 readUser=anyone
 # cldb key location
@@ -134,9 +134,9 @@ for ZK in $ZK_STRING; do
     echo "Host: $ZK_HOST"
     echo ""
     echo "Creating MapR Conf Dir if it doesn't exist"
-    ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/conf && sudo chown mapr:mapr ${MAPR_INST}/conf && sudo chmod 755 ${MAPR_INST}/conf"
+    ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/conf && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf && sudo chmod 755 ${MAPR_INST}/conf"
     echo "Creating zkdata location and setting myid"
-    ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/zkdata && echo $ZK_ID|sudo tee ${MAPR_INST}/zkdata/myid && sudo chown -R mapr:mapr ${MAPR_INST}/zkdata && sudo chmod 750 ${MAPR_INST}/zkdata"
+    ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/zkdata && echo $ZK_ID|sudo tee ${MAPR_INST}/zkdata/myid && sudo chown -R ${FSUSER}:${FSUSER} ${MAPR_INST}/zkdata && sudo chmod 750 ${MAPR_INST}/zkdata"
     echo "Creating ZK conf and log location on the host"
     ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/zookeeper/logs && sudo mkdir -p ${MAPR_INST}/zookeeper/conf"
 
@@ -148,7 +148,7 @@ for ZK in $ZK_STRING; do
     echo "Unpacking and copying conf"
     ssh $ZK_HOST "sudo mv /home/${IUSER}/zk_default.tgz ${MAPR_INST}/zookeeper/conf/ && sudo tar zxf ${MAPR_INST}/zookeeper/conf/zk_default.tgz -C ${MAPR_INST}/zookeeper/conf && sudo rm ${MAPR_INST}/zookeeper/conf/zk_default.tgz"
     ssh $ZK_HOST "sudo mv /home/${IUSER}/zoo.cfg ${MAPR_INST}/zookeeper/conf/"
-    ssh $ZK_HOST "sudo chown -R mapr:mapr ${MAPR_INST}/zookeeper && sudo chmod 777 ${MAPR_INST}/zookeeper/logs"
+    ssh $ZK_HOST "sudo chown -R $FSUSER:$FSUSER ${MAPR_INST}/zookeeper && sudo chmod 777 ${MAPR_INST}/zookeeper/logs"
 
 
     echo "Creating marathon scripts"
@@ -179,7 +179,7 @@ for ZK in $ZK_STRING; do
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "${DOCKER_REG_URL}/zkdocker:${MAPR_DOCKER_TAG}",
+      "image": "${FS_DOCKER_REG_URL}/zkdocker:${MAPR_DOCKER_TAG}",
       "network": "HOST"
     },
     "volumes": [

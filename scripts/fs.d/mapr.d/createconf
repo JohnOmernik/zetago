@@ -6,7 +6,7 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-
+sourceconf "$FS_CONF"
 IP_DETECT="./conf/ip-detect"
 
 if [ ! -f "$IP_DETECT" ]; then
@@ -24,16 +24,6 @@ echo ""
 echo "Now we will ask you a series of questions about your MapR installation."
 echo "---------------------------------------"
 echo ""
-echo "As we build the docker containers for MapR, we need a temporary Docker registry to host the containers"
-echo "This is ONLY for mapr based containers"
-echo "It will be named maprdocker-mapr-shared.marathon.slave.mesos by default, only change this name if you understand what that means"
-echo "Which name do you wish to give this docker registry instance?"
-echo ""
-read -p "MapR Docker Registry Host: " -e -i "maprdocker-mapr-shared.marathon.slave.mesos" DOCKER_REG_HOST
-echo ""
-read -p "Which port should the MapR Docker register run on (we recommend 5000): " -e -i "5000" DOCKER_REG_PORT
-echo ""
-echo "---------------------------------------"
 echo "Where would you like the MapR Installation directory to be location on the physical host?"
 echo "It should not be in /opt/mapr to avoid conflicts with clients or other things on the physical node"
 echo ""
@@ -167,7 +157,6 @@ echo "The MapR Clustername will be taken from the DCOS clustername"
 echo ""
 echo "MapR Clustername: $CLUSTERNAME"
 echo ""
-echo ""
 echo "---------------------------------------"
 echo "Please select a MapR Version file to utilize for the initial kickoff of the cluster"
 echo ""
@@ -197,13 +186,17 @@ echo "CLUSTER:tcp:${ZK_CLIENT_PORT}:shared:mapr:MapR Zookeeper Main" >> $SERVICE
 echo "CLUSTER:tcp:${ZK_MASTER_ELECTION_PORT}:shared:mapr:MapR Zookeeper Master Election" >> $SERVICES_CONF
 echo "CLUSTER:tcp:${ZK_QUORUM_PORT}:shared:mapr:MapR Zookeeper Quorum Port" >> $SERVICES_CONF
 
+FS_CAP="ldap:snapshot:volumes:hdfs:posix"
 
-
-cat > $MAPR_CONF << EOF
+cat > $FS_PROVIDER_CONF << EOF
 #!/bin/bash
 
 #########################
 # These are the editable settings for installing a MapR running on Docker cluster.  Edit these settings prior to executing the scripts
+
+#########################
+# FS_CAP the capabilities that the filesystem (in this case MapR) has
+FS_CAP="$FS_CAP"
 
 #########################
 # Need a list of nodes we'll be working on. In the future, we will get this auto matically, but for now you have to put a space separated list of the IP address of all nodes in your cluster. 
@@ -227,15 +220,6 @@ export CLDBS="$CLDB_STRING"
 #
 export MAPR_INST="$MAPR_INST"
 
-#########################
-# This is the docker registry that will be used to house the images so you don't have to build them on every node
-# After your cluster is started in AWS, pick a node and use the default port
-
-export DOCKER_REG_HOST="$DOCKER_REG_HOST"
-export DOCKER_REG_PORT="$DOCKER_REG_PORT"
-export DOCKER_REG_URL="\${DOCKER_REG_HOST}:\${DOCKER_REG_PORT}"
-
-
 export ZK_STRING="$ZK_STRING"
 export ZK_CLIENT_PORT="$ZK_CLIENT_PORT"
 export ZK_MASTER_ELECTION_PORT="$ZK_MASTER_ELECTION_PORT"
@@ -246,7 +230,7 @@ export MAPR_CONF_OPTS=""
 export SUBNETS="$SUBNETS"
 
 export MAPR_VERS="$MAPR_VERS"
-export MAPR_LOCKED="1"
+export FS_MAPR_LOCKED="1"
 
 
 # Do not change the rest of this script, this creates two more variables from your ZKs, one to put into the zoo.cfg on each ZK (ZOOCFG) and the other to pass to the mapr configure script ($ZKS)
@@ -282,4 +266,4 @@ export ZOOCFG=\$TZOOCFG
 
 EOF
 
-@go.log INFO "MapR Conf file written to $MAPR_CONF"
+@go.log INFO "MapR Conf file written to $FS_CONF"
