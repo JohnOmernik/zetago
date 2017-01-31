@@ -29,7 +29,6 @@ function fs_mkvol(){
     getpaths "FUSEPATH" "HDFSPATH" "$VPATH"
 
     MAPR_DEFAULT="${IUSER}:fc,a,dump,restore,m,d%20${FSUSER}:fc,a,dump,restore,m,d&ae=$FSUSER"
-
     maprapi "RETCODE" "RETOUT" "/volume/create?name=${VNAME}&path=${HDFSPATH}&rootdirperms=${ROOTPERMS}&user=${MAPR_DEFAULT}"
 
     while [ "$RETCODE" != "0" ]; do
@@ -136,8 +135,8 @@ function mapr_volnamebymount(){
 function maprapi(){
     #Base is https://HOST/rest"
     # CMD should be like "/volume/remove?name=mapr.hbase"
-    local RETCODE=$1
-    local RESULT=$2
+    local LRETCODE=$1
+    local LRESULT=$2
     local CMD=$3
 
     HOST=$(echo $CLDBS|cut -d"," -f1|cut -d":" -f1)
@@ -169,9 +168,10 @@ EOCRED
         RT="1"
     else
         @go.log INFO "MAPR API Success: Command: $CMD - Results $CURL_RESULT"
+        RT="0"
     fi
 
-    eval $RETCODE="'$RT'"
-    eval $RESULT="'$CURL_RESULT'"
+    eval $LRETCODE="'$RT'"
+    eval $LRESULT="'$CURL_RESULT'"
     rm $TFILE
 }
