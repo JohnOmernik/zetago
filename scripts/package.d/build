@@ -11,7 +11,8 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
@@ -28,7 +29,7 @@ function _packagebuild() {
     REBUILD="0"
     SEARCH_ADD_FIRST="0"
 
-  . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+  . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
 
     for i in "$@"
         do
@@ -72,7 +73,7 @@ function _packagebuild() {
 
     # Pre fil variables and create the base Zeta install location
     BUILD="N"
-    APP_ROOT="/mapr/$CLUSTERNAME/zeta/shared/$APP_NAME"
+    APP_ROOT="$CLUSTERMOUNT/zeta/shared/$APP_NAME"
     APP_PKG_DIR="$APP_ROOT/packages"
     mkdir -p $APP_ROOT
     mkdir -p $APP_PKG_DIR

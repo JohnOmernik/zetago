@@ -6,7 +6,8 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
@@ -17,7 +18,7 @@ reqshared "dockerregv2 zetaca openldap"
 CORE_PKG_LOC="./pkgs"
 
 # Core base install
-SHARED_LOC="/mapr/$CLUSTERNAME/zeta/shared"
+SHARED_LOC="$CLUSTERMOUNT/zeta/shared"
 
 # Additional Package Repo locations (This can be multiple directories separated by commas)
 ADD_PKG_LOC=""

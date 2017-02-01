@@ -5,7 +5,8 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
@@ -47,7 +48,7 @@ function _packagestatus() {
         if [ -d "./pkgs/$PKG" ]; then
             PKGBASE="true"
         fi
-        if [ -d "/mapr/$CLUSTERNAME/zeta/shared/$PKG" ]; then
+        if [ -d "$CLUSTERMOUNT/zeta/shared/$PKG" ]; then
             INST="true"
         else
             INST="false"
