@@ -175,3 +175,8 @@ IP_DETECT="$IP_DETECT"
 EOP
 
 
+echo ""
+echo "Running ./zeta dcos sshhosts to trust keys of nodes provided"
+echo ""
+./zeta dcos sshhosts
+echo ""
