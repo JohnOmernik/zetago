@@ -70,7 +70,8 @@ function _localvolume() {
             NODE=$(echo "$N"|cut -d":" -f1)
             VOL_NAME="mapr.$NODE.local""
             VOL_MOUNT="/var/mapr/local/${NODE}"/local"
-            maprapi "/volume/info?name=${VOL_NAME}"
+            maprapi "RETCODE" "RETVAL" "/volume/info?name=${VOL_NAME}"
+            echo "$RETVAL"
         done
     else
         for N in $NODES; do
