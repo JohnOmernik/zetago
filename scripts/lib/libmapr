@@ -45,7 +45,7 @@ function fs_mklocalvol(){
         fi
     fi
 
-    maprapi "RETCODE" "RETOUT" "/volume/create?name=${VOL_NAME}&path=${HDFS_MOUNT}&replication=1&localvolumehost=${NODE}$localvolumeport=5660&shufflevolume=true&replicationtimeoutsec=300"
+    maprapi "RETCODE" "RETOUT" "/volume/create?name=${VOL_NAME}&path=${HDFS_MOUNT}&replication=1&localvolumehost=${NODE}$localvolumeport=5660&shufflevolume=true&rereplicationtimeoutsec=300"
     if [ "$RETCODE" == "0" ]; then
         while [ ! -d "$FUSE_MOUNT" ]; do
             sleep 1
