@@ -12,6 +12,19 @@ ME=$(whoami)
 if [ "$ME" != "$IUSER" ]; then
     @go.log FATAL "Currentling running as $ME. Scripts need to be run as $IUSER. Please connect to the init node as $IUSER via $ ssh -i $OUT_KEY $IUSER@$INIT_NODE"
 fi
+echo ""
+echo "Prior to starting DCOS Conf, it's important that your node prep was successful. We will run ./zeta prep status now to show you the prep status."
+echo ""
+./zeta prep status
+echo ""
+echo ""
+echo "All nodes should be up, should return the same kernel version, the same docker version, and show that the sudo test was successful"
+echo "If this is not the case, please run ./zeta prep install -n=172.31.x.x where 172.31.x.x is the IP of the node that is not the same as the others"
+echo ""
+read -e -p "Do you wish to exit now to fix any issues in prep?" -i "N" QUIT
+if [ "$QUIT" == "Y" ]; then
+    @go.log FATAL "Exiting per user request"
+fi
 
 
 echo ""
