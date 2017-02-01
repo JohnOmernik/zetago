@@ -49,7 +49,7 @@ APP_MAR_FILE="${APP_HOME}/marathon.json"
 APP_DATA_DIR="${APP_HOME}/data"
 APP_CONF_DIR="${APP_DATA_DIR}/gogs/conf"
 APP_CERT_LOC="${APP_HOME}/certs"
-APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
+APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 
 mkdir -p $APP_DATA_DIR
 mkdir -p ${APP_CERT_LOC}
@@ -122,7 +122,7 @@ EOL1
 
 CN_GUESS="${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
 
-. /mapr/$CLUSTERNAME/zeta/shared/zetaca/gen_server_cert.sh
+. $CLUSTERNAME/zeta/shared/zetaca/gen_server_cert.sh
 
 cat > $APP_MAR_FILE << EOL
 {

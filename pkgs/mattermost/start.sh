@@ -8,7 +8,7 @@ APP_MAR_APP_ID="${APP_ROLE}/${APP_ID}/mattermostapp"
 APP_MAR_DB_ID="${APP_ROLE}/${APP_ID}/mattermostdb"
 APP_MAR_WEB_ID="${APP_ROLE}/${APP_ID}/mattermostweb"
 
-APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
+APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 APP_CERT_LOC="${APP_HOME}/certs"
 
 @go.log INFO "Checking for presense of Mattermost DB"

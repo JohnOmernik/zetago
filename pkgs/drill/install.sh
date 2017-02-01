@@ -52,7 +52,6 @@ read -e -p "Please enter the amount of memory (total) to provide as a limit to M
 read -e -p "Please enter the amount of CPU shares to limit bits too in Marathon: " -i "4.0" APP_CPU
 echo ""
 echo "Misc:"
-read -e -p "What is the default MapR topology for your data to use for Spill Location Volume Creation? " -i "/data/default-rack" APP_TOPO_ROOT
 read -e -p "How many drillbits should we start by default: " -i "1" APP_CNT
 echo ""
 
@@ -64,7 +63,7 @@ echo "If you do not have them, please answer yes to the next question and it wil
 echo "If you are unsure, run it anyways, it won't hurt your volumes if they do exist"
 read -e -p "Try creating volumes? (Y/N): " -i "N" CVOL
 if [ "$CVOL" == "Y" ]; then
-    ./zeta mapr createlocalvols -a -u
+    ./zeta fs $FS_PROVIDER createlocalvols -a -u
 fi
 
 
@@ -85,22 +84,31 @@ mkdir -p ${APP_HOME}/conf.std/jars
 mkdir -p ${APP_HOME}/conf.std/lib
 mkdir -p ${APP_CERT_LOC}
 
-sudo chown mapr:mapr ${APP_HOME}/logs/sqlline
+sudo chown $FSUSER:$FSUSER ${APP_HOME}/logs/sqlline
 sudo chmod 777 ${APP_HOME}/logs/sqlline
-sudo chown -R mapr:${IUSER} ${APP_HOME}/conf.std
+sudo chown -R $FSUSER:${IUSER} ${APP_HOME}/conf.std
 sudo chmod -R 775 ${APP_HOME}/conf.std
-sudo chown -R mapr:${IUSER} ${APP_CERT_LOC}
+sudo chown -R $FSUSER:${IUSER} ${APP_CERT_LOC}
 sudo chmod -R 770 ${APP_CERT_LOC}
 
 CN_GUESS="${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
 
 # Doing Java for this app because Drill uses Java
-. /mapr/$CLUSTERNAME/zeta/shared/zetaca/gen_java_keystore.sh
+. $CLUSTERROOT/zeta/shared/zetaca/gen_java_keystore.sh
 
 
 ##########
 # Highly recommended to create instance specific information to an env file for your Mesos Role
 
+if [ "$FS_PROVIDER" == "mapr" ]; then
+    TICKETS="export MAPR_TICKETFILE_LOCATION=/opt/mapr/conf/mapruserticket"
+    IMPERSON="export MAPR_IMPERSONATION_ENABLED=true"
+    JAVO="export DRILL_JAVA_OPTS=\"\${DRILL_JAVA_OPTS} -Djava.security.auth.login.config=/opt/mapr/conf/mapr.login.conf -Dzookeeper.sasl.client=false\""
+else
+    TICKETS=""
+    IMPERSON=""
+    JAVO="export DRILL_JAVA_OPTS=\"\${DRILL_JAVA_OPTS} -Dzookeeper.sasl.client=false\""
+fi
 
 cat > $APP_ENV_FILE << EOL1
 #!/bin/bash
@@ -132,14 +140,10 @@ cat > ${APP_HOME}/conf.std/distrib-env.sh << EOM
 
 # MapR-specific environment settings for Drill
 
-export HADOOP_VERSION="2.7.0"
-export HADOOP_HOME=/opt/mapr/hadoop/hadoop-\${HADOOP_VERSION}
-
-export DRILL_JAVA_OPTS="\${DRILL_JAVA_OPTS} -Djava.security.auth.login.config=/opt/mapr/conf/mapr.login.conf -Dzookeeper.sasl.client=false"
-#export DRILL_LOG_DIR="/opt/mapr/drill/drill-1.8.0/logs"
-#export DRILL_PID_DIR="/opt/mapr/drill/drill-1.8.0/pids"
-export MAPR_IMPERSONATION_ENABLED=true
-export MAPR_TICKETFILE_LOCATION=/opt/mapr/conf/mapruserticket
+export HADOOP_HOME="$FS_HADOOP_HOME"
+$JAVO
+$TICKETS
+$IMPERSON
 
 EOM
 
@@ -163,10 +167,10 @@ cat > ${APP_HOME}/conf.std/drill-env.sh << EOF
 
 CALL_SCRIPT="\$0"
 MESOS_ROLE="${APP_ROLE}"
-CLUSTERNAME=\$(ls /mapr)
+CLUSTERNAME="$CLUSTERNAME"
 APP_ID="${APP_ID}"
-. /mapr/\${CLUSTERNAME}/zeta/kstore/env/zeta_shared.sh
-. /mapr/\${CLUSTERNAME}/zeta/kstore/env/zeta_${APP_ROLE}.sh
+. $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
+. $CLUSTERMOUNT/zeta/kstore/env/zeta_${APP_ROLE}.sh
 
 echo "Webhost: \${ZETA_${APP_ID}_WEB_HOST}:\${ZETA_${APP_ID}_WEB_PORT}"
 
@@ -193,20 +197,13 @@ HOSTNAME=\$(hostname -f)
 
 export DRILL_LOG_DIR="${APP_HOME}/logs"
 
-
 # Location to place the Drillbit pid file when running as a daemon using
 # drillbit.sh start.
 # Set to $DRILL_HOME by default.
 export DRILL_PID_DIR="${APP_HOME}/logs/pids"
 
-#export SERVER_GC_OPTS="-XX:+CMSClassUnloadingEnabled -XX:+UseG1GC "
-#export DRILL_JAVA_OPTS="--XX:ReservedCodeCacheSize=1G -Ddrill.exec.enable-epoll=true -Djava.library.path=./${APP_VER}/libjpam -Djava.security.auth.login.config=/opt/mapr/conf/mapr.login.conf -Dzookeeper.sasl.client=false"
+SPILLLOC="$FS_PROVIDER_LOCAL/\${HOSTNAME}/local/drillspill/\${APP_ID}"
 
-# MAPR Specifc Setting up a location for spill (this is a quick hacky version of what is done in the createTTVolume.sh)
-
-
-NFSROOT="/mapr/\${CLUSTERNAME}"
-SPILLLOC="/var/mapr/local/\${HOSTNAME}/drillspill/\${APP_ID}"
 
 o=\$(echo \$CALL_SCRIPT|grep sqlline)
 if [ "\$o" != "" ]; then
@@ -221,11 +218,11 @@ else
     export DRILL_LOG_DIR="${APP_HOME}/logs/drillbits/\$HOSTNAME"
     export DRILL_SPILLLOC="\$SPILLLOC"
 
-    if [ -d "\${NFSROOT}\${SPILLLOC}" ]; then
+    if [ -d "${CLUSTERMOUNT}\${SPILLLOC}" ]; then
         echo "Spill Location exists: \${SPILLLOC}"
     else
         echo "Need to create SPILL LOCATION: \${SPILLLOC}"
-        mkdir -p \${NFSROOT}\${SPILLLOC}
+        mkdir -p $CLUSTERMOUNT\${SPILLLOC}
     fi
 fi
 EOF
@@ -258,9 +255,9 @@ drill.exec: {
   http.port: \${ZETA_${APP_ID}_WEB_PORT},
   rpc.user.server.port: \${ZETA_${APP_ID}_USER_PORT},
   rpc.bit.server.port: \${ZETA_${APP_ID}_BIT_PORT},
-  sys.store.provider.zk.blobroot: "maprfs:///${APP_DIR}/${APP_ROLE}/${APP_NAME}/${APP_ID}/logs/profiles",
+  sys.store.provider.zk.blobroot: "${FS_HDFS_PREFIX}${APP_DIR}/${APP_ROLE}/${APP_NAME}/${APP_ID}/logs/profiles",
   sort.external.spill.directories: [ \${?DRILL_SPILLLOC} ],
-  sort.external.spill.fs: "maprfs:///",
+  sort.external.spill.fs: "$FS_HDFS_PREFIX",
   zk.connect: \${ZETA_ZKS},
   zk.root: "${APP_ID}",
   impersonation: {
@@ -354,7 +351,7 @@ cat > ${APP_MAR_FILE} << EOF4
 "DRILL_CONF_DIR":"${APP_HOME}/conf.std"
 },
 $APP_PORT_LIST
-"user": "mapr",
+"user": "$FSUSER",
 "uris": ["file://${APP_PKG_DIR}/${APP_TGZ}"],
 "constraints": [["hostname", "UNIQUE"]]
 }

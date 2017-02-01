@@ -37,7 +37,7 @@ APP_CNT="1"
 
 
 APP_MAR_FILE="${APP_HOME}/marathon.json"
-APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
+APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 
 mkdir -p ${APP_HOME}/brokerdata
 

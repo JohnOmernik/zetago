@@ -30,7 +30,7 @@ APP_MAR_HIST_ID="${APP_ROLE}/${APP_ID}/sparkhistory"
 APP_MAR_SHUF_ID="${APP_ROLE}/${APP_ID}/sparkshuffle"
 
 
-@go.log INFO "Counting active agent nodes with MapR"
+@go.log INFO "Counting active agent nodes with FS"
 NODES=$(echo "$INODES"|tr ";" " ")
 APP_SHUF_CNT=0
 for N in $NODES; do
@@ -65,7 +65,7 @@ echo "If you do not have them, please answer yes to the next question and it wil
 echo "If you are unsure, run it anyways, it won't hurt your volumes if they do exist"
 read -e -p "Try local creating volumes? (Y/N): " -i "N" CVOL
 if [ "$CVOL" == "Y" ]; then
-    ./zeta mapr createlocalvols -a -u
+    ./zeta fs $FS_PROVIDER createlocalvols -a -u
 fi
 
 
@@ -112,16 +112,16 @@ cat > $APP_HOME/run.sh << EOL
 IMG="$APP_IMG"
 SPARK="-v=${APP_HOME}/${APP_VER_DIR}:/spark:ro"
 
-MAPR="-v=/opt/mapr:/opt/mapr:ro"
+FSVOL="-v=${FS_HOME}:${FS_HOME}:ro"
 MESOSLIB="-v=/opt/mesosphere:/opt/mesosphere:ro"
 NET="--net=host"
 
 U="--user nobody"
 
 if [ -f "/usr/bin/sudo" ]; then
-    sudo docker run -it --rm \$U \$NET \$SPARK \$MAPR \$MESOSLIB \$IMG /bin/bash
+    sudo docker run -it --rm \$U \$NET \$SPARK \$FSVOL \$MESOSLIB \$IMG /bin/bash
 else
-    docker run -it --rm \$U \$NET \$SPARK \$MAPR \$MESOSLIB \$IMG /bin/bash
+    docker run -it --rm \$U \$NET \$SPARK \$FSVOL \$MESOSLIB \$IMG /bin/bash
 fi
 
 EOL
@@ -129,11 +129,9 @@ EOL
 chmod +x $APP_HOME/run.sh
 
 
-# These are Calculated for a MapR install
-MAPR_HOME="/opt/mapr"
-HDIR=$(ls -1 $MAPR_HOME/hadoop/|grep "hadoop-2")
-HADOOP_HOME="$MAPR_HOME/hadoop/$HDIR"
-
+@go.log WARN "Need to genericize FS library loading"
+MAPR_HOME="$FS_HOME"
+HADOOP_HOME="$FS_HADOOP_HOME"
 
 @go.log INFO "Creating spark-env.sh"
 cat > ${APP_HOME}/${APP_VER_DIR}/conf/spark-env.sh << EOE
@@ -143,13 +141,12 @@ export MESOS_NATIVE_JAVA_LIBRARY=/opt/mesosphere/lib/libmesos.so
 export LD_LIBRARY_PATH=/opt/mesosphere/lib
 export JAVA_HOME=/opt/mesosphere/active/java/usr/java
 
-export MAPR_HOME="$MAPR_HOME"
 export HADOOP_HOME="$HADOOP_HOME"
-
+export MAPR_HOME="$MAPR_HOME"
 
 HNAME=\$(hostname -f)
 APP_ID="$APP_ID"
-TMP_LOC="/mapr/$CLUSTERNAME/var/mapr/local/\$HNAME/local/spark/\$APP_ID"
+TMP_LOC="${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}/\$HNAME/local/spark/\$APP_ID"
 ME=\$(whoami)
 if [ "\$ME" == "root" ]; then
     echo "TMP_LOC: \$TMP_LOC"
@@ -159,7 +156,7 @@ if [ "\$ME" == "root" ]; then
 fi
 ln -s \$TMP_LOC /tmp/spark
 
-ls -ls /mapr/$CLUSTERNAME/var/mapr/local/\$HNAME/local/spark
+ls -ls ${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}/\$HNAME/local/spark
 
 
 export HADOOP_CONF_DIR=\${HADOOP_HOME}/etc/hadoop
@@ -169,7 +166,7 @@ export SPARK_LIBRARY_PATH=\$MAPR_HADOOP_JNI_PATH
 MAPR_SPARK_CLASSPATH="\$MAPR_HADOOP_CLASSPATH"
 SPARK_DIST_CLASSPATH=\$MAPR_SPARK_CLASSPATH
 # Security status
-source /opt/mapr/conf/env.sh
+source \$MAPR_HOME/conf/env.sh
 if [ "\$MAPR_SECURITY_STATUS" = "true" ]; then
 SPARK_SUBMIT_OPTS="\$SPARK_SUBMIT_OPTS -Dmapr_sec_enabled=true"
 fi
@@ -196,7 +193,7 @@ spark.executor.extraClassPath   ${YARNCP}:${MAPRCP}
 spark.network.timeout 15s
 
 spark.mesos.executor.docker.image $APP_IMG
-spark.mesos.executor.docker.volumes ${APP_HOME}/${APP_VER_DIR}:/spark:ro,/opt/mapr:/opt/mapr:ro,/opt/mesosphere:/opt/mesosphere:ro,/mapr/$CLUSTERNAME/var/mapr/local:/mapr/$CLUSTERNAME/var/mapr/local:rw
+spark.mesos.executor.docker.volumes ${APP_HOME}/${APP_VER_DIR}:/spark:ro,${FS_HOME}:${FS_HOME}:ro,/opt/mesosphere:/opt/mesosphere:ro,${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}:${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}:rw
 
 spark.home  /spark
 spark.local.dir /tmp/spark
@@ -253,8 +250,8 @@ cat > $APP_MAR_SHUF_FILE << EOQ
         "mode": "RW"
       },
       {
-        "containerPath": "/opt/mapr",
-        "hostPath": "/opt/mapr",
+        "containerPath": "${FS_HOME}",
+        "hostPath": "${FS_HOME}",
         "mode": "RO"
       },
       {
@@ -263,8 +260,8 @@ cat > $APP_MAR_SHUF_FILE << EOQ
         "mode": "RO"
       },
       {
-        "containerPath": "/mapr/$CLUSTERNAME/var/mapr/local",
-        "hostPath": "/mapr/$CLUSTERNAME/var/mapr/local",
+        "containerPath": "${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}",
+        "hostPath": "${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}",
         "mode": "RW"
       }
     ]
@@ -302,8 +299,8 @@ cat > $APP_MAR_HIST_FILE << EOM
         "mode": "RW"
       },
       {
-        "containerPath": "/opt/mapr",
-        "hostPath": "/opt/mapr",
+        "containerPath": "${FS_HOME}",
+        "hostPath": "${FS_HOME}",
         "mode": "RO"
       },
       {

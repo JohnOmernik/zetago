@@ -51,9 +51,10 @@ for N in $AGENT_NODES; do
     AGENT_HOSTS="${AGENT_HOSTS}$N - $H"$'\n'
 done
 
-
+FS_HADOOP_HOME="/opt/mapr/hadoop/hadoop-2.7.0"
+FS_HOME="/opt/mapr"
 FS_PROVIDER_LOCAL="/var/local"
-
+FS_HDFS_PREFIX="maprfs:///"
 FS_PROVIDER_FUSE_SVC="/etc/init.d/mapr-posix-client-basic"
 
 echo ""
@@ -234,12 +235,13 @@ export ZK_QUORUM_PORT="$ZK_QUORUM_PORT"
 export NFS_NODES="$NFS_NODES"
 export MAPR_CONF_OPTS=""
 export SUBNETS="$SUBNETS"
-
+export FS_HADOOP_HOME="$FS_HADOOP_HOME"
+export FS_HOME="$FS_HOME"
 export FS_PROVIDER_FUSE_SVC="$FS_PROVIDER_FUSE_SVC"
 export FS_PROVIDER_LOCAL="$FS_PROVIDER_LOCAL"
 export MAPR_VERS="$MAPR_VERS"
 export FS_MAPR_LOCKED="1"
-
+export FS_HDFS_PREFIX="$FS_HDFS_PREFIX"
 
 # Do not change the rest of this script, this creates two more variables from your ZKs, one to put into the zoo.cfg on each ZK (ZOOCFG) and the other to pass to the mapr configure script ($ZKS)
 

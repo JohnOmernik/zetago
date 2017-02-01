@@ -23,7 +23,7 @@
 # - git, nano, unzip
 # - rpm2cpio and cpio
 #
-# Included in Maprbase image
+# Included in zetabase image
 # - ldap
 # - openjdk-8
 # - wget and curl
@@ -41,7 +41,7 @@ APP_IMG_TAG="$APP_VER"
 APP_IMG_NAME="usershell"
 APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
 
-REQ_APP_IMG_NAME="buildbase_mapr"
+REQ_APP_IMG_NAME="buildbase"
 
 
 if [ "$BUILD" == "Y" ]; then

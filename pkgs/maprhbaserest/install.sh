@@ -52,7 +52,7 @@ echo "This can be changed in the conf directory (the hbase-site.xml) for this in
 read -e -p "What root directory should we use to identify hbase tables? :" -i "/apps/${APP_ROLE}/myhbasetables" APP_TABLE_ROOT
 
 APP_MAR_FILE="${APP_HOME}/marathon.json"
-APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
+APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 APP_CONF_DIR="${APP_HOME}/conf"
 APP_LOGS_DIR="${APP_HOME}/logs"
 

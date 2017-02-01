@@ -7,7 +7,7 @@ APP_MAR_SHUF_FILE="${APP_HOME}/marathon_shuf.json"
 APP_MAR_HIST_ID="${APP_ROLE}/${APP_ID}/sparkhistory"
 APP_MAR_SHUF_ID="${APP_ROLE}/${APP_ID}/sparkshuffle"
 
-APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
+APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 
 if [ "$UNATTEND" == "1" ]; then
     CONFIRM="Y"

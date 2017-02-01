@@ -6,7 +6,7 @@ APP_TGZ="$APP_URL_FILE"
 APP_VER_DIR=$(echo "$APP_TGZ"|sed "s/\.tgz//g")
 APP_URL="${APP_URL_BASE}${APP_URL_FILE}"
 
-REQ_APP_IMG_NAME="zetabase_mapr"
+REQ_APP_IMG_NAME="zetabase"
 
 APP_VER="spark-2.0.2"
 APP_IMG_TAG="2.0.2"

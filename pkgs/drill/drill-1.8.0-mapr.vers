@@ -7,5 +7,5 @@ APP_URL_FILE="mapr-drill-1.8.0.201609121517-1.noarch.rpm"
 APP_URL="${APP_URL_ROOT}${APP_URL_FILE}"
 
 
-REQ_APP_IMG_NAME="buildbase_mapr"
+REQ_APP_IMG_NAME="buildbase"
 

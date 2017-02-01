@@ -28,7 +28,7 @@ read -e -p "How many instances of kafkarest do you want to run? " -i "1" APP_CNT
 echo "Kafkarest requires an already running instace of kafka to work with.  Please provide a appid.conf file for the kafka instance for this to run against."
 echo "This is normally localted in the APP_HOME, so if you have an instead of kafka named kafkaprod running in the role prod, your file would be located: "
 echo ""
-echo "/mapr/$CLUSTERNAME/zeta/prod/kafka/kafkaprod/kafkaprod.conf"
+echo "$CLUSTERMOUNT/zeta/prod/kafka/kafkaprod/kafkaprod.conf"
 echo ""
 echo "This is REQUIRED"
 echo ""
@@ -73,7 +73,7 @@ else
 fi
 
 APP_MAR_FILE="${APP_HOME}/marathon.json"
-APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
+APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 APP_CONF_DIR="${APP_HOME}/conf"
 mkdir -p $APP_CONF_DIR
 
