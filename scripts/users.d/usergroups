@@ -6,20 +6,21 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
 
-AUTH_LIB="lib${LDAP_PROVIDER}"
 
 # Load the Auth lib for this cluster
+AUTH_LIB="lib${LDAP_PROVIDER}"
 . "$_GO_USE_MODULES" $AUTH_LIB
 
 
 function _group() {
 
-    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+    . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
 
     ACTION_SRC="usergroups"
     for i in "$@"

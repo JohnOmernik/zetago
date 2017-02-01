@@ -11,11 +11,15 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
-. "$_GO_USE_MODULES" 'libmapr'
+# Load the FS lib for this cluster
+FS_LIB="lib${FS_PROVIDER}"
+. "$_GO_USE_MODULES" $FS_LIB
+
 MYDIR=$(pwd)
 
 function _localvolume() {
@@ -66,37 +70,12 @@ function _localvolume() {
             NODE=$(echo "$N"|cut -d":" -f1)
             VOL_NAME="mapr.$NODE.local""
             VOL_MOUNT="/var/mapr/local/${NODE}"/local"
-
             maprapi "/volume/info?name=${VOL_NAME}"
         done
     else
         for N in $NODES; do
-            NODE=$(echo "$N"|cut -d":" -f1)
-            NFS_ROOT="/mapr/$CLUSTERNAME"
-            VOL_NAME="mapr.$NODE.local"
-            VOL_MOUNT="/var/mapr/local/${NODE}/local"
-            NFS_MOUNT="${NFS_ROOT}${VOL_MOUNT}"
-            if [ -d "${NFS_MOUNT}" ]; then
-                @go.log WARN "The directory already exists, should we try to delete before creating volume? (If the volume exists, the delete will fail and all is well"
-                if [ "$UNATTEND" == "1" ]; then
-                    DMNT="Y"
-                else
-                    read -e -p "Delete local diretory $NFS_MOUNT? (Y/N): " -i "Y" DMNT
-                fi
-                if [ "$DMNT" == "Y" ]; then
-                     sudo rm -rf $NFS_MOUNT
-                fi
-            fi
-
-            maprapi "/volume/create?name=${VOL_NAME}&path=${VOL_MOUNT}&replication=1&localvolumehost=${NODE}&localvolumeport=5660&shufflevolume=true&rereplicationtimeoutsec=300"
-            echo ""
-            T=""
-            while [ "$T" == "" ]; do
-                sleep 1
-                T=$(ls -1 /mapr/$CLUSTERNAME/var/mapr/local|grep "$NODE")
-            done
-            sudo chown mapr:$IUSER $NFS_MOUNT
-            sudo chmod 775 $NFS_MOUNT
+            MNODE=$(echo "$N"|cut -d":" -f1)
+            fs_mklocalvol "RETCODE" "$MNODE"
         done
     fi
 }

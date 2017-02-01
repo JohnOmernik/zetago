@@ -52,6 +52,8 @@ for N in $AGENT_NODES; do
 done
 
 
+FS_PROVIDER_LOCAL="/var/local"
+
 FS_PROVIDER_FUSE_SVC="/etc/init.d/mapr-posix-client-basic"
 
 echo ""
@@ -234,7 +236,7 @@ export MAPR_CONF_OPTS=""
 export SUBNETS="$SUBNETS"
 
 export FS_PROVIDER_FUSE_SVC="$FS_PROVIDER_FUSE_SVC"
-
+export FS_PROVIDER_LOCAL="$FS_PROVIDER_LOCAL"
 export MAPR_VERS="$MAPR_VERS"
 export FS_MAPR_LOCKED="1"
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Create conf file for initial MapR installation
+# Create conf file for initial Shared Filesytem installation
 #
 
 sourceconf "$PREP_CONF"
@@ -36,7 +36,7 @@ cat > $FS_CONF << EOF
 #!/bin/bash
 
 #########################
-# These are the editable settings for installing a MapR running on Docker cluster.  Edit these settings prior to executing the scripts
+# These are the editable settings for installing a Shared Filesystem (via FS_PROVIDER)  running on Zeta cluster.  Edit these settings prior to executing the scripts
 
 
 #########################

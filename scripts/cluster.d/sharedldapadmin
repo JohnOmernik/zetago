@@ -7,7 +7,8 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
@@ -16,7 +17,7 @@ reqshared "dockerregv2 zetaca openldap"
 
 function _installldapadmin() {
 
-    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+    . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
 
     CURUSER=$(whoami)
 
@@ -31,7 +32,7 @@ function _installldapadmin() {
     sudo docker tag $SOURCE_IMG $APP_IMG
     sudo docker push $APP_IMG
 
-    APP_ROOT="/mapr/$CLUSTERNAME/zeta/shared/ldapadmin"
+    APP_ROOT="$CLUSTERMOUNT/zeta/shared/ldapadmin"
 
     if [ -d "$APP_ROOT" ]; then
         @go.log FATAL "LDAP Admin Root at $APP_ROOT already exists. Refusing to go on..."
@@ -59,12 +60,12 @@ function _installldapadmin() {
 
 
 
-cat > /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/ldapadmin.sh << EOL
+cat > $CLUSTERMOUNT/zeta/kstore/env/env_shared/ldapadmin.sh << EOL
 export ZETA_LDAPADMIN_HOST="ldapadmin-shared.marathon.slave.mesos"
 export ZETA_LDAPADMIN_PORT="$APP_PORT"
 EOL
 
-    sudo chmod +x /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/ldapadmin.sh
+    sudo chmod +x $CLUSTERMOUNT/zeta/kstore/env/env_shared/ldapadmin.sh
 
     MARFILE="${APP_ROOT}/marathon.json"
 
@@ -72,7 +73,7 @@ EOL
     APP_CERT_LOC="${APP_ROOT}/certs"
     CN_GUESS="ldapadmin-shared.marathon.slave.mesos"
 
-    . /mapr/$CLUSTERNAME/zeta/shared/zetaca/gen_server_cert.sh
+    . $CLUSTERMOUNT/zeta/shared/zetaca/gen_server_cert.sh
 
 cat > $MARFILE << EOF
 {

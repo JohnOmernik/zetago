@@ -6,15 +6,66 @@
 #
 # fs_rmdir
 # fs_prepbase
-# fs_mkdir
+# fs_mkvol
+# fs_mklocalvol
+#
+
+#
+# function fs_mklocalvol 
+#
+# Desc: Create a volume that is local to a node. 
+# Note all Shared filesystems can do this, if you are implementing this function in a filesystem that doesn't have a concept of local volumes, please just create a volume or a directory at the proper place $FS_PROVIDER_LOCAL/$HOSTNAME/local
 #
 #
 
+function fs_mklocalvol(){
+
+    local RESULT=$1
+    local NODE=$2
+    if [ ! -d "${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}" ]; then
+        sudo mkdir -p ${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}
+        sudo chown -R  $FSUSER:$FSUSER ${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}
+    fi
+    if [ ! -d "${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}/${NODE}" ]; then
+        sudo mkdir -p ${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}/${NODE}
+        sudo chown -R $FSUSER:$FSUSER ${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}/${NODE}
+    fi
+    VOL_NAME="mapr.$NODE.local"
+    HDFS_MOUNT="${FS_PROVIDER_LOCAL}/${NODE}/local"
+    FUSE_MOUNT="${CLUSTERMOUNT}${HDFS_MOUNT}"
+    if [ -d "${FUSE_MOUNT}" ]; then
+        @go.log WARN "The directory already exists, should we try to delete before creating volume? (If the volume exists, the delete will fail and all is well"
+        if [ "$UNATTEND" == "1" ]; then
+            DMNT="Y"
+        else
+            read -e -p "Delete local diretory $NFS_MOUNT? (Y/N): " -i "Y" DMNT
+        fi
+        if [ "$DMNT" == "Y" ]; then
+            sudo rm -rf $FUSE_MOUNT
+        fi
+    fi
+
+    maprapi "RETCODE" "RETOUT" "/volume/create?name=${VOL_NAME}&path=${HDFS_MOUNT}&replication=1&localvolumehost=${NODE}$localvolumeport=5660&shufflevolume=true&replicationtimeoutsec=300"
+    if [ "$RETCODE" == "0" ]; then
+        while [ ! -d "$FUSE_MOUNT" ]; do
+            sleep 1
+            sudo chown -R ${IUSER}:${IUSER} $FUSE_MOUNT 2> /dev/null
+            @go.log INFO "Waiting for $FUSE_MOUNT sync"
+        done
+        sudo chown -R $FSUSER:$IUSER $FUSE_MOUNT
+        sudo chmod 775 $FUSE_MOUNT
+        R="0"
+    else
+        R="1"
+    fi
+    eval $RESULT="'$R'"
+}
 
 #
-# fs_mkdir
+# fs_mkvol
 #
 #
+
 function fs_mkvol(){
     local RESULT=$1
     local VPATH=$2

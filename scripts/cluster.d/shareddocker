@@ -37,7 +37,7 @@ function _shareddocker() {
     sudo docker pull registry:2
     sudo docker tag registry:2 zeta/registry:2
 
-    echo "We use the MapR Bootstrap Docker Registry to host the Shared Docker Registry"
+    echo "We use the FS Bootstrap Docker Registry to host the Shared Docker Registry"
 
     sudo docker tag registry:2 ${FS_DOCKER_REG_URL}/dockerregv2
     sudo docker push ${FS_DOCKER_REG_URL}/dockerregv2

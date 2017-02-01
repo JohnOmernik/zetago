@@ -6,7 +6,8 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
@@ -19,7 +20,7 @@ AUTH_LIB="lib${LDAP_PROVIDER}"
 
 function _roleschema() {
 
-    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+    . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
 
 
     ACTION_SRC="schema"
@@ -75,22 +76,22 @@ function _roleschema() {
 
 
     if [ "$ACTION_ADD" == "1" ]; then
-        SCHEMA_INST="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${ROLE}/schema.sh"
+        SCHEMA_INST="$CLUSTERMOUNT/zeta/kstore/env/env_${ROLE}/schema.sh"
         if [ -f "$SCHEMA_INST" ]; then
             @go.log FATAL "Schema for $ROLE already installed - exiting"
         fi
-        mkdir -p /mapr/$CLUSTERNAME/zeta/kstore/env/env_$ROLE
+        mkdir -p $CLUSTERMOUNT/zeta/kstore/env/env_$ROLE
         touch $SCHEMA_INST
-        echo "Please enter the starting UID number for this role - $ROLE"   
+        echo "Please enter the starting UID number for this role - $ROLE"
         echo "To help, here is a list of the currently defined roles"
         echo "If no roles are established, we recommend starting with 1000000"
         echo "If roles are established take the highest role and add 1000000"
         echo ""
-        cat /mapr/$CLUSTERNAME/zeta/kstore/zetasync/zetauid.list
+        cat $CLUSTERMOUNT/zeta/kstore/zetasync/zetauid.list
         echo ""
 
 
-        SHRD=$(cat /mapr/$CLUSTERNAME/zeta/kstore/zetasync/zetauid.list|grep $ROLE)
+        SHRD=$(cat $CLUSTERMOUNT/zeta/kstore/zetasync/zetauid.list|grep $ROLE)
 
         if [ "$SHRD" != "" ]; then
             echo "It looks like the role you are trying to add already has a STARTID specified"
@@ -99,7 +100,7 @@ function _roleschema() {
             STARTID=$(echo $SHRD|cut -d":" -f2)
         else
             read -e -p "Please enter the starting UID for role $ROLE: " -i "1000000" STARTID
-            echo "$ROLE:$STARTID" >> /mapr/$CLUSTERNAME/zeta/kstore/zetasync/zetauid.list
+            echo "$ROLE:$STARTID" >> $CLUSTERMOUNT/zeta/kstore/zetasync/zetauid.list
         fi
         CURUID="$STARTID"
         CURGID=$(($STARTID + 500000))
