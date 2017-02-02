@@ -17,5 +17,11 @@ reqshared "dockerregv2 zetaca openldap"
 function _addsharedrole() {
     @go.log INFO "Adding shared role to Zeta"
     ./zeta users roleschema -a -r="shared" -u
+
+    MYDIRS=$(echo "$ROOT_DIRS"|tr "," " ")
+    for DIR in $MYDIRS; do
+        @go.log INFO "Updating permissions on Shared $DIR Directory"
+        sudo chown -R $IUSER:zetashared${DIR} ${CLUSTERMOUNT}/${DIR}/shared
+    done
 }
 _addsharedrole "$@"
