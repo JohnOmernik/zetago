@@ -7,6 +7,10 @@
 
 
 if [ "$EXISTS" == "" ]; then
+    # Fix Java
+    . /etc/environment
+    PATH=$PATH:$JAVA_HOME/bin
+
     RUNNING=$(echo $CUR_STATUS|grep "TASK_RUNNING")
     if [ "$RUNNING" != "" ]; then
         BROKER_CONF="$APP_HOME/brokers.conf"

@@ -25,7 +25,7 @@ haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 
 read -e -p "Please enter the CPU shares to use with the kafka-mesos scheduler: " -i "1.0" APP_CPU
 echo ""
-read -e -p "Please enter the Marathon Memory limit to use with kafka-mesos scheduler: " -i "768" APP_MEM
+read -e -p "Please enter the Marathon Memory limit to use with kafka-mesos scheduler: " -i "1280" APP_MEM
 echo ""
 echo "Running Kafka as zetasvc$APP_ROLE"
 APP_USER="zetasvc$APP_ROLE"
