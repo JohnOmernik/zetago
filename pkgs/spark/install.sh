@@ -10,6 +10,7 @@ sudo chown -R $IUSER:zeta${APP_ROLE}zeta $APP_HOME/sparklogs
 
 if [ "$JAVA_HOME" == "" ]; then
     . /etc/environment
+    export JAVA_HOME="$JAVA_HOME"
 fi
 
 @go.log INFO "Checking for Active CLDB"
