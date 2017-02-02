@@ -94,7 +94,7 @@ sudo chmod -R 770 ${APP_CERT_LOC}
 CN_GUESS="${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
 
 # Doing Java for this app because Drill uses Java
-. $CLUSTERROOT/zeta/shared/zetaca/gen_java_keystore.sh
+. $CLUSTERMOUNT/zeta/shared/zetaca/gen_java_keystore.sh
 
 
 ##########
