@@ -43,9 +43,11 @@ function _prepinstall() {
         addtoconfvar "$HOST" " " "NODES" "$PREP_CONF"
         RUN_NODES="$HOST"
     fi
+
     INITSKIP="N"
+
     for NODE in $RUN_NODES; do
-        if [ "$NODE" == "$INIT_NODE" ];
+        if [ "$NODE" == "$INIT_NODE" ]; then
             @go.log INFO "Skipping INIT_NODE ($INIT_NODE) to prep this node at the end of the run"
             INITSKIP="Y"
         else
