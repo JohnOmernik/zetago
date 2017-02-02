@@ -43,15 +43,33 @@ function _prepinstall() {
         addtoconfvar "$HOST" " " "NODES" "$PREP_CONF"
         RUN_NODES="$HOST"
     fi
-
+    INITSKIP="N"
     for NODE in $RUN_NODES; do
-        ./zeta prep userprep -n="$NODE"
-        if [ "$UNATTEND" == "1" ]; then
-            ./zeta prep systemprep -n="$NODE" -u
+        if [ "$NODE" == "$INIT_NODE" ];
+            @go.log INFO "Skipping INIT_NODE ($INIT_NODE) to prep this node at the end of the run"
+            INITSKIP="Y"
         else
-            ./zeta prep systemprep -n="$NODE"
+            ./zeta prep userprep -n="$NODE"
+            if [ "$UNATTEND" == "1" ]; then
+                ./zeta prep systemprep -n="$NODE" -u
+            else
+                ./zeta prep systemprep -n="$NODE"
+            fi
         fi
     done
+    if [ "$INITSKIP" == "Y" ]; then
+        @go.log INFO "Running on Skipped Init Node ($INIT_NODE)"
+        @go.log WARN "When this node is complete, it will likely lose the SSH Connection - This is normal - it's the node rebooting"
+        ./zeta prep userprep -n="$INIT_NODE"
+        if [ "$UNATTEND" == "1" ]; then
+            ./zeta prep systemprep -n="$INIT_NODE" -u
+        else
+            ./zeta prep systemprep -n="$INIT_NODE"
+        fi
+        echo ""
+        echo ""
+        @go.log INFO "To check prep install status please run $ ./zeta prep status"
+    fi
 }
 
 _prepinstall "$@"
