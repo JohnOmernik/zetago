@@ -8,6 +8,10 @@ mkdir -p $APP_HOME/sparklogs
 sudo chown -R $IUSER:zeta${APP_ROLE}zeta $APP_HOME/sparklogs
 
 
+if [ "$JAVA_HOME" == "" ]; then
+    . /etc/environment
+fi
+
 @go.log INFO "Checking for Active CLDB"
 CLDBS=$(echo "$ZETA_CLDBS"|tr "," " ")
 for C in $CLDBS; do
