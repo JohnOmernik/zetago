@@ -201,5 +201,10 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
 ----------
 1. The best part about zeta is the packages!
 2. You can build, install, start, stop, and uninstall pacakges with the ./zeta package interface
-3. $ ./zeta package # For more info
+3. $ ./zeta package # For more info - This also builds the package.conf on first run. 
 4. A Very important package if you want to do services is the marathonlb package ./zeta package build marathonlb and ./zeta package install marathonlb
+    - A good example to start with is Apache Drill
+    - Build: ./zeta package build drill
+    - Install ./zeta package install drill
+    - Start: Following the command provided by ./zeta package install drill to start your drill instance!
+
