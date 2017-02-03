@@ -14,7 +14,7 @@ This other repos may continue to get updates until they are completely folded in
 
 ## Working Zeta Step By Step
 ----------
-Please see https://github.com/JohnOmernik/zetago/INSTRUCTIONS.md
+Please see https://github.com/JohnOmernik/zetago/blob/master/INSTRUCTIONS.md
 
 
 
