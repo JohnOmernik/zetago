@@ -63,8 +63,10 @@ sudo docker kill $CID
 sudo docker rm $CID
 sudo mv ${APP_CONF_DIR}/conf_orig/* $APP_CONF_DIR/
 sudo rm -rf $APP_CONF_DIR/conf_orig
-sudo chown -R zetaadm:zetaproddata $APP_CONF_DIR
-
+sudo chown -R $IUSER:zeta${APP_ROLE}data $APP_CONF_DIR
+sudo chown -R $IUSER:zeta${APP_ROLE}data $APP_LOGS_DIR
+sudo chmod -R 770 $APP_CONF_DIR
+sudo chmod -R 770 $APP_LOGS_DIR
 
 cat > ${APP_CONF_DIR}/docker_start.sh << EOF4
 #!/bin/bash
@@ -197,7 +199,7 @@ cat > $APP_MAR_FILE << EOF
     "HADOOP_HOME": "${HADOOP_HOME}",
     "HBASE_LOG_DIR": "/${APP_VER_DIR}/logs",
     "HBASE_ROOT_LOGGER": "INFO,RFA",
-    "HBASE_CLASSPATH_PREFIX":"/${APP_VER_DIR}/lib/*:/opt/mapr/lib/*",
+    "HBASE_CLASSPATH_PREFIX":"/${APP_VER_DIR}/lib/*:/opt/mapr/lib/mapr*",
     "JAVA_HOME": "/usr/lib/jvm/java-8-openjdk-amd64"
   },
   "container": {
