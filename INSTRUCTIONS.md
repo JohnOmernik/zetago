@@ -88,11 +88,12 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
     - Proxy information is required if you are behind a proxy. 
     - All conf info is in ./conf/dcos.conf
 2. Now that the DCOS config is setup, it's time to trust the keys on the various hosts. Run: ./zeta dcos sshhosts # -u if you want unattended
+    - The Create conf for dcos does ask you to do this, so you don't have to do it manually
     - If you run this command, it uses ssh-key to get the host key of all nodes and trust them by adding it to the known_hosts file. It does this for the IP, the short name, and the fully qualified name of every host. 
     - You can run this with -u if you don't want to it to prompt. Otherwise it will prompt once before trusting all keys. 
 3. Prior to doing the DCOS install, it's now time to run the network setup: Run $ ./zeta network
     - You cannot start further DCOS install processes without putting a firewall up. 
-    - This command sets the network.conf file with information about your networking setup. Some notes:
+    - This command sets the network.conf file with information about your networking setup 
         - NTP Servers: If you specify this, it will limit outbound NTP request only to those servers, otherwise, if left blank, we allow outbound NTP to all.
         - Zeta Routable Addresses: This is your main subnet, the subnet that your default gateway is on that all servers connect to. For me, on AWS, it's 172.31.0.0/16, but it may be different for you. 
         - Zeta Non-Routable Addresses: If you have other interfaces that connect all nodes (non-gateway interfaces)  You can add them here to ensure node to node communication is unfettered. So lets say your routable interfaces are 192.168.0.0/24.  Then you have two more network interfaces between nodes that are not routable: 10.0.4.0/24 and 192.168.250.0/24 Then you would put here: 10.0.4.0/24,192.168.250.0/24  If you have no additional interfaces, just leave blank
@@ -116,45 +117,61 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
     - The other option is to just add your IP to the ./conf/network.conf file and redeploy the firewall. 
 ### FS Install
 ----------
-1. Once DCOS is is up and running and the Agents properly appear in the UI its time for MapR
+1. Once DCOS is is up and running and the Agents properly appear in the UI its time for a Shared Filesystem
 2. First create the conf file by running ./zeta fs
-    - Pick a Provider and FS Docker Bootstrap. The only provider have right now is mapr, so I would choose that.
-    - Once this is complete, it will ask you questions about your provider (based on $PROVIDER createconf) 
+    - Pick a Provider. The only provider have right now is mapr, so I would choose that. (Otherwise nothing will work)
+    - It will ask you about your FS Docker registery. Defaults are best here. 
+    - Once this is complete, it will automatically invoke the fs_$PROVIDER create conf and ask you questions specific to your provider 
     - FS conf is written to ./conf/fs.conf
+    - FS_$PROVIDER conf is written to ./conf/fs_$PROVIDER.conf (for example) ./conf/fs_mapr.conf
+    - The initial cluster conf is also invoked here. There are no questions to answer, but this conf is written to ./conf/cluster.conf
 3. Mapr Provider Questions:
     - Defaults work for most things, here are some notes:
-    - MapR installation directory should be default.
+    - MapR installation directory should be default. (/opt/maprdocker)
     - ZK string is the first interesting one. You need to determine how many agents will run ZK instances. In a small cluster 1 is ok, 3 is better, 5 is best. 
-        - The ZK string should be NodeID:Hostname (the script prints out the internal host names) so if you have one, then it's just Node ID 0, if two then Node ID 0 and Node ID 1
-        - Just pick a node... 
-    - ZK ports should be defaults
+        - The ZK string format should be NodeID:Hostname,NodeID:Hostname 
+        - The script prints out the internal host names) so if you have one, then it's just Node ID 0, if two then Node ID 0 and Node ID 1
+        - Example: 0:node.aws.local,1:node2.aws.local 
+        - ZK ports should be left as defaults
     - CLDB String is pretty simple, pick one (or more) servers for a CLDB (Master MapR Node) and put the hostname colon port (7222) node1:7222
-    - The initial disks string is important, the format is NODE1:/dev/disk1,/dev/disk2;NODE2:/dev/disk1,/dev/disk2 (disk 1 may be sda, disk 2 may be sdb, each system is different)
+    - The initial disks string is important.
+        - The format is NODE1:/dev/disk1,/dev/disk2;NODE2:/dev/disk1,/dev/disk2 (disk 1 may be sda, disk 2 may be sdb, each system may be different)
+        - The disks should be unformatted block devices. 
         - THat said, often times when you are starting a cluster, each node DOES have the same disks for MapR's use. The script asks that, if it's the case, hit enter to enter a disk string once and apply it to all nodes
         - For example, on the m3.xlarge nodes I use, I can use /dev/xvdb,/dev/xvdc as my disk string and apply it to all nodes. 
-    - NFS Nodes aren't needed for now.
-    - MapR Subnet: I use 172.31.0.0/16 because that's the range AWS puts me in... try to enter something here that works for your env
+    - NFS Nodes
+        - Nodes to install NFS Server on the nodes
+        - This is not highly tested at this time
+    - MapR Subnet:
+        - These are the subnets of the interfaces to use for Node to Node Communications
+        - It will read the data from the FW Config and use that
+        - I use 172.31.0.0/16 because that's the range AWS puts me in... enter something here that works for your env
     - Use the default vers file
     - All conf information is ./conf/fs_mapr.conf
-3. Install local zetaca via ./zeta cluster zetaca install
-4. Install the fs docker registry via $./zeta fs fsdocker
-
-5. At this point we are ready to build our ZK and MapR containers
+3. Install local zetaca via $ ./zeta cluster zetaca install
+    - Choose both the certificate auth defaults and the certificate defaults for your cluster here
+    - You will need to enter a password to bootstrap the CA, this is the key for your CA
+    - This runs locally for now (as there is no shared filesystem). 
+4. Install the fs docker registry via $ ./zeta fs fsdocker
+    - This runs locally for now, as there is no shared filesystem
+5. At this point we are ready to build our ZK and MapR containers. 
     - $ ./zeta fs mapr buildzk -u # Build the ZK container
     - $ ./zeta fs mapr buildmapr -u # Build the mapr container
-6. Once built, we need to start the ZKs first:
+6. Once built, we need to start the ZKs first: 
     - $ ./zeta fs mapr installzk -u
 7. Once ZKs are running start them MapR containers:
     - $ ./zeta fs mapr installmapr -u
-8. Yeah! MapR should be up and running, it should print a CLDB link for you to go check and see your cluster running!
-9. Now to complete MapR, running 
+    - $ It will start CLDBs first, wait until they are up and running, and then run the standard nodes
+    - $ Once it submits the standard nodes, it will provide a CLDB link. You can log into the MapR Console using the FSUSER password you provided in prep for what is likely the mapr user. 
+8. Now to complete MapR/FS install by installing fuse clients on nodes. 
     - $ ./zeta fs mapr installfuse -u # This installs the FUSE client on all agents so it's ready for cluster installation (ZETA!)
 10. Create some local volumes for use in shuffle activities
     - $ ./zeta fs mapr createlocalvols -a -u
+
 ### Cluster (Zeta) Install
 ----------
-1. The cluster.conf file was already created (the MapR install calls the cluster install script secretly)
-2. The first step is to install the zeta base directories 
+1. The cluster.conf file was already created (the FS install calls the cluster install script secretly)
+2. The first step is to install the zeta base directories. This will clear your cluster directories in your initial install. 
     - $ ./zeta cluster zetabase
 3. Next we will be installing the shared docker registry that is backed by MapR (instead of local)
     - $ ./zeta cluster shareddocker
@@ -173,6 +190,7 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
     - $ ./zeta cluster ldapperf -a -u
 9. (Optional) I like to add a user role now (say "prod")
     - $ ./zeta cluster addzetarole -r=prod
+    - Manually increment the UID from the provided 1000000 (which is shared) 1 million to 2000000 for each role you add. I do need to automate this... 
 
 ### Users and Groups
 ----------
