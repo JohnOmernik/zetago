@@ -45,7 +45,7 @@ echo "Then at the prompt for directory root, pot in /data/prod/myhbasetables"
 echo ""
 echo "This can be changed in the conf directory (the hbase-site.xml) for this instance"
 
-read -e -p "What root directory should we use to identify hbase tables? :" -i "/apps/${APP_ROLE}/myhbasetables" APP_TABLE_ROOT
+read -e -p "What root directory should we use to identify hbase tables? " -i "/apps/${APP_ROLE}/myhbasetables" APP_TABLE_ROOT
 
 APP_MAR_FILE="${APP_HOME}/marathon.json"
 APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
