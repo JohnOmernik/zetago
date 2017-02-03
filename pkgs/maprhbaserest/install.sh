@@ -32,10 +32,6 @@ bridgeports "APP_PORT_JSON" "8000" "$APP_PORTSTR"
 haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}~${APP_INFO_PORTSTR}"
 
 
-
-
-read -e -p "Please enter the port for ${APP_NAME} info service: " -i "27005" APP_INFO_PORT
-read -e -p "Please enter the port for ${APP_NAME} REST API: " -i "27000" APP_PORT
 read -e -p "Please enter the amount of memory to use for the $APP_ID instance of $APP_NAME: " -i "1024" APP_MEM
 read -e -p "Please enter the amount of cpu to use for the $APP_ID instance of $APP_NAME: " -i "1.0" APP_CPU
 
