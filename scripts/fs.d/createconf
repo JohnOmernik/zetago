@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# Create conf file for initial Shared Filesytem installation
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+
+IP_DETECT="./conf/ip-detect"
+
+if [ ! -f "$IP_DETECT" ]; then
+    @go.log FATAL "The ip-detect script should be located at $IP_DETECT but was not found. exiting"
+fi
+
+
+echo "What file system provider do you wish to use for Zeta?"
+read -e -p "Filesystem provider: " -i "mapr" FS_PROVIDER
+if [ ! -d "./vers/$FS_PROVIDER" ]; then
+    @go.log FATAL "Chosen filesystem provider $FS_PROVIDER does not exist in .vers"
+fi
+
+echo ""
+echo "As we build the docker containers for FS, we need a temporary Docker registry to host the containers"
+echo "This is ONLY for fs based containers"
+echo "It will be named fsdocker-shared.marathon.slave.mesos by default, only change this name if you understand what that means"
+echo "Which name do you wish to give this docker registry instance?"
+echo ""
+read -e -p "FS Docker Registry Host: " -i "fsdocker-shared.marathon.slave.mesos" FS_DOCKER_REG_HOST
+echo ""
+read -e -p "Which port should the FS Docker register run on (we recommend 5000): " -i "5000" FS_DOCKER_REG_PORT
+echo ""
+
+
+cat > $FS_CONF << EOF
+#!/bin/bash
+
+#########################
+# These are the editable settings for installing a Shared Filesystem (via FS_PROVIDER)  running on Zeta cluster.  Edit these settings prior to executing the scripts
+
+
+#########################
+# This is the docker registry that will be used to house the images so you don't have to build them on every node
+# After your cluster is started in AWS, pick a node and use the default port
+
+export FS_DOCKER_REG_HOST="$FS_DOCKER_REG_HOST"
+export FS_DOCKER_REG_PORT="$FS_DOCKER_REG_PORT"
+export FS_DOCKER_REG_URL="\${FS_DOCKER_REG_HOST}:\${FS_DOCKER_REG_PORT}"
+
+export FS_PROVIDER="$FS_PROVIDER"
+export FS_PROVIDER_CONF="./conf/fs_\${FS_PROVIDER}.conf"
+
+export FS_LOCKED="1"
+
+EOF
+
+@go.log INFO "FS Conf file written to $FS_CONF"
+

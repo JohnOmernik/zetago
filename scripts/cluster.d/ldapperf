@@ -5,7 +5,8 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
@@ -19,7 +20,7 @@ AUTH_LIB="lib${LDAP_PROVIDER}"
 
 function _openldapperf() {
 
-    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+    . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
 
     CURUSER=$(whoami)
     if [ "$CURUSER" != "$IUSER" ]; then
@@ -101,8 +102,8 @@ function _openldapperf() {
 
     if [ "$ACTION_ALL" == "1" ]; then
 
-        LDAP_CACHE_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/ldap_cache.sh"
-        LDAP_INDEX_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/ldap_indexes.sh"
+        LDAP_CACHE_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_shared/ldap_cache.sh"
+        LDAP_INDEX_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_shared/ldap_indexes.sh"
 
         if [ -f "$LDAP_INDEX_FILE" ]; then
             @go.log WARN "Indexes already added to this install - skipping"

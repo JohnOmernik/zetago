@@ -7,7 +7,8 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
@@ -16,7 +17,7 @@ reqshared "dockerregv2"
 
 function _installldap() {
 
-    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+    . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
 
     CURUSER=$(whoami)
 
@@ -24,7 +25,7 @@ function _installldap() {
         echo "Must use ${IUSER}: User: $CURUSER"
     fi
 
-    if [ ! -d "/mapr/$CLUSTERNAME/zeta/shared/zetaca" ]; then
+    if [ ! -d "$CLUSTERMOUNT/zeta/shared/zetaca" ]; then
         @go.log WARN "zetaca not yet moved to shared location"
         read -e -p "Should we invoke ./zeta cluster zetaca final to move zeta to final location? " -i "Y" MOVECA
         if [ "$MOVECA" != "Y" ]; then
@@ -76,7 +77,7 @@ function _installldap() {
     fi
 
 
-    APP_ROOT="/mapr/$CLUSTERNAME/zeta/shared/openldap"
+    APP_ROOT="$CLUSTERMOUNT/zeta/shared/openldap"
 
     if [ -d "$APP_ROOT" ]; then
         @go.log FATAL "OpenLDAP Root at $APP_ROOT already exists. Refusing to go on..."
@@ -99,7 +100,7 @@ function _installldap() {
     CN_GUESS="openldap-shared.marathon.slave.mesos"
 
 
-    . /mapr/$CLUSTERNAME/zeta/shared/zetaca/gen_server_cert.sh
+    . $CLUSTERMOUNT/zeta/shared/zetaca/gen_server_cert.sh
 
 
     @go.log INFO "Adding OpenLDAP Ports to $SERVICES_CONF"
@@ -107,7 +108,7 @@ function _installldap() {
     echo "CLUSTER:tcp:636:shared:openldap:OpenLDAP SSL Port" >> $SERVICES_CONF
 
 
-cat > /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/openldap.sh << EOL
+cat > $CLUSTERMOUNT/zeta/kstore/env/env_shared/openldap.sh << EOL
 export ZETA_OPENLDAP_HOST="openldap-shared.marathon.slave.mesos"
 export ZETA_OPENLDAP_PORT="389"
 export ZETA_OPENLDAP_SECURE_PORT="636"
@@ -153,7 +154,7 @@ LDAP_READONLY_USER_USERNAME: readonly
 LDAP_READONLY_USER_PASSWORD: readonly
 EOL2
 
-    sudo chmod +x /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/openldap.sh
+    sudo chmod +x $CLUSTERMOUNT/zeta/kstore/env/env_shared/openldap.sh
 
     MARFILE="${APP_ROOT}/marathon.json"
 

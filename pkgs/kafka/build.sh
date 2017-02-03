@@ -2,7 +2,7 @@
 
 checkdocker
 
-reqdockerimg "buildbase_mapr"
+reqdockerimg "buildbase"
 
 check4package "$APP_TGZ" BUILD
 

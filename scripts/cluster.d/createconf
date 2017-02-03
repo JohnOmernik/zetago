@@ -6,7 +6,8 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 
 echo ""
 echo "---------------------------------------"
@@ -32,7 +33,7 @@ echo "In the zeta install, there are four base directories, plus the user home, 
 echo ""
 echo "apps,etl,data,zeta"
 echo ""
-echo "For each of these directories, every time a role is installed, a mapr volume is created for that role under the directory."
+echo "For each of these directories, every time a role is installed, a FS volume is created for that role under the directory."
 echo "In addition, a user for data service, and groups are created to help manage the data in the directories"
 echo "For each directory (apps, mesos, data, etl):"
 echo "---- a group zeta%role%%dir% is created that has write permissions by default to /directory/%role% (i.e. for role prod, /apps/prod)"

@@ -25,7 +25,7 @@ haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 
 read -e -p "Please enter the CPU shares to use with the kafka-mesos scheduler: " -i "1.0" APP_CPU
 echo ""
-read -e -p "Please enter the Marathon Memory limit to use with kafka-mesos scheduler: " -i "768" APP_MEM
+read -e -p "Please enter the Marathon Memory limit to use with kafka-mesos scheduler: " -i "1280" APP_MEM
 echo ""
 echo "Running Kafka as zetasvc$APP_ROLE"
 APP_USER="zetasvc$APP_ROLE"
@@ -37,7 +37,7 @@ APP_CNT="1"
 
 
 APP_MAR_FILE="${APP_HOME}/marathon.json"
-APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
+APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 
 mkdir -p ${APP_HOME}/brokerdata
 

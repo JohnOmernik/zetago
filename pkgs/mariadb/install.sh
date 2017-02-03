@@ -32,7 +32,7 @@ APP_MAR_FILE="${APP_HOME}/marathon.json"
 APP_DATA_DIR="$APP_HOME/data"
 APP_LOCK_DIR="$APP_HOME/lock"
 APP_CRED_DIR="$APP_HOME/creds"
-APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
+APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 
 mkdir -p $APP_DATA_DIR
 mkdir -p $APP_LOCK_DIR

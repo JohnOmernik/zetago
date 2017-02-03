@@ -9,7 +9,7 @@ APP_URL_FILE="mapr-hbase-1.1.1.201602221251-1.noarch.rpm"
 
 APP_URL="${APP_URL_ROOT}${APP_URL_FILE}"
 
-REQ_APP_IMG_NAME="buildbase_mapr"
+REQ_APP_IMG_NAME="buildbase"
 
 APP_IMG_NAME="hbaserest"
 APP_IMG_TAG="$APP_VER"
@@ -59,7 +59,7 @@ EOL
     rm ./pkg_hbaserest.sh
     rm ./Dockerfile
 cat > ./Dockerfile << EOL1
-FROM ${ZETA_DOCKER_REG_URL}/buildbase_mapr
+FROM ${ZETA_DOCKER_REG_URL}/buildbase
 ADD ${APP_TMP_TGZ} /
 
 cmd ["/bin/bash"]

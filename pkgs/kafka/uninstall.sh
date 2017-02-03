@@ -1,6 +1,6 @@
 #!/bin/bash
-. "$_GO_USE_MODULES" 'libmapr'
-
+FS_LIB="lib${FS_PROVIDER}"
+. "$_GO_USE_MODULES" $FS_LIB
 
 if [ "$UNATTEND" == "1" ]; then
     CONFIRM="Y"
@@ -42,10 +42,10 @@ if [ "$CONFIRM" == "Y" ]; then
     @go.log WARN "$APP_NAME instance $APP_ID unininstalled"
     if [ "$DESTROY" == "1" ]; then
         for X in $(seq 1 $BROKER_COUNT); do
-
             BROKER="broker${X}"
             VOL="${APP_DIR}.${APP_ROLE}.${APP_ID}.${BROKER}"
-            maprapi "/volume/remove?name=${VOL}"
+            MNT="/${APP_DIR}/${APP_ROLE}/${APP_NAME}/${APP_ID}/brokerdata/${BROKER}"
+            fs_rmdir "RETCODE" "$MNT"
         done
         @go.log WARN "Also removing all data for app"
         sudo rm -rf $APP_HOME

@@ -7,6 +7,30 @@ sourceconf "$PREP_CONF"
 
 IP_DETECT="./conf/ip-detect"
 
+ME=$(whoami)
+
+if [ "$ME" != "$IUSER" ]; then
+    @go.log FATAL "Currentling running as $ME. Scripts need to be run as $IUSER. Please connect to the init node as $IUSER via $ ssh -i $OUT_KEY $IUSER@$INIT_NODE"
+fi
+
+
+echo ""
+echo "Prior to starting DCOS Conf, it's important that your node prep was successful. We will run ./zeta prep status now to show you the prep status."
+echo ""
+echo ""
+./zeta prep status -o
+echo ""
+echo ""
+echo ""
+echo "All nodes should be up, should return the same kernel version, the same docker version, and show that the sudo test was successful"
+echo "If this is not the case, please run ./zeta prep install -n=172.31.x.x where 172.31.x.x is the IP of the node that is not the same as the others"
+echo ""
+read -e -p "Do you wish to exit now to fix any issues in prep? (Y/N): " -i "N" QUIT
+if [ "$QUIT" == "Y" ]; then
+    @go.log FATAL "Exiting per user request"
+fi
+
+
 echo ""
 echo "-----------------------------------"
 echo "This process will ask a series of questions in order to create a dcos.conf script for gettings nodes ready for Zeta"
@@ -73,9 +97,18 @@ echo "$SOME_NODES"
 echo ""
 read -e -p "Please enter a list of public node(s) using space to separate (Internal IPs) (Optional, just hit enter for none): " PUBLIC_NODES
 echo ""
-echo "Please enter a cluster name - This will match the clustername in MapR as well"
+echo "Please enter a cluster name"
 echo ""
 read -e -p "Cluster name: " -i "mydcos" CLUSTERNAME
+echo ""
+echo "Please enter a POSIX client base mount point. This will be used, with the clustername as the basis for posix interaction with your shared filesystem"
+echo ""
+read -e -p "Cluster Mount point: " -i "zeta" CLUSTERBASE
+echo ""
+echo "Your cluster base is: $CLUSTERBASE"
+echo "Your cluster name is: $CLUSTERNAME"
+CLUSTERMOUNT="/$CLUSTERBASE/$CLUSTERNAME"
+echo "Your cluster posix mount point is $CLUSTERMOUNT"
 echo ""
 echo "DNS Resolution"
 echo "This is needed for external DNS resolution, defaults are examples from an AWS region, please enure the resolve it correct for your installation"
@@ -123,12 +156,13 @@ cat > $DCOS_CONF << EOP
 #!/bin/bash
 DOCKER_PROXY="$DOCKER_PROXY"
 DOCKER_NOPROXY="$DOCKER_NOPROXY"
-
+CLUSTERBASE="$CLUSTERBASE"
 CLUSTERNAME="$CLUSTERNAME"
+CLUSTERMOUNT="$CLUSTERMOUNT"
 MASTER_NODES="$MASTER_NODES"
 BOOTSTRAP_NODE="$BOOTSTRAP_NODE"
 BOOTSTRAP_PORT="$BOOTSTRAP_PORT"
-BOOTSTRAP_LOC="/home/zetaadm/dcos_bootstrap"
+BOOTSTRAP_LOC="/home/$IUSER/dcos_bootstrap"
 DNS_RESOLVERS="$DNS_RESOLVERS"
 DNS_SEARCH="$DNS_SEARCH"
 INTERNAL_NODES="$INTERNAL_NODES"
@@ -141,3 +175,8 @@ IP_DETECT="$IP_DETECT"
 EOP
 
 
+echo ""
+echo "Running ./zeta dcos sshhosts to trust keys of nodes provided"
+echo ""
+./zeta dcos sshhosts
+echo ""

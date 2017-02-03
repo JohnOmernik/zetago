@@ -9,7 +9,9 @@
 # Example: ./zeta cluster marathon delete myrole/myapp http://marathon.mesos:8080/v2/apps
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 
 function _marathon_delete() {

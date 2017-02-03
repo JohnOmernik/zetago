@@ -10,7 +10,7 @@ APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
 APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_NAME}"
 
 
-REQ_APP_IMG_NAME="buildbase_mapr"
+REQ_APP_IMG_NAME="buildbase"
 
 
 APP_GIT_ROOT="https://github.com"

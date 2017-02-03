@@ -12,7 +12,7 @@ echo ""
 
 
 APP_USER_ID=$(id $APP_USER)
-APP_USER_HOME="/mapr/$CLUSTERNAME/user/$APP_USER"
+APP_USER_HOME="$CLUSTERMOUNT/user/$APP_USER"
 APP_MAR_FILE="${APP_HOME}/marathon/user_shell_${APP_USER}_marathon.json"
 APP_USER_PATH="${APP_USER_HOME}/bin"
 
@@ -22,7 +22,7 @@ if [ "$APP_USER_ID" == "" ]; then
     @go.log FATAL "Cannot determined UID for user $APP_USER - Can Not Proceed"
 fi
 if [ ! -d "$APP_USER_HOME" ]; then
-    @go.log FATAL "Cannot find user home directory for $APP_USER at /mapr/$CLUSTERNAME/users - Can Not Proceed"
+    @go.log FATAL "Cannot find user home directory for $APP_USER at $CLUSTERMOUNT/users - Can Not Proceed"
 fi
 if [ -f "$APP_MAR_FILE" ]; then
     @go.log WARN "There is already an instance file for $APP_USER running usershell, do you wish to start?"
@@ -59,7 +59,8 @@ if [ "$STARTME" == "N" ]; then
     if [ "$INSTRUCTIONS" == "" ]; then
 
 sudo tee -a ${APP_USER_HOME}/.profile << EOF
-CLUSTERNAME=\$(ls /mapr)
+CLUSTERNAME="$CLUSTERNAME"
+CLUSTERMOUNT="$CLUSTERMOUNT"
 echo ""
 echo "**************************************************************************"
 echo "Zeta Cluster User Shell"
@@ -73,8 +74,8 @@ echo "- Java is in the path and available for use"
 echo "- Python is installed and in the path"
 echo "- The hadoop client (i.e. hadoop fs -ls /) is in the path and available"
 echo "- While the container is not persistent, the user's home directory IS persistent. Everything in /home/$USER will be maintained after the container expires"
-echo "- /mapr/\$CLUSTERNAME is also persistent.  This is root of the distributed file system. (I.e. ls /mapr/\$CLUSTERNAME has the same result as hadoop fs -ls /)"
-echo "- The user's home directory is also in the distributed filesystem. Thus, if you save a file to /home/\$USER it also is saved at /mapr/\$CLUSTERNAME/user/\$USER. THis is usefule for running distributed drill queries."
+echo "- $CLUSTERMOUNT is also persistent.  This is root of the distributed file system. (I.e. ls $CLUSTERMOUNT has the same result as hadoop fs -ls /)"
+echo "- The user's home directory is also in the distributed filesystem. Thus, if you save a file to /home/\$USER it also is saved at $CLUSTERMOUNT/user/\$USER. THis is usefule for running distributed drill queries."
 echo ""
 echo "This is a basic shell environment. It does NOT have the ability to run docker commands, and we would be very interested in other feature requests."
 echo ""
@@ -83,9 +84,7 @@ echo ""
 EOF
     fi
 
-    MAPR_HOME="/opt/mapr"
-    HDIR=$(ls -1 $MAPR_HOME/hadoop/|grep "hadoop-2")
-    HADOOP_HOME="$MAPR_HOME/hadoop/$HDIR"
+    HADOOP_HOME="$FS_HADOOP_HOME"
 
     @go.log INFO "Linking Hadoop Client for use in Container"
     ln -s $HADOOP_HOME/bin/hadoop ${APP_USER_PATH}/hadoop
@@ -122,7 +121,7 @@ EOF
         read -e -p "What role is this instance of $PKG in? " PKG_ROLE
 
         if [ "$PKG_ID" != "" ]; then
-            DRILL_PKG_HOME="/mapr/$CLUSTERNAME/zeta/$PKG_ROLE/$PKG/$PKG_ID"
+            DRILL_PKG_HOME="$CLUSTERMOUNT/zeta/$PKG_ROLE/$PKG/$PKG_ID"
             if [ ! -d "${DRILL_PKG_HOME}" ]; then
                 echo "Instance home not found, skipping"
             else
@@ -136,7 +135,7 @@ EOF
         read -e -p "What role is this instance of $PKG in? " PKG_ROLE
 
         if [ "$PKG_ID" != "" ]; then
-            SPARK_PKG_HOME="/mapr/$CLUSTERNAME/zeta/$PKG_ROLE/$PKG/$PKG_ID"
+            SPARK_PKG_HOME="$CLUSTERMOUNT/zeta/$PKG_ROLE/$PKG/$PKG_ID"
             if [ ! -d "${SPARK_PKG_HOME}" ]; then
                 echo "Instance home not found, skipping"
             else
@@ -179,11 +178,11 @@ cat > $APP_MAR_FILE << EOM
       "network": "HOST"
     },
   "volumes": [
-      { "containerPath": "/opt/mapr", "hostPath": "/opt/mapr", "mode": "RO"},
+      { "containerPath": "$FS_HOME", "hostPath": "$FS_HOME", "mode": "RO"},
       { "containerPath": "/opt/mesosphere", "hostPath": "/opt/mesosphere", "mode": "RO"},
-      { "containerPath": "/home/$APP_USER", "hostPath": "/mapr/$CLUSTERNAME/user/$APP_USER", "mode": "RW"},
-      { "containerPath": "/home/zetaadm", "hostPath": "/mapr/$CLUSTERNAME/user/zetaadm", "mode": "RW"},
-      { "containerPath": "/mapr/$CLUSTERNAME", "hostPath": "/mapr/$CLUSTERNAME", "mode": "RW"},
+      { "containerPath": "/home/$APP_USER", "hostPath": "$CLUSTERMOUNT/user/$APP_USER", "mode": "RW"},
+      { "containerPath": "/home/zetaadm", "hostPath": "$CLUSTERMOUNT/user/zetaadm", "mode": "RW"},
+      { "containerPath": "$CLUSTERMOUNT", "hostPath": "$CLUSTERMOUNT", "mode": "RW"},
       { "containerPath": "/spark", "hostPath": "${SPARK_HOME}", "mode": "RW"}
     ]
   }
@@ -208,11 +207,11 @@ cat > $APP_MAR_FILE << EOU
       "network": "HOST"
     },
   "volumes": [
-      { "containerPath": "/opt/mapr", "hostPath": "/opt/mapr", "mode": "RO"},
+      { "containerPath": "$FS_HOME", "hostPath": "$FS_HOME", "mode": "RO"},
       { "containerPath": "/opt/mesosphere", "hostPath": "/opt/mesosphere", "mode": "RO"},
-      { "containerPath": "/home/$APP_USER", "hostPath": "/mapr/$CLUSTERNAME/user/$APP_USER", "mode": "RW"},
-      { "containerPath": "/home/zetaadm", "hostPath": "/mapr/$CLUSTERNAME/user/zetaadm", "mode": "RW"},
-      { "containerPath": "/mapr/$CLUSTERNAME", "hostPath": "/mapr/$CLUSTERNAME", "mode": "RW"}
+      { "containerPath": "/home/$APP_USER", "hostPath": "$CLUSTERMOUNT/user/$APP_USER", "mode": "RW"},
+      { "containerPath": "/home/zetaadm", "hostPath": "$CLUSTERMOUNT/user/zetaadm", "mode": "RW"},
+      { "containerPath": "$CLUSTERMOUNT", "hostPath": "$CLUSTERMOUNT", "mode": "RW"}
     ]
   }
 }

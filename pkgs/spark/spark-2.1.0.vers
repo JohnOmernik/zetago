@@ -15,7 +15,7 @@ APP_VER="spark-2.1.0"
 APP_IMG_TAG="2.1.0"
 APP_IMG_NAME="spark"
 
-REQ_APP_IMG_NAME="zetabase_mapr"
+REQ_APP_IMG_NAME="zetabase"
 
 
 APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"

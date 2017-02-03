@@ -119,7 +119,7 @@ function checkversbuild () {
     . ${PKG_BASE}/$VERS
 
     if [ "$APP_TGZ" != "" ]; then
-        ROOT="/mapr/$CLUSTERNAME/zeta/shared/$APP"
+        ROOT="$CLUSTERMOUNT/zeta/shared/$APP"
         ROOT_PKG="${ROOT}/packages"
         if [ ! -f "${ROOT_PKG}/$APP_TGZ" ]; then
             if [ "$UN" == "1" ]; then

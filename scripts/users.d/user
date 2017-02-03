@@ -6,19 +6,24 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
 
-AUTH_LIB="lib${LDAP_PROVIDER}"
 
 # Load the Auth lib for this cluster
+AUTH_LIB="lib${LDAP_PROVIDER}"
 . "$_GO_USE_MODULES" $AUTH_LIB
-. "$_GO_USE_MODULES" 'libmapr'
+
+# Load the FS lib for this cluster
+FS_LIB="lib${FS_PROVIDER}"
+. "$_GO_USE_MODULES" $FS_LIB
+
 function _user() {
 
-    . /mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh
+    . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
 
     ACTION_SRC="user"
     for i in "$@"
@@ -76,7 +81,7 @@ function _user() {
             USER_ROLE="shared"
         fi
         if [ "$USER_ROLE" != "" ]; then
-            START_UID=$(cat /mapr/$CLUSTERNAME/zeta/kstore/zetasync/zetauid.list|grep $USER_ROLE|cut -d":" -f2)
+            START_UID=$(cat $CLUSTERMOUNT/zeta/kstore/zetasync/zetauid.list|grep $USER_ROLE|cut -d":" -f2)
 
             if [ "$START_UID" == "" ]; then
                 @go.log FATAL "The starting UID for role $USER_ROLE was not found, are you sure this role is installed?"
@@ -145,17 +150,12 @@ function _user() {
             TST=$(id $USER_NAME)
         done
         sleep 3
-        if [ ! -d "/mapr/$CLUSTERNAME/user/$USER_NAME" ]; then
+        if [ ! -d "$CLUSTERMOUNT/user/$USER_NAME" ]; then
             @go.log INFO "$USER_NAME Home Directory not found: Creating"
-            maprapi "/volume/create?name=user.${USER_NAME}&path=/user/${USER_NAME}&rootdirperms=770&user=${USER_NAME}:fc,a,dump,restore,m,d%20${IUSER}:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=${USER_NAME}" "10"
-            echo ""
-            T=""
-            while [ "$T" == "" ]; do
-                sleep 1
-                T=$(ls -1 /mapr/$CLUSTERNAME/user|grep $USER_NAME)
-            done
-            sudo chown $USER_NAME:$IUSER /mapr/$CLUSTERNAME/user/$USER_NAME
-            sudo chmod 770 /mapr/$CLUSTERNAME/user/$USER_NAME
+
+            fs_mkvol "RETCODE" "/user/${USER_NAME}" "user.${USER_NAME}" "770"
+            sudo chown -R ${USER_NAME}:${IUSER} $CLUSTERMOUNT/user/${USER_NAME}
+            sudo chmod 770 ${CLUSTERMOUNT}/user/$USER_NAME
         else
             @go.log WARN "User Directory for $USER_NAME Already Exists: Ensure to check permissions for reuse"
         fi

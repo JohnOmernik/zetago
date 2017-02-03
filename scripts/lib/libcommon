@@ -2,6 +2,7 @@
 #
 # libcommon
 #
+# parseproxy - Parse the proxy variables into component pieces
 #
 # addtoconfvar - Take a new value and check a specific confvar if it exists, if it doesn't, remove it
 #
@@ -14,8 +15,43 @@
 # checkapi - Check a given URL to determine if it's up and running. Keep trying until the number of fails is reached, then FATAL out
 #
 # getpass - Request a password from the User 
+#
+# getpaths - Provide a path, and return both the fuse path and the HDFS path in Zeta
+#
 # --------------------------------------------
 #
+#
+# function getpaths - Provide a path, and return both the HDFS and FUSE path (Either HDFS or FUSE can be provided)
+#
+# Arguments
+# $1 variable to put the FUSE Path in
+# $2 variable to put the HDFS Path in
+# $3 Path to work on
+#
+function getpaths() {
+
+    local RES_FUSE=$1
+    local RES_HDFS=$2
+    local DPATH=$3
+
+    FUSEPATH=""
+    HDFSPATH=""
+
+    CHK=$(echo "$DPATH"|grep "$CLUSTERMOUNT")
+    if [ "$CHK" != "" ]; then
+        @go.log INFO "$CLUSTERMOUNT found in DIR Path, assuming FUSE Path provided"
+        FUSEPATH="$DPATH"
+        HDFSPATH=$(echo "$DPATH"|sed "s@$CLUSTERMOUNT@@g")
+    else
+        @go.log INFO "$CLUSTERMOUNT not found in DIR Path, assuming HDFS Path provided"
+        FUSEPATH="${CLUSTERMOUNT}${DPATH}"
+        HDFSPATH="$DPATH"
+    fi
+
+    eval $RES_FUSE="'$FUSEPATH'"
+    eval $RES_HDFS="'$HDFSPATH'"
+
+}
 
 #
 # function parseproxy() - Take a proxy string are parse it into host, port, user, and password 
@@ -189,7 +225,7 @@ function initconf(){
 function reqshared() {
     SHAREDREQS="$1"
     for REQ in $SHAREDREQS; do
-        if [ ! -d "/mapr/$CLUSTERNAME/zeta/shared/$REQ" ]; then
+        if [ ! -d "$CLUSTERMOUNT/zeta/shared/$REQ" ]; then
             @go.log FATAL "Shared service $REQ is required for this service, please install"
         fi
     done

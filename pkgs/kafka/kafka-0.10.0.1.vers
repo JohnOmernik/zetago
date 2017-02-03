@@ -9,7 +9,7 @@ APP_URL_FILE="kafka_2.10-0.10.0.1.tgz"
 
 APP_URL="${APP_URL_ROOT}${APP_URL_FILE}"
 
-REQ_APP_IMG_NAME="buildbase_mapr"
+REQ_APP_IMG_NAME="buildbase"
 
 APP_GIT_URL="https://github.com"
 APP_GIT_USER="mesos"

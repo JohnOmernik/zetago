@@ -44,7 +44,7 @@ APP_DATA_DIR="$APP_HOME/data"
 APP_CONF_DIR="$APP_HOME/conf"
 APP_CONF_FILE="${APP_CONF_DIR}/redis.conf"
 APP_LOG_DIR="$APP_HOME/logs"
-APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
+APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 
 
 mkdir -p $APP_DATA_DIR

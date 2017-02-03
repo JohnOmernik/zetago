@@ -6,7 +6,9 @@
 
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
@@ -42,9 +44,9 @@ for NODE in $INODES; do
     @go.log INFO "Node Host: $NODE_HOST - Node Disks: $NODE_DISKS"
     echo ""
     if [ "$UNATTEND" == "1" ]; then
-        ./zeta mapr installmaprnode -n="${NODE_HOST}" -d="${NODE_DISKS}" -u
+        ./zeta fs mapr installmaprnode -n="${NODE_HOST}" -d="${NODE_DISKS}" -u
     else
-        ./zeta mapr installmaprnode -n="${NODE_HOST}" -d="${NODE_DISKS}"
+        ./zeta fs mapr installmaprnode -n="${NODE_HOST}" -d="${NODE_DISKS}"
     fi
 done
 IFS=$OLDIFS
@@ -59,7 +61,7 @@ for CLDB in $CLDBS; do
     else
         STARTED="$STARTED $CLDB_HOST"
     fi
-    ./zeta mapr submitmaprnode $CLDB_HOST 1
+    ./zeta fs mapr submitmaprnode $CLDB_HOST 1
 done
 IFS=$OLDIFS
 echo ""
@@ -94,7 +96,7 @@ for NODE in $INODES; do
     NODE_HOST=$(echo $NODE|cut -d":" -f1)
     CHK=$(echo $STARTED|grep $NODE_HOST)
     if [ "$CHK" == "" ]; then
-        ./zeta mapr submitmaprnode $NODE_HOST
+        ./zeta fs mapr submitmaprnode $NODE_HOST
         echo ""
     fi
 done

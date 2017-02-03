@@ -9,7 +9,8 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
@@ -173,7 +174,7 @@ sudo sed -i "s/compat/compat ldap/g" /etc/nsswitch.conf
 
 sudo /etc/init.d/nscd restart
 sudo service nslcd restart
-sudo /etc/init.d/mapr-posix-client-basic restart
+sudo $FS_PROVIDER_FUSE_SVC restart
 sudo service dcos-mesos-slave restart
 sudo service dcos-mesos-slave-public restart
 elif [ "\$INST_TYPE" == "rh_centos" ]; then

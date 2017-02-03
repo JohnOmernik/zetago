@@ -62,7 +62,7 @@ function addindexcache(){
         LDIF_DATA="${LDIF_DATA}olcDbIndex: ${IDX} ${IDX_TYPE}"$'\n'
     fi
 
-    LDAP_ROOT="/mapr/$CLUSTERNAME/zeta/shared/openldap"
+    LDAP_ROOT="$CLUSTERMOUNT/zeta/shared/openldap"
     LDIF_FILE_ZETA="${LDAP_ROOT}/slapd.d/tmp_index.ldif"
     LDIF_FILE_DOCKER="/etc/ldap/slapd.d/tmp_index.ldif"
 
@@ -217,7 +217,7 @@ function runldapcommand() {
     LDIF_COMMAND=$2
     PASSRESULT=$3
 
-    LDAP_ROOT="/mapr/$CLUSTERNAME/zeta/shared/openldap"
+    LDAP_ROOT="$CLUSTERMOUNT/zeta/shared/openldap"
 
     if [ ! -d "$LDAP_ROOT" ]; then
         @go.log FATAL "Open LDAP doesn't appear to be installed at $LDAP_ROOT"

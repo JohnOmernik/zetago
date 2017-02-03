@@ -1,0 +1,4 @@
+#!/bin/bash
+
+DEF_APP_VERS="buildbase_1.0.vers"
+

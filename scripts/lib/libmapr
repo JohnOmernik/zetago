@@ -1,16 +1,189 @@
 #!/bin/bash
 #
-# Mapr helper fuctions for use with Zeta
+# Mapr Provider library for use with Zeta
+#
+##### The Following functions are required to have implementations to work with Zeta
+#
+# fs_rmdir
+# fs_prepbase
+# fs_mkvol
+# fs_mklocalvol
 #
 
+#
+# function fs_mklocalvol 
+#
+# Desc: Create a volume that is local to a node. 
+# Note all Shared filesystems can do this, if you are implementing this function in a filesystem that doesn't have a concept of local volumes, please just create a volume or a directory at the proper place $FS_PROVIDER_LOCAL/$HOSTNAME/local
+#
+#
+
+function fs_mklocalvol(){
+
+    local RESULT=$1
+    local NODE=$2
+    if [ ! -d "${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}" ]; then
+        sudo mkdir -p ${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}
+        sudo chown -R  $FSUSER:$FSUSER ${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}
+    fi
+    if [ ! -d "${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}/${NODE}" ]; then
+        sudo mkdir -p ${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}/${NODE}
+        sudo chown -R $FSUSER:$FSUSER ${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}/${NODE}
+    fi
+    VOL_NAME="mapr.$NODE.local"
+    HDFS_MOUNT="${FS_PROVIDER_LOCAL}/${NODE}/local"
+    FUSE_MOUNT="${CLUSTERMOUNT}${HDFS_MOUNT}"
+    if [ -d "${FUSE_MOUNT}" ]; then
+        @go.log WARN "The directory already exists, should we try to delete before creating volume? (If the volume exists, the delete will fail and all is well"
+        if [ "$UNATTEND" == "1" ]; then
+            DMNT="Y"
+        else
+            read -e -p "Delete local diretory $NFS_MOUNT? (Y/N): " -i "Y" DMNT
+        fi
+        if [ "$DMNT" == "Y" ]; then
+            sudo rm -rf $FUSE_MOUNT
+        fi
+    fi
+
+    maprapi "RETCODE" "RETOUT" "/volume/create?name=${VOL_NAME}&path=${HDFS_MOUNT}&replication=1&localvolumehost=${NODE}&localvolumeport=5660&shufflevolume=true&rereplicationtimeoutsec=300"
+    if [ "$RETCODE" == "0" ]; then
+        while [ ! -d "$FUSE_MOUNT" ]; do
+            sleep 1
+            sudo chown -R ${IUSER}:${IUSER} $FUSE_MOUNT 2> /dev/null
+            @go.log INFO "Waiting for $FUSE_MOUNT sync"
+        done
+        sudo chown -R $FSUSER:$IUSER $FUSE_MOUNT
+        sudo chmod 775 $FUSE_MOUNT
+        R="0"
+    else
+        R="1"
+    fi
+    eval $RESULT="'$R'"
+}
+
+#
+# fs_mkvol
+#
+#
+
+function fs_mkvol(){
+    local RESULT=$1
+    local VPATH=$2
+    local VNAME=$3
+    local ROOTPERMS=$4
+
+
+    if [ "$ROOTPERMS" == "" ]; then
+        ROOTPERMS="775"
+    fi
+
+    getpaths "FUSEPATH" "HDFSPATH" "$VPATH"
+
+    MAPR_DEFAULT="${IUSER}:fc,a,dump,restore,m,d%20${FSUSER}:fc,a,dump,restore,m,d&ae=$FSUSER"
+    maprapi "RETCODE" "RETOUT" "/volume/create?name=${VNAME}&path=${HDFSPATH}&rootdirperms=${ROOTPERMS}&user=${MAPR_DEFAULT}"
+
+    while [ "$RETCODE" != "0" ]; do
+        @go.log WARN "Volume Creation did not work - Result: $RETCODE - try again?"
+        read -e -p "Try Again? (Y/N): " -i "Y" TRY
+        if [ "$TRY" == "Y" ]; then
+            maprapi "RETCODE" "RETOUT" "/volume/create?name=${VNAME}&path=${HDFSPATH}&rootdirperms=${ROOTPERMS}&user=${MAPR_DEFAULT}"
+        else
+            @go.log WARN "User home vol creation failed"
+        fi
+    done
+    if [ "$RETCODE" == "0" ]; then
+        while [ ! -d "$FUSEPATH" ]; do
+            sleep 1
+            sudo chown -R ${IUSER}:${IUSER} $FUSEPATH 2> /dev/null
+            @go.log INFO "Waiting for $FUSEPATH sync"
+        done
+    fi
+    eval $RESULT="'$RETCODE'"
+
+}
+
+
+#
+#  Remove a directory by mountpoint. This is specifically important for FS implementation that use mount points as directories (where you can't just delete the directory via FUSE)
+#  This should remove the directory wether it's a volume or not (if it's nots, just rm) and it will do based on the fuse base or not
+#  $1 Result
+#  $2 Path to directory to remove (Fuse Path, /CLUSTERBASE/CLUSTERNAME/PATH/TO/DIR or just /PATH/TO/DIR)
+#
+function fs_rmdir(){
+
+    local RESULT=$1
+    local DPATH=$2
+
+
+    getpaths "FUSEPATH" "HDFSPATH" "$DPATH"
+
+    mapr_volnamebymount "VOL_NAME" "$HDFSPATH"
+
+    maprapi "APIRET" "APIOUT" "/volume/remove?name=${VOL_NAME}"
+
+    if [ "$APIRET" != "0" ]; then
+        @go.log WARN "fs_rmdir error: $API_OUT"
+    fi
+
+    if [ -d "$FUSEPATH" ]; then
+        @go.log WARN "Error removing MapR Volume - It may not have existed, doing an RM of the path"
+        sudo rm -rf $FUSEPATH
+    fi
+    RETSTR="0"
+    if [ -d "$FUSEPATH" ]; then
+        @go.log WARN "We attempted to remove $FUSEPATH - $HDFSPATH but it still exists"
+        RETSTR="1"
+    fi
+    eval $RESULT="'$RETSTR'"
+}
+
+
+
+function fs_prepbase(){
+
+    BASEDIRS="hbase apps user"
+    for BDIR in $BASEDIRS; do
+        if [ -d "$CLUSTERMOUNT/$BDIR" ]; then
+            @go.log WARN "Found $CLUSTERMOUNT/$BDIR Should we remove?"
+            read -e -p "Remove /$BDIR? (Y/N): " -i "Y" RMDIR
+            if [ "$RMDIR" == "Y" ]; then
+                fs_rmdir "RETCODE" "$CLUSTERMOUNT/$BDIR"
+            fi
+        fi
+    done
+}
+
+
+
+################################ The Following are provider specific functions that are not required by Zeta
+function mapr_volnamebymount(){
+    local RESULT=$1
+    local HDFSP=$2
+
+    maprapi "APIRET" "APIOUT" "/volume/list?filter=%5Bp%3D%3D${HDFSP}%5D&columns=n"
+
+    if [ "$APIRET" == "0" ]; then
+        VOLNAME=$(echo "$APIOUT"|grep -P -o "volumename\":\"[^\"]+\""|cut -d":" -f2|sed "s/\"//g")
+    else
+        VOLNAME=""
+    fi
+    eval $RESULT="'$VOLNAME'"
+}
+#
+#
+# maprapi - Sets up the MapR API calls based on creds
+#
+# Arguments
+# $1 Retcode (0 for success 1 for failre)
+# $2 Result
+# $3 CMD to run
+#
 function maprapi(){
     #Base is https://HOST/rest"
     # CMD should be like "/volume/remove?name=mapr.hbase"
-    CMD=$1
-    RETRIES="$2"
-    if [ "$RETRIES" == "" ]; then
-        RETRIES="1"
-    fi
+    local LRETCODE=$1
+    local LRESULT=$2
+    local CMD=$3
 
     HOST=$(echo $CLDBS|cut -d"," -f1|cut -d":" -f1)
 
@@ -20,36 +193,31 @@ function maprapi(){
 
     TFILE="./tmp/netrc.tmp"
 
+    RT="0"
+
     touch $TFILE
     chown ${IUSER}:${IUSER} $TFILE
     chmod 600 $TFILE
 
 cat > $TFILE << EOCRED
-machine $HOST login mapr password $MAPR_PASS
+machine $HOST login $FSUSER password $FSUSER_PASS
 EOCRED
 
     BASE_REST="https://$WEBHOST/rest"
     CURL_GET_BASE="/opt/mesosphere/bin/curl -k -s --netrc-file $TFILE $BASE_REST"
 
     CURL_RESULT=$(${CURL_GET_BASE}${CMD})
-    ATTEMPT="1"
     ERR_RESULT=$(echo $CURL_RESULT|grep "ERROR")
+
     if [ "$ERR_RESULT" != "" ]; then
         @go.log WARN "MAPR API Failure: Command $CMD - Result: $CURL_RESULT"
-        while [ "$ATTEMPT" -lt "$RETRIES" ] && [ "$ERR_RESULT" != "" ]; do
-            @go.log WARN "Attempt to create home directory failed, trying again after 30 seconds"
-            sleep 30
-            CURL_RESULT=$(${CURL_GET_BASE}${CMD})
-            ATTEMPT=$(( $ATTEMPT + 1 ))
-            ERR_RESULT=$(echo $CURL_RESULT|grep "ERROR")
-            @go.log WARN "Previous attempts failed: On Attempt $ATTEMPT this is the result of $CMD - $CURL_RESULT"
-        done
+        RT="1"
     else
-        @go.log INFO "MAPR API Success: Command: $CMD - Result: $CURL_RESULT"
-
+        @go.log INFO "MAPR API Success: Command: $CMD - Results $CURL_RESULT"
+        RT="0"
     fi
 
-
+    eval $LRETCODE="'$RT'"
+    eval $LRESULT="'$CURL_RESULT'"
     rm $TFILE
-
 }

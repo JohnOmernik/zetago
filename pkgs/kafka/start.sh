@@ -1,7 +1,8 @@
 #!/bin/bash
 
-. "$_GO_USE_MODULES" 'libmapr'
-
+# Load the FS lib for this cluster
+FS_LIB="lib${FS_PROVIDER}"
+. "$_GO_USE_MODULES" $FS_LIB
 
 CUR_STATUS=$(./zeta cluster marathon getinfo $APP_MAR_ID "ALL" $MARATHON_SUBMIT)
 
@@ -87,14 +88,9 @@ if [ "$BROKERS" == "no brokers" ]; then
         MNT="/${APP_DIR}/${APP_ROLE}/${APP_NAME}/${APP_ID}/brokerdata/${BROKER}"
         NFSLOC="${APP_HOME}/brokerdata/${BROKER}/"
 
-        maprapi "/volume/create?name=${VOL}&path=${MNT}&rootdirperms=775&user=${IUSER}:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d%20${APP_USER}:fc,a,dump,restore,m,d&ae=${APP_USER}" "2"
-
-        T=""
-        while [ "$T" == "" ]; do
-            sleep 1
-            T=$(ls -1 ${APP_HOME}/brokerdata|grep $BROKER)
-        done
+        fs_mkvol "RETCODE" "$MNT" "$VOL" "775"
         sudo chown ${APP_USER}:${APP_GROUP} $NFSLOC
+
         ./kafka-mesos.sh broker add $X
         ./kafka-mesos.sh broker update $X --cpus ${BROKER_CPU} --heap ${BROKER_HEAP} --mem ${BROKER_MEM} --options log.dirs=${NFSLOC},delete.topic.enable=true
 

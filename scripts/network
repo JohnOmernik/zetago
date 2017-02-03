@@ -34,7 +34,6 @@ function _network() {
     echo "Commands to use with package:"
     echo ""
     echo "./zeta network                          # This command"
-    echo "./zeta network status                   # Lists all packages in ./pkgs and their status in the cluster"
     echo "./zeta network deployfw                 # Calls createfw and then deploys to all nodes"
     echo "./zeta network createfw                 # Creates the current FW for nodes"
     echo ""

@@ -34,19 +34,21 @@ echo "As part of this process, we will generate a key for the IUSER user"
 echo "It will be stored at $OUT_KEY and its public key will be stored at $OUT_KEY_PUB"
 echo "These values will be saved in the conf for use as well"
 echo ""
-ZETAADM_UID="2500"
-MAPR_UID="2000"
+IUSER_UID="2500"
+FSUSER_UID="2000"
 IUSER="zetaadm" # The Main User for Zeta
+FSUSER="mapr"   # The filesystem user for Zeta
+
 
 echo "-----------------------------------"
-echo "The UID for the IUSER user will be $ZETAADM_UID and the UID for the mapr user will be $MAPR_UID"
+echo "The UID for the IUSER user will be $IUSER_UID and the UID for the filesystem user will be $FS_UID"
 echo "These values are stored in the conf"
 echo ""
 echo "-----------------------------------"
 echo ""
-getpass "$IUSER" ZETAADM_PASS
+getpass "$IUSER" IUSER_PASS
 echo ""
-getpass "mapr" MAPR_PASS
+getpass "$FSUSER" FSUSER_PASS
 echo ""
 echo "-----------------------------------"
 echo "Please enter the list of nodes we will be preparing for Zeta, the nodes should be space separated"
@@ -79,19 +81,19 @@ INIT_KEY_LOC="$INIT_KEY_LOC"
 
 # The Main user for Zeta  (zetaadm by default)
 IUSER="$IUSER"
-
-# The following Variables determine whether to generate a key for zetaadm, what that key will be called, and what the public key will be called
+FSUSER="$FSUSER"
+# The following Variables determine whether to generate a key for IUSER, what that key will be called, and what the public key will be called
 GEN_KEY="$GEN_KEY"
 OUT_KEY="$OUT_KEY"
 OUT_KEY_PUB="$OUT_KEY_PUB"
 
-# The UIDs for zetaadm and mapr
-ZETAADM_UID="$ZETAADM_UID"
-MAPR_UID="$MAPR_UID"
+# The UIDs for IUSER and FSUSER
+IUSER_UID="$IUSER_UID"
+FSUSER_UID="$FSUSER_UID"
 
-# Passwords for mapr and zetaadm
-MAPR_PASS="$MAPR_PASS"
-ZETAADM_PASS="$ZETAADM_PASS"
+# Passwords for FSUSER and IUSER
+FSUSER_PASS="$FSUSER_PASS"
+IUSER_PASS="$IUSER_PASS"
 
 # Node list to prep
 NODES="$NODES"
@@ -102,7 +104,7 @@ INIT_NODE="$INIT_NODE"
 # Interfaces to check for internal IPs (in order)
 INTERFACE_LIST="$INTERFACE_LIST"
 
-# If this is set to 1, scripts will assume "Use" when the conf exists. 
+# If this is set to 1, scripts will assume "Use" when the conf exists.
 PREP_LOCKED="0"
 
 EOF

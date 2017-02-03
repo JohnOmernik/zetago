@@ -10,7 +10,8 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
@@ -73,7 +74,7 @@ function _installmaprnode(){
         rm -f ${MAPR_DEFAULTS}/conf/*
         rm -f ${MAPR_DEFAULTS}/roles/*
 
-        CID=$(sudo docker run -d ${DOCKER_REG_URL}/maprdocker:$MAPR_DOCKER_TAG sleep 15)
+        CID=$(sudo docker run -d ${FS_DOCKER_REG_URL}/maprdocker:$MAPR_DOCKER_TAG sleep 15)
 
         sudo docker cp ${CID}:/opt/mapr/conf ${MAPR_DEFAULTS}
         sudo docker cp ${CID}:/opt/mapr/roles ${MAPR_DEFAULTS}
@@ -234,7 +235,7 @@ function _installmaprnode(){
 
     echo ""
     echo "Updating permissions of directories"
-    ssh $NODE_HOST "sudo chown -R mapr:mapr ${MAPR_INST}/conf && sudo chown -R mapr:mapr ${MAPR_INST}/logs && sudo chmod -R 755 ${MAPR_INST}/conf && sudo chmod -R 777 ${MAPR_INST}/logs"
+    ssh $NODE_HOST "sudo chown -R $FSUSER:$FSUSER ${MAPR_INST}/conf && sudo chown -R $FSUSER:$FSUSER ${MAPR_INST}/logs && sudo chmod -R 755 ${MAPR_INST}/conf && sudo chmod -R 777 ${MAPR_INST}/logs"
     echo ""
     echo "Getting Memory on Node"
 
@@ -320,7 +321,7 @@ cat > $MARFILE << MAREOF
   },
   "env": {
   "CLDBS": "$CLDBS",
-  "MUSER": "mapr",
+  "FSUSER": "$FSUSER",
   "ZKS": "$ZKS",
   "CLUSTERNAME": "$CLUSTERNAME",
   "MAPR_CONF_OPTS": "$MAPR_CONF_OPTS"
@@ -329,7 +330,7 @@ cat > $MARFILE << MAREOF
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "${DOCKER_REG_URL}/maprdocker:${MAPR_DOCKER_TAG}",
+      "image": "${FS_DOCKER_REG_URL}/maprdocker:${MAPR_DOCKER_TAG}",
       "privileged": true,
       "parameters": [
                 { "key": "ipc", "value": "host" }

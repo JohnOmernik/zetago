@@ -17,14 +17,14 @@ APP_NAME="marathonlb"
 APP_ROLE="shared"
 APP_DIR="zeta"
 APP_ID="marathonlb"
-APP_ROOT="/mapr/${CLUSTERNAME}/${APP_DIR}/shared/${APP_NAME}"
+APP_ROOT="$CLUSTERMOUNT/${APP_DIR}/shared/${APP_NAME}"
 APP_PKG_DIR="${APP_ROOT}/packages"
-APP_HOME="/mapr/${CLUSTERNAME}/${APP_DIR}/${APP_ROLE}/${APP_NAME}/${APP_ID}"
+APP_HOME="$CLUSTERMOUNT/${APP_DIR}/${APP_ROLE}/${APP_NAME}/${APP_ID}"
 APP_MAR_FILE="$APP_HOME/marathon.json"
 APP_MAR_ID="shared/marathonlb"
 APP_CERT_LOC="${APP_HOME}/certs"
 APP_TEMPLATES="${APP_HOME}/templates"
-APP_ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
+APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 
 if [ -d "$APP_HOME" ]; then
     @go.log FATAL "Marathon LB already appears insstalled at $APP_HOME - EXITING"
@@ -67,7 +67,7 @@ read -e -p "Generate certificates from Zeta CA? " -i "N" ZETA_CA_CERTS
 echo ""
 if [ "$ZETA_CA_CERTS" == "Y" ]; then
     CN_GUESS="${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
-    . /mapr/$CLUSTERNAME/zeta/shared/zetaca/gen_server_cert.sh
+    . $CLUSTERMOUNT/zeta/shared/zetaca/gen_server_cert.sh
 
     cat ${APP_CERT_LOC}/cert.pem ${APP_CERT_LOC}/key-no-password.pem > ${APP_CERT_LOC}/certkey.pem
 

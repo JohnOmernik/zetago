@@ -8,11 +8,14 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
-. "$_GO_USE_MODULES" 'libmapr'
+
+FS_LIB="lib${FS_PROVIDER}"
+. "$_GO_USE_MODULES" $FS_LIB
 
 function _zetabase() {
 
@@ -25,57 +28,39 @@ function _zetabase() {
         @go.log FATAL "Cluster base conf found at $CLUSTER_BASE_CONF - Not installing"
     fi
 
+    # Run FS Provider specific prep (cleaning) 
+    fs_prepbase
 
-    @go.log INFO "Checking default hbase and apps volumes in MapR and removing if exists"
-    if [ -d "/mapr/$CLUSTERNAME/hbase" ]; then
-        @go.log WARN "Found /mapr/$CLUSTERNAME/hbase  Should we remove?"
-        read -e -p "Remove /hbase? (Y/N): " -i "Y" RMHBASE
-        if [ "$RMHBASE" == "Y" ]; then
-            maprapi "/volume/remove?name=mapr.hbase"
-            sudo rm -rf /mapr/$CLUSTERNAME/hbase
-        fi
-    fi
-    if [ -d "/mapr/$CLUSTERNAME/apps" ]; then
-        @go.log WARN "Removing default mapr.apps volume if it exists"
-        maprapi "/volume/remove?name=mapr.apps"
-        if [ -d "/mapr/$CLUSTERNAME/apps" ]; then
-            @go.log WARN "/mapr/$CLUSTERNAME/apps still exists, should we delete? This can be a dangerous operation if you have information /apps"
-            read -e -p "Try full removal of /mapr/$CLUSTERNAME/apps? (Y/N): " -i "N" FORCERM
-            if [ "$FORCERM" == "Y" ]; then
-                sudo rm -rf /mapr/$CLUSTERNAME/apps
-            fi
-        fi
+    @go.log INFO "Creating Base Home Directory"
+    if [ ! -d "$CLUSTERMOUNT/user" ]; then
+        sudo mkdir -p $CLUSTERMOUNT/user # Just a need a directory here
+        sudo chown -R ${IUSER}:2501 $CLUSTERMOUNT/user
+        chmod -R 750 $CLUSTERMOUNT/user
     fi
 
-    @go.log INFO "Checking for and creating if not existing, home directories for mapr and $IUSER users"
-    UNAMES="mapr $IUSER"
-    for U in $NAMES; do
-        if [ ! -d "/mapr/$CLUSTERNAME/user/$U" ]; then
+   @go.log INFO "Checking for and creating if not existing, home directories for $FSUSER and $IUSER users"
+    UNAMES="$FSUSER $IUSER"
+    for U in $UNAMES; do
+        if [ ! -d "$CLUSTERMOUNT/user/$U" ]; then
             @go.log INFO "User Directory for $U not found: Creating"
-            maprapi "/volume/create?name=user.$U&path=/user/$U&rootdirperms=770&user=$U:fc,a,dump,restore,m,d%20${IUSER}:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=$U"
-            T=""
-            while [ "$T" == "" ]; do
-                sleep 1
-                T=$(ls -1 /mapr/$CLUSTERNAME/user|grep $U)
-            done
-            sudo chown -R $U:${IUSER} /mapr/$CLUSTERNAME/user/$U
+            fs_mkvol "RETCODE" "/user/$U" "user.$U" "770"
+            sudo chown -R $U:${IUSER} $CLUSTERMOUNT/user/$U
         else
             @go.log INFO "User directory for $U found"
         fi
     done
 
-
     @go.log INFO "Creating root directories for your zeta cluster"
     ROOTS=$(echo $ROOT_DIRS|tr "," " ")
     for DIR in $ROOTS; do
-        if [ -d "/mapr/$CLUSTERNAME/$DIR" ]; then
-            @go.log WARN "Directory /mapr/$CLUSTERNAME/$DIR already exists: Updating Permissions"
+        if [ -d "$CLUSTERMOUNT/$DIR" ]; then
+            @go.log WARN "Directory $CLUSTERMOUNT/$DIR already exists: Updating Permissions"
         else
-            @go.log INFO "Creating directory /mapr/$CLUSTERNAME/$DIR and updating permissions"
-            sudo mkdir -p /mapr/$CLUSTERNAME/$DIR
+            @go.log INFO "Creating directory $CLUSRERMOUNT/$DIR and updating permissions"
+            sudo mkdir -p $CLUSTERMOUNT/$DIR
         fi
-        sudo chown -R ${IUSER}:2501 /mapr/$CLUSTERNAME/$DIR
-        sudo chmod -R 750 /mapr/$CLUSTERNAME/$DIR
+        sudo chown -R ${IUSER}:2501 $CLUSTERMOUNT/$DIR
+        sudo chmod -R 750 $CLUSTERMOUNT/$DIR
     done
 
     #####################################################
@@ -83,13 +68,13 @@ function _zetabase() {
     # the kstore directory under zeta is used to house zeta specific configuration data, as well as zeta specific clusterwide information
     # Descriptions of the locations are below
     @go.log INFO "Setting up zeta kstore directory"
-    DIR="/mapr/$CLUSTERNAME/zeta/kstore"
+    DIR="$CLUSTERMOUNT/zeta/kstore"
     sudo mkdir -p $DIR
     sudo chown ${IUSER}:2501 $DIR
     sudo chmod 755 $DIR
 
     # Group Sync
-    DIR="/mapr/$CLUSTERNAME/zeta/kstore/zetasync"
+    DIR="$CLUSTERMOUNT/zeta/kstore/zetasync"
     sudo mkdir -p $DIR
     sudo chown ${IUSER}:${IUSER} $DIR
     sudo chmod 775 $DIR
@@ -114,7 +99,7 @@ USROF
     fi
 
     # ENV Main
-    DIR="/mapr/$CLUSTERNAME/zeta/kstore/env"
+    DIR="$CLUSTERMOUNT/zeta/kstore/env"
     sudo mkdir -p $DIR
     sudo chown ${IUSER}:${IUSER} $DIR
     sudo chmod 775 $DIR
@@ -127,7 +112,7 @@ cat > $DIR/master_env.sh << EOL3
 # START GLOBAL ENV Variables for Zeta Environment
 
 export ZETA_CLUSTERNAME="${CLUSTERNAME}"
-export ZETA_NFS_ROOT="/mapr/\$ZETA_CLUSTERNAME"
+export ZETA_NFS_ROOT="$CLUSTERMOUNT"
 
 export ZETA_MESOS_DOMAIN="mesos"
 export ZETA_MESOS_LEADER="leader.\${ZETA_MESOS_DOMAIN}"
@@ -140,43 +125,31 @@ EOL3
     fi
 
 
-    #########
-    # By creating a world reable directory in MapRFS for tickets, and then setting permission on each ticket to be only user readble, we have a one stop shop to store tickets
-    # The only caveat is the mapr and $IUSER tickets need TLC, if especially the mapr ticket expires on a secure cluster, the result is NFS mount that don't work breaking all the things
-    DIR="/mapr/$CLUSTERNAME/zeta/kstore/maprtickets"
-    sudo mkdir -p $DIR
-    sudo chown mapr:${IUSER} $DIR
-    sudo chmod 775 $DIR
-
     ##########
     # Installing global role directories
     # This is only available to $IUSER and is used for shared services like a cluster wide docker registry, and cluster wide ldap server
     #
     @go.log INFO "Looking for shared directory (volume) in each root direcory, create if not found"
     for DIR in $ROOTS; do
-        if [ -d "/mapr/$CLUSTERNAME/$DIR/shared" ]; then
-            @go.log WARN "/mapr/$CLUSTERNAME/$DIR/shared already exists, skipping"
+        if [ -d "$CLUSTERMOUNT/$DIR/shared" ]; then
+            @go.log WARN "$CLUSTERMOUNT/$DIR/shared already exists, skipping"
         else
-            @go.log INFO "Creating /mapr/$CLUSTERNAME/$DIR/shared"
-            maprapi "/volume/create?name=$DIR.shared&path=/$DIR/shared&rootdirperms=770&user=${IUSER}:fc,a,dump,restore,m,d%20mapr:fc,a,dump,restore,m,d&ae=${IUSER}"
-            T=""
-            while [ "$T" == "" ]; do
-                sleep 1
-                T=$(ls -1 /mapr/$CLUSTERNAME/$DIR|grep shared)
-            done
-            sudo chown -R ${IUSER}:${IUSER} /mapr/$CLUSTERNAME/$DIR/shared
+            @go.log INFO "Creating $CLUSTERMOUNT/$DIR/shared"
+            fs_mkvol "RETCODE" "/$DIR/shared" "$DIR.shared" "770"
+            sudo chown -R ${IUSER}:${IUSER} $CLUSTERMOUNT/$DIR/shared
         fi
     done
 
-    DIR="/mapr/$CLUSTERNAME/zeta/kstore/env/env_shared"
+    DIR="$CLUSTERMOUNT/zeta/kstore/env/env_shared"
     sudo mkdir -p $DIR
     sudo chown ${IUSER}:${IUSER} $DIR
     sudo chmod 775 $DIR
-    ENV_FILE="/mapr/$CLUSTERNAME/zeta/kstore/env/zeta_shared.sh"
+    ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh"
 
 cat > $ENV_FILE << EOL9
 # Source Master Zeta ENV File
-. /mapr/\$(ls -1 /mapr)/zeta/kstore/env/master_env.sh
+. $CLUSTERMOUNT/zeta/kstore/env/master_env.sh
+
 # START GLOBAL ENV Variables for Zeta Environment
 
 export ZETA_MARATHON_ENV="marathon"
@@ -190,7 +163,7 @@ export ZETA_ZKS="$ZKS"
 export ZETA_DOCKER_PROXY="$DOCKER_PROXY"
 
 # Source env_shared
-for SRC in /mapr/\$ZETA_CLUSTERNAME/zeta/kstore/env/env_shared/*.sh; do
+for SRC in $CLUSTERMOUNT/zeta/kstore/env/env_shared/*.sh; do
    . \$SRC
 done
 
@@ -202,7 +175,7 @@ EOL9
 
     chmod +x $ENV_FILE
     #Create a dummy script in the env_prod directory so that file not found errors don't appear when sourcing main file
-cat > /mapr/$CLUSTERNAME/zeta/kstore/env/env_shared/env_shared.sh << EOL5
+cat > $CLUSTERMOUNT/zeta/kstore/env/env_shared/env_shared.sh << EOL5
 #!/bin/bash
 # Basic script to keep file not found errors from happening
 EOL5

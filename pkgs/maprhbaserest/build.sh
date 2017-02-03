@@ -4,6 +4,11 @@ checkdocker
 reqdockerimg "${REQ_APP_IMG_NAME}"
 check4dockerimage "${APP_IMG_NAME}" BUILD
 
+if [ "$FS_PROVIDER" != "mapr" ]; then
+    @go.log FATAL "This package is only usable if the FS provider is MapR and has MapR Tables working"
+fi
+
+
 if [ "$BUILD" == "Y" ]; then
     rm -rf $BUILD_TMP
     mkdir -p $BUILD_TMP

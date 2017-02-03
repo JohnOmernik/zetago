@@ -7,7 +7,8 @@
 sourceconf "$PREP_CONF"
 sourceconf "$DCOS_CONF"
 sourceconf "$NETWORK_CONF"
-sourceconf "$MAPR_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
@@ -39,9 +40,9 @@ for NODE in $AGENT_NODES; do
     @go.log INFO "Sending Node $NODE to FUSE Install Script"
     echo ""
     if [ "$UNATTEND" == "1" ]; then
-        ./zeta mapr fuseinstall -n="${NODE}" -u
+        ./zeta fs mapr fuseinstall -n="${NODE}" -u
     else
-        ./zeta mapr fuseinstall -n="${NODE}"
+        ./zeta fs mapr fuseinstall -n="${NODE}"
     fi
 done
 
