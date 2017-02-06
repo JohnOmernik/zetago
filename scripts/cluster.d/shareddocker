@@ -112,7 +112,8 @@ cat > $MARFILE << EOF
 EOF
     ./zeta cluster marathon submit "${MARFILE}" "${MARATHON_SUBMIT}" 1
 
-    @go.log INFO "Shared Docker Registry installed"
+    @go.log INFO "Shared Docker Registry installed - Waiting for API"
+    checkapi "https://${ZETA_DOCKER_REG_HOST}:${ZETA_DOCKER_REG_PORT}/v2" 5
 
 }
 
