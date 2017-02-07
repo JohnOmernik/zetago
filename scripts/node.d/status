@@ -43,7 +43,7 @@ function _nodestatus() {
     done
 
 
-    if [ "$HOST" != "" ]; then
+    if [ "$HOST" == "" ]; then
         if [ "$MASTERS" == "0" ] && [ "$AGENTS" == "0" ]; then
             @go.log "No host provided (with -n) and -a or -m not specified, assuming all nodes"
             ALL=1
