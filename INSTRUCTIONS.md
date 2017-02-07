@@ -108,7 +108,7 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
     - The flag `-f="Nodes on deploy"` are the nodes that each deploy uses in the change log. 
     - This updates the `FW_FIRST_RUN` flag in the `network.conf` to allow you to continue to install DCOS. 
     - It's recommened at this point if you had a more restrictive AWS Security group to now open things up wide open for the cluster. We are managing the firewall connnections now. 
-4. Start the bootstrap server by running $ ./zeta dcos bootstrap
+4. Start the bootstrap server by running `$ ./zeta dcos bootstrap`
 5. Install DCOS by running `$ ./zeta dcos install -a`
     - This installs DCOS first on the Masters specified, then on the remaining nodes. 
     - It also provides the Master UI Address (as well as exhibitor)
@@ -158,17 +158,17 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
 4. Install the fs docker registry via `$ ./zeta fs fsdocker`
     - This runs locally for now, as there is no shared filesystem
 5. At this point we are ready to build our ZK and MapR containers. 
-    - `$ ./zeta fs mapr buildzk -u` # Build the ZK container
-    - `$ ./zeta fs mapr buildmapr -u` # Build the mapr container
+    - `$ ./zeta fs mapr buildzk -u` Build the ZK container
+    - `$ ./zeta fs mapr buildmapr -u` Build the mapr container
 6. Once built, we need to start the ZKs first: 
     - `$ ./zeta fs mapr installzk -u`
 7. Once ZKs are running start them MapR containers:
     - `$ ./zeta fs mapr installmapr -u`
     - It will start CLDBs first, wait until they are up and running, and then run the standard nodes
-    - Once it submits the standard nodes, it will provide a CLDB link. You can log into the MapR Console using the FSUSER password you provided in prep for what is likely the mapr user. 
+    - Once it submits the standard nodes, it will provide a CLDB link. You can log into the MapR Console using the FSUSER password you provided in prep for what is likely the `mapr` user. 
 8. Now to complete MapR/FS install by installing fuse clients on nodes. 
-    - `$ ./zeta fs mapr installfuse -u` # This installs the FUSE client on all agents so it's ready for cluster installation (ZETA!)
-10. Create some local volumes for use in shuffle activities
+    - `$ ./zeta fs mapr installfuse -u` This installs the FUSE client on all agents so it's ready for cluster installation (ZETA!)
+10. Create some local volumes for use in MapReduce shuffle activities
     - `$ ./zeta fs mapr createlocalvols -a -u`
 
 ### Cluster (Zeta) Install
@@ -178,7 +178,7 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
     - `$ ./zeta cluster zetabase`
 3. Next we will be installing the shared docker registry that is backed by MapR (instead of local)
     - `$ ./zeta cluster shareddocker`
-4. Authentication! We now install the shared openldap server
+4. Authentication! We now install the shared OpenLDAP server
     - `$ ./zeta cluster sharedldap`
     - Note: It will warn that the CA is not yet moved to the final location. It will ask you to do this, `Y` (the default) is the correct answer here
     - Enter a ldapadmin password (this is the admin account for account administration)
@@ -193,7 +193,7 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
     - `$ ./zeta cluster ldapperf -a -u`
 9. (Optional) I like to add a user role now (say "prod")
     - `$ ./zeta cluster addzetarole -r=prod`
-    - Manually increment the UID from the provided 1000000 (which is shared) 1 million to `2000000` for each role you add. I do need to automate this... 
+    - Manually increment the UID from the provided `1000000` (which is shared) 1 million to `2000000` for each role you add. # TODO: Automate this... 
 
 ### Users and Groups
 ----------
