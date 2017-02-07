@@ -43,7 +43,7 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
 ### Get initial Repo - Note this prep will not work from a mac.  Please run from a linux host to start (See aws note about start node)
 ----------
 1. `$ git clone https://github.com/JohnOmernik/zetago`
-1b. Ensure your priv key you used to start the nodes is on the box you are doing the prep from.  
+    - **Note:** Ensure your priv key you used to start the nodes is on the box you are doing the prep from.  
 2. `$ cd zetago`
 
 ### Prep Cluster
@@ -52,15 +52,15 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
     - This is the initial prep configuration creator. It will ask some quesstions, defaults are great for most things unless noted here:
     - The Initial user list is a list of users the scripts try to connect to the nodes.  If you need to add to the default list just make is space separated
     - the Key is the key that is used to connect to the instance the first time. This will change after we prep the nodes. 
-    - Passwords for the zetaadm (IUSER) and mapr users. Pretty clean cut. 
+    - Passwords for the `zetaadm` (IUSER) and `mapr` users. Pretty clean cut. 
     - Space separated list of nodes to connect to. These are the IPs that the scripts will connect to initially to do the setup. If on prem, they may be internal IPs, if AWS they may be external depending on where you prepping from.
       - On AWS if you are connecting to a node and doing all prep from there, use the internal AWS IPs. If you are using an off AWS Network linux box to do the initial prep, use the External IPs to AWS.
     - Initial node is the node that will be used to complete the zeta install. just pick one of the nodes in the previous list
     - Interface check list: This is just the list and order of interfaces we check for "internal" IPs. This should be ok to leave as is, unless you want to add or reorder for your env
-    - All conf info is in ./conf/prep.conf
+    - All conf info is in `./conf/prep.conf`
 2. At this point the prep.conf is written, but you should review it you can do this by:
-    - `$ ./zeta prep` # And then press E to examine the conf
-    - If this looks good go ahead press "U" to use the conf. Then enter:
+    - `$ ./zeta prep` # And then press `E` to examine the conf
+    - If this looks good go ahead press `U` to use the conf. Then enter:
     - `$ ./zeta prep -l` # This locks the conf, so it doesn't prompt you every time. It asks you to use the prep.conf again and then confirms the locking. Now it will assume the conf is correct. 
 3. Your conf is created, reviewed, and locked, the next step is to prep the nodes.
     - $ `./zeta prep install -a -u` # This installs the prep on all nodes (`-a`) and does so unattended (`-u`) however it will prompt you for the version file to use... (Just use the default 1.0.0 by hitting enter)
@@ -72,8 +72,8 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
 ----------
 1. Once the `./zeta prep status` command returns docker installed on all nodes it's time to switch the context. Instead of running commands using ./zeta from your machine and user, you will be connecting to the initial node (specidfied in the config) and running all remaining commands from there
     - You can get the exact SSH command to connect to the initial node by typing ./zeta prep on your machine, it will show you the SSH command to connect to the initial node with zetaadm (IUSER). 
-2. To get the SSH command to use, just type ./zeta prep and it will show you the SSH command to connect to the initial node
-3. Once connected to the inital node run $ cd zetago  # All commands will start from here
+2. To get the SSH command to use, just type `./zeta prep` and it will show you the SSH command to connect to the initial node
+3. Once connected to the inital node run `$ cd zetago`  # All commands will start from here
 
 ### DCOS and Firewall Install
 ----------
@@ -87,35 +87,32 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
     - dns resolvers should be setup for AWS, but if you are on another platform, please correct them
     - Proxy information is required if you are behind a proxy. 
     - All conf info is in `./conf/dcos.conf`
-2. Now that the DCOS config is setup, it's time to trust the keys on the various hosts. Run: `./zeta dcos sshhosts` # `-u` if you want unattended
-    - The Create conf for dcos does ask you to do this, so you don't have to do it manually
-    - If you run this command, it uses ssh-key to get the host key of all nodes and trust them by adding it to the known_hosts file. It does this for the IP, the short name, and the fully qualified name of every host. 
-    - You can run this with -u if you don't want to it to prompt. Otherwise it will prompt once before trusting all keys. 
-3. Prior to doing the DCOS install, it's now time to run the network setup: Run `$ ./zeta network`
+2. Prior to doing the DCOS install, it's now time to run the network setup: Run `$ ./zeta network`
     - You cannot start further DCOS install processes without putting a firewall up. 
     - This command sets the network.conf file with information about your networking setup 
         - NTP Servers: If you specify this, it will limit outbound NTP request only to those servers, otherwise, if left blank, we allow outbound NTP to all.
-        - Zeta Routable Addresses: This is your main subnet, the subnet that your default gateway is on that all servers connect to. For me, on AWS, it's 172.31.0.0/16, but it may be different for you. 
-        - Zeta Non-Routable Addresses: If you have other interfaces that connect all nodes (non-gateway interfaces)  You can add them here to ensure node to node communication is unfettered. So lets say your routable interfaces are 192.168.0.0/24.  Then you have two more network interfaces between nodes that are not routable: `10.0.4.0/24` and `192.168.250.0/24` Then you would put here: `10.0.4.0/24,192.168.250.0/24`  If you have no additional interfaces, just leave blank
+        - Zeta Routable Addresses: This is your main subnet, the subnet that your default gateway is on that all servers connect to. For me, on AWS, it's `172.31.0.0/16`, but it may be different for you. 
+        - Zeta Non-Routable Addresses: If you have other interfaces that connect all nodes (non-gateway interfaces)  You can add them here to ensure node to node communication is unfettered. So lets say your routable interfaces are `192.168.0.0/24`.  Then you have two more network interfaces between nodes that are not routable: `10.0.4.0/24` and `192.168.250.0/24` Then you would put here: `10.0.4.0/24,192.168.250.0/24`  If you have no additional interfaces, just leave blank
         - Static IPs of Remote Machines: If you have certain machines that you will bedoing administration from, put them here comma separated. 
         - List of remote admin machine names: If you are on a network that is dynamic, and wish to use a reverse lookup for admin machines, you can enter names here. The FW script will attempt to look up each name, and add the look up IP to the remote allowed IP list. 
-        - If you have an unstable (IP Wise) connection, you may want to always allow port 22 connections from the world. The default is N, but if you want to allows this, set to Y. 
+        - If you have an unstable (IP Wise) connection, you may want to always allow port `22` connections from the world. The default is `N`, but if you want to allows this, set to `Y`. 
         - Allow direct outbound connections on `80/443`: If you don't use a proxy, then you must say yes here, if not, your zeta will fail. If you use a proxy, and specified in the DCOS config, you can say no here. 
         - Edge nodes: These are the nodes that will allow services into your cluster. It will auto populate with public nodes from the DCOS config, but you can add more nodes, or use non-public nodes (if you don't have public nodes) here.  
-4.  Now that the initial config is setup, install the firewall on each node by running `./zeta network deployfw -f="Initial firewall deployment"`
+3.  Now that the initial config is setup, install the firewall on each node by running `./zeta network deployfw -f="Initial firewall deployment"`
     - The flag `-f="Nodes on deploy"` are the nodes that each deploy uses in the change log. 
     - This updates the `FW_FIRST_RUN` flag in the `network.conf` to allow you to continue to install DCOS. 
     - It's recommened at this point if you had a more restrictive AWS Security group to now open things up wide open for the cluster. We are managing the firewall connnections now. 
-5. Start the bootstrap server by running $ ./zeta dcos bootstrap
-6. Install DCOS by running `$ ./zeta dcos install -a`
+4. Start the bootstrap server by running $ ./zeta dcos bootstrap
+5. Install DCOS by running `$ ./zeta dcos install -a`
     - This installs DCOS first on the Masters specified, then on the remaining nodes. 
     - It also provides the Master UI Address (as well as exhibitor)
     - The Master will take some time to come up, it checks this, and doesn't install agents until after the master is healthy.
-7. Check the UI for DCOS and once all your agents are connected, rerun the firewall now that DCOS is deployed. `$ ./zeta network deployfw -f="Post DCOS Firewall Deploy"`
+6. Check the UI for DCOS and once all your agents are connected, rerun the firewall now that DCOS is deployed. `$ ./zeta network deployfw -f="Post DCOS Firewall Deploy"`
     - Note, if you are on an unstable IP and instead of specifying remote admin machines, you instead opted for open to the world SSH. UIs are a bit tricky.
     - One option is to connect via ssh and use a remote socks proxy. `ssh -D8080 user@clusterip` to connect then set your browser to use a SOCKS proxy at -d8080.
     - The other option is to just add your IP to the `./conf/network.conf` file and redeploy the firewall. 
-### FS Install
+
+### Filesystem Install
 ----------
 1. Once DCOS is is up and running and the Agents properly appear in the UI its time for a Shared Filesystem
 2. First create the conf file by running `./zeta fs`
@@ -208,3 +205,10 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
     - Install `./zeta package install drill`
     - Start: Following the command provided by `./zeta package install drill` to start your drill instance!
 
+
+### Adding Nodes # TODO
+----------
+1.  Run: `./zeta dcos sshhosts` # `-u` if you want unattended
+    - The Create conf for dcos does ask you to do this, so you don't have to do it manually
+    - If you run this command, it uses ssh-key to get the host key of all nodes and trust them by adding it to the known_hosts file. It does this for the IP, the short name, and the fully qualified name of every host. 
+    - You can run this with `-u` if you don't want to it to prompt. Otherwise it will prompt once before trusting all keys. 
