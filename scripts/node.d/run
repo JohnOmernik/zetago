@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Show Status of Nodes in Zeta ENV
+# Run a command on a group of nodes
 #
 
 sourceconf "$PREP_CONF"
@@ -16,14 +16,14 @@ sourceconf "$NODE_CONF"
 reqshared "dockerregv2 zetaca openldap"
 
 
-function _nodestatus() {
+function _noderun() {
 
     MASTERS="0"
     AGENTS="0"
     ALL="0"
     HOST=""
     MYHOSTS=""
-
+    VERBOSE="0"
     for i in "$@"
         do
         case $i in
@@ -33,10 +33,14 @@ function _nodestatus() {
             "-a")
             AGENTS="1"
             ;;
+            "-v")
+            VERBOSE="1"
+            ;;
             "-n="*)
             HOST="${i#*=}"
             ;;
             *)
+            COMMAND="$i"
             # unknown option
             ;;
         esac
@@ -68,16 +72,17 @@ function _nodestatus() {
             fi
         fi
     fi
-
-    echo "Hosts to Check Status on: $MYHOSTS"
-
-    if [ ! -f "./bin/node_status.sh" ]; then
-cat > ./bin/node_status.sh << EOF
-#!/bin/bash
-
-
-EOF
-    fi
+    echo ""
+    echo "Results of Commmand: "
+    echo ""
+    for NODE in $MYHOSTS; do
+        if [ "$VERBOSE" == "1" ]; then
+            @go.log INFO "Running $COMMAND on $NODE"
+            echo ""
+        fi
+        ssh $NODE "$COMMAND"
+        echo ""
+    done
 
 
 
@@ -85,4 +90,4 @@ EOF
 
 }
 
-_nodestatus "$@"
+_noderun "$@"
