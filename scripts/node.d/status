@@ -1,0 +1,76 @@
+#!/bin/bash
+#
+# Show Status of Nodes in Zeta ENV
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$NODE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+
+function _nodestatus() {
+
+    MASTERS="0"
+    AGENTS="0"
+    ALL="0"
+    HOST=""
+    MYHOSTS=""
+
+    for i in "$@"
+        do
+        case $i in
+            "-m")
+            MASTERS="1"
+            ;;
+            "-a")
+            AGENTS="1"
+            ;;
+            "-n="*)
+            HOST="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+    if [ "$HOST" != "" ]; then
+        if [ "$MASTERS" == "0" ] && [ "$AGENTS" == "0" ]; then
+            @go.log "No host provided (with -n) and -a or -m not specified, assuming all nodes"
+            ALL=1
+        elif [ "$MASTERS" == "1" ] && [ "$AGENTS" == "1" ]; then
+            ALL=1
+        fi
+    else
+        @go.log INFO "Host provided with -n= - Ignoring other flags"
+    fi
+
+    if [ "$ALL" == "1" ]; then
+        MYHOSTS="$NODES"
+    else
+        if [ "$HOST" != "" ]; then
+            MYHOSTS="$HOST"
+        else
+            if [ "$MASTERS" == "1" ]; then
+                MYHOSTS="$MASTERS"
+            fi
+            if [ "$AGENTS" == "1" ]; then
+                MYHOSTS="$AGENTS"
+            fi
+        fi
+    fi
+
+    echo "Hosts to Check Status on: $MYHOSTS"
+
+}
+
+_nodestatus "$@"

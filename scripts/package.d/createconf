@@ -35,9 +35,15 @@ echo ""
 cat > $PACKAGE_CONF << EOP
 #!/bin/bash
 
+# The core location for Packages in your zeta Architecture
 CORE_PKG_LOC="$CORE_PKG_LOC"
+
+# The shared location typically CLUSTERMOUNT/zeta/shared
 SHARED_LOC="$SHARED_LOC"
+
+# Path to additional package locations separated by commas
 ADD_PKG_LOC="$ADD_PKG_LOC"
+
 PACKAGE_LOCKED="1"
 EOP
 
