@@ -14,7 +14,7 @@ This other repos may continue to get updates until they are completely folded in
 
 ## Working Zeta Step By Step
 ----------
-Please see [blob/master/INSTRUCTIONS.md](blob/master/INSTRUCTIONS.md)
+Please see [INSTRUCTIONS.md](INSTRUCTIONS.md)
 
 
 
