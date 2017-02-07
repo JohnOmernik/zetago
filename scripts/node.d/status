@@ -45,7 +45,7 @@ function _nodestatus() {
 
     if [ "$HOST" == "" ]; then
         if [ "$MASTERS" == "0" ] && [ "$AGENTS" == "0" ]; then
-            @go.log "No host provided (with -n) and -a or -m not specified, assuming all nodes"
+            @go.log INFO "No host provided (with -n) and -a or -m not specified, assuming all nodes"
             ALL=1
         elif [ "$MASTERS" == "1" ] && [ "$AGENTS" == "1" ]; then
             ALL=1
@@ -55,16 +55,16 @@ function _nodestatus() {
     fi
 
     if [ "$ALL" == "1" ]; then
-        MYHOSTS="$NODES"
+        MYHOSTS="$INTERNAL_NODES"
     else
         if [ "$HOST" != "" ]; then
             MYHOSTS="$HOST"
         else
             if [ "$MASTERS" == "1" ]; then
-                MYHOSTS="$MASTERS"
+                MYHOSTS="$MASTER_NODES"
             fi
             if [ "$AGENTS" == "1" ]; then
-                MYHOSTS="$AGENTS"
+                MYHOSTS="$AGENT_NODES"
             fi
         fi
     fi
