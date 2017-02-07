@@ -1,8 +1,11 @@
 # Working Zeta Step By Step
 ----------
 
-### Initial Prep and Instance launch (AWS version, we can do other versions and even use APIs for this later)
+### Initial Prep and Instance launch (AWS)
 ----------
+
+**Note on choice of AWS:** Zeta can be deployed to other clouds and we can even use APIs for this later
+
 1. Get an Amazon AWS Account. Upload a keypair (without a password) so you have one accessible to use for your cluster. 
 2. Spin up 5 hosts (I used `m3.xlarge`) running Ubuntu 16.04 (For now)
     - Note: Nodes must have at least 16GB of ram, and at least one extra disk (other than OS disk) for MapR Services to install.
@@ -40,8 +43,11 @@ If you have a on-prem cluster where having a large node dedicated to a special r
 That is the fundamental difference, if you don't want to have "public" nodes as defined by DCOS, then leave the public prompt in the DCOS config creation blank, and instead specify edge nodes manually in the network configuration.  If you specify public nodes in the DCOS config, it will auto populate the suggested node in the network config. 
 
 
-### Get initial Repo - Note this prep will not work from a mac.  Please run from a linux host to start (See aws note about start node)
+### Get initial Repo 
 ----------
+
+**Note:** this prep will not work on MacOS.  Please run from a Linux host to start (See AWS note about start node)
+
 1. `$ git clone https://github.com/JohnOmernik/zetago`
     - **Note:** Ensure your priv key you used to start the nodes is on the box you are doing the prep from.  
 2. `$ cd zetago`
@@ -135,7 +141,7 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
         - The format is `NODE1:/dev/disk1,/dev/disk2;NODE2:/dev/disk1,/dev/disk2` (disk 1 may be sda, disk 2 may be sdb, each system may be different)
         - The disks should be unformatted block devices. 
         - THat said, often times when you are starting a cluster, each node DOES have the same disks for MapR's use. The script asks that, if it's the case, hit enter to enter a disk string once and apply it to all nodes
-        - For example, on the m3.xlarge nodes I use, I can use /dev/xvdb,/dev/xvdc as my disk string and apply it to all nodes. 
+        - For example, on the m3.xlarge nodes I use, I can use `/dev/xvdb,/dev/xvdc` as my disk string and apply it to all nodes. 
     - NFS Nodes
         - Nodes to install NFS Server on the nodes
         - This is not highly tested at this time
@@ -167,7 +173,7 @@ That is the fundamental difference, if you don't want to have "public" nodes as 
 
 ### Cluster (Zeta) Install
 ----------
-1. The cluster.conf file was already created (the FS install calls the cluster install script secretly)
+1. The `cluster.conf` file was already created (the FS install calls the cluster install script secretly)
 2. The first step is to install the zeta base directories. This will clear your cluster directories in your initial install. 
     - `$ ./zeta cluster zetabase`
 3. Next we will be installing the shared docker registry that is backed by MapR (instead of local)
