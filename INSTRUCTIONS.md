@@ -12,9 +12,9 @@
 3. Note the subnet (Mine was `172.31.0.0/16`) - If you are unclear here, you may need to create your own subnet for testing. All nodes, but be able to talk to all nodes (via security policy) on all ports
 4. On the Add storage, the two disks is correct, but up up the root volume to be 50 GB instead of 8
 5. Security Group - SSH (`22`) from anywhere, All traffic from your subnet (mine was `172.31.0.0/16`) and All traffic from your IP (we will change this later, once we get the node firewalls up, we will open this to world to keep things easier to manage)
-6. Launch with the prv key you intend to use from the initial node prep in "Prep Cluster" below
+6. Launch with the private key you intend to use from the initial node prep in the [Prep Cluster](#prep-cluster) instructions below
 7. Pick a node, upload the private key from step 1 and connect to this node. 
-8. Go to "Get Initial Repo"
+8. Go to [Clone Repository](#clone-repository)
 
 ### Initial Prep - On Prem
 ----------
@@ -30,7 +30,7 @@
         - 8 or more "Storage" drives. Faster equates to better storage in your cluster
         - Networking: We like upping this as much as possible. 4 10Gbps Copper, bonded into two HA pairs.  One for the main Zeta (Routable) subnet and another for fast disk backchannel
     - Aim for at least 5 nodes to start with. 
-3. You must go to each node and have an account that is accessible by a SSH keypair (with no password), and has passwordless sudo rights. After install, you can deprivilege this account.  Goto "Get Initial Repo"
+3. You must go to each node and have an account that is accessible by a SSH keypair (**with no password**), and has passwordless sudo rights. After install, you can deprivilege this account.  Go to [Clone Repository](#clone-repository)
 
 ### Notes: Initial Prep - Edge Nodes vs. Public 
 ----------
@@ -43,10 +43,10 @@ If you have a on-prem cluster where having a large node dedicated to a special r
 That is the fundamental difference, if you don't want to have "public" nodes as defined by DCOS, then leave the public prompt in the DCOS config creation blank, and instead specify edge nodes manually in the network configuration.  If you specify public nodes in the DCOS config, it will auto populate the suggested node in the network config. 
 
 
-### Get initial Repo 
+### Clone Repository
 ----------
 
-**Note:** this prep will not work on MacOS.  Please run from a Linux host to start (See AWS note about start node)
+**Note:** this prep will not work on MacOS.  Please run from a Linux host to start (See [AWS](#initial-prep-and-instance-launch-aws) note about start node)
 
 1. `$ git clone https://github.com/JohnOmernik/zetago`
     - **Note:** Ensure your priv key you used to start the nodes is on the box you are doing the prep from.  
