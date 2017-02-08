@@ -101,14 +101,14 @@ EOF
     printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES"
 
     SSHOPT=""
-    for HOST in $MYHOSTS; do
+    for H in $MYHOSTS; do
 
-        scp -q ${SSHOPT}-i ${OUT_KEY} ./bin/system_type.sh ${IUSER}@${HOST}:/home/${IUSER}/system_type.sh 2> /dev/null
-        scp -q ${SSHOPT}-i ${OUT_KEY} ./bin/node_status.sh ${IUSER}@${HOST}:/home/${IUSER}/node_status.sh 2> /dev/null
+        scp -q ${SSHOPT}-i ${OUT_KEY} ./bin/system_type.sh ${IUSER}@${H}:/home/${IUSER}/system_type.sh 2> /dev/null
+        scp -q ${SSHOPT}-i ${OUT_KEY} ./bin/node_status.sh ${IUSER}@${H}:/home/${IUSER}/node_status.sh 2> /dev/null
         if [ "$?" == "0" ]; then
-            ssh ${SSHOPT}-i ${OUT_KEY} ${IUSER}@${HOST} "/home/${IUSER}/node_status.sh" 2> /dev/null
+            ssh ${SSHOPT}-i ${OUT_KEY} ${IUSER}@${H} "/home/${IUSER}/node_status.sh" 2> /dev/null
         else
-            printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$HOST" "false" "-" "-" "-" "-" "-"
+            printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$H" "false" "-" "-" "-" "-" "-"
         fi
     done
 
