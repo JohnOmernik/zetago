@@ -122,7 +122,7 @@ EOL1
 
 CN_GUESS="${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
 
-. $CLUSTERNAME/zeta/shared/zetaca/gen_server_cert.sh
+. $CLUSTERMOUNT/zeta/shared/zetaca/gen_server_cert.sh
 
 cat > $APP_MAR_FILE << EOL
 {
