@@ -74,10 +74,10 @@ function _nodestatus() {
 cat > ./bin/node_status.sh << EOF
 #!/bin/bash
 CLUSTERNAME="$CLUSTERNAME"
-CLUSTERROOT="$CLUSTERROOT"
+CLUSTERBASE="$CLUSTERBASE"
 IUSER="$IUSER"
 
-MNT=\$(ls /$CLUSTERROOT|grep $CLUSTERNAME)
+MNT=\$(ls /$CLUSTERBASE|grep $CLUSTERNAME)
 if [ "\$MNT" != "" ]; then
     FUSE_MOUNTED="true"
 else
@@ -89,16 +89,17 @@ HNAME=\$(hostname)
 KERNEL=\$(uname -a|cut -d" " -f3)
 UP="true"
 MESOS_ROLE=\$(sudo systemctl list-units|grep -v "dns"|grep -P -o "dcos-mesos-[^\.]+\.service"|sed "s/dcos-mesos-//g"|sed "s/\.service//g")
+MESOS_STATUS=\$(sudo systemctl list-units|grep -P "dcos-mesos-${MESOS_ROLE}\.service"|grep -o -P "loaded [^ ]+ [^ ]+")
 SYS_TYPE=\$(/home/${IUSER}/system_type.sh)
 DCK_VERS=\$(sudo docker info 2> /dev/null|grep "Server Version")
 
-printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "\$HNAME" "\$UP"  "\$KERNEL" "\$SYS_TYPE" "\$DCK_VERS" "\$MESOS_ROLE" "\$FUSE_MOUNTED"
+printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "\$HNAME" "\$UP"  "\$KERNEL" "\$SYS_TYPE" "\$DCK_VERS" "\$MESOS_ROLE" "\$MESOS_STATUS" "\$FUSE_MOUNTED"
 
 EOF
     chmod +x ./bin/node_status.sh
     DASHES="------------------------------"
-    printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "Hostname" "Host Up" "Kernel" "System Type" "Docker Version" "Mesos SVC Role" "Fuse Mounted"
-    printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES"
+    printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "Hostname" "Host Up" "Kernel" "System Type" "Docker Version" "Mesos SVC Role" "Mesos Status" "Fuse Mounted"
+    printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES"
 
     SSHOPT=""
     for H in $MYHOSTS; do
@@ -108,7 +109,7 @@ EOF
         if [ "$?" == "0" ]; then
             ssh ${SSHOPT}-i ${OUT_KEY} ${IUSER}@${H} "/home/${IUSER}/node_status.sh" 2> /dev/null
         else
-            printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$H" "false" "-" "-" "-" "-" "-"
+            printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$H" "false" "-" "-" "-" "-" "-" "-"
         fi
     done
 
