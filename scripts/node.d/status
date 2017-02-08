@@ -1,0 +1,120 @@
+#!/bin/bash
+#
+# Show Status of Nodes in Zeta ENV
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$NODE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+
+function _nodestatus() {
+
+    MASTERS="0"
+    AGENTS="0"
+    ALL="0"
+    HOST=""
+    MYHOSTS=""
+
+    for i in "$@"
+        do
+        case $i in
+            "-m")
+            MASTERS="1"
+            ;;
+            "-a")
+            AGENTS="1"
+            ;;
+            "-n="*)
+            HOST="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+    if [ "$HOST" == "" ]; then
+        if [ "$MASTERS" == "0" ] && [ "$AGENTS" == "0" ]; then
+            @go.log INFO "No host provided (with -n) and -a or -m not specified, assuming all nodes"
+            ALL=1
+        elif [ "$MASTERS" == "1" ] && [ "$AGENTS" == "1" ]; then
+            ALL=1
+        fi
+    else
+        @go.log INFO "Host provided with -n= - Ignoring other flags"
+    fi
+
+    if [ "$ALL" == "1" ]; then
+        MYHOSTS="$INTERNAL_NODES"
+    else
+        if [ "$HOST" != "" ]; then
+            MYHOSTS="$HOST"
+        else
+            if [ "$MASTERS" == "1" ]; then
+                MYHOSTS="$MASTER_NODES"
+            fi
+            if [ "$AGENTS" == "1" ]; then
+                MYHOSTS="$AGENT_NODES"
+            fi
+        fi
+    fi
+    echo ""
+    echo "Hosts to Check Status on: $MYHOSTS"
+    echo ""
+cat > ./bin/node_status.sh << EOF
+#!/bin/bash
+CLUSTERNAME="$CLUSTERNAME"
+CLUSTERBASE="$CLUSTERBASE"
+IUSER="$IUSER"
+
+MNT=\$(ls /$CLUSTERBASE|grep $CLUSTERNAME)
+if [ "\$MNT" != "" ]; then
+    FUSE_MOUNTED="true"
+else
+    FUSE_MOUNTED="false"
+fi
+
+
+HNAME=\$(hostname)
+KERNEL=\$(uname -a|cut -d" " -f3)
+UP="true"
+MESOS_ROLE=\$(sudo systemctl list-units|grep -v "dns"|grep -P -o "dcos-mesos-[^\.]+\.service"|sed "s/dcos-mesos-//g"|sed "s/\.service//g")
+MESOS_STATUS=\$(sudo systemctl list-units|grep -P "dcos-mesos-\${MESOS_ROLE}\.service"|grep -o -P "loaded {1,}[a-z]+ {1,}[a-z]+"|tr -s " ")
+SYS_TYPE=\$(/home/${IUSER}/system_type.sh)
+DCK_VERS=\$(sudo docker info 2> /dev/null|grep "Server Version")
+
+printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "\$HNAME" "\$UP"  "\$KERNEL" "\$SYS_TYPE" "\$DCK_VERS" "\$MESOS_ROLE" "\$MESOS_STATUS" "\$FUSE_MOUNTED"
+
+EOF
+    chmod +x ./bin/node_status.sh
+    DASHES="------------------------------"
+    printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "Hostname" "Host Up" "Kernel" "System Type" "Docker Version" "Mesos SVC Role" "Mesos Status" "Fuse Mounted"
+    printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES"
+
+    SSHOPT=""
+    for H in $MYHOSTS; do
+
+        scp -q ${SSHOPT}-i ${OUT_KEY} ./bin/system_type.sh ${IUSER}@${H}:/home/${IUSER}/system_type.sh 2> /dev/null
+        scp -q ${SSHOPT}-i ${OUT_KEY} ./bin/node_status.sh ${IUSER}@${H}:/home/${IUSER}/node_status.sh 2> /dev/null
+        if [ "$?" == "0" ]; then
+            ssh ${SSHOPT}-i ${OUT_KEY} ${IUSER}@${H} "/home/${IUSER}/node_status.sh" 2> /dev/null
+        else
+            printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$H" "false" "-" "-" "-" "-" "-" "-"
+        fi
+    done
+
+
+
+}
+
+_nodestatus "$@"

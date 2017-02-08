@@ -1,0 +1,93 @@
+#!/bin/bash
+#
+# Run a command on a group of nodes
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$NODE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+
+function _noderun() {
+
+    MASTERS="0"
+    AGENTS="0"
+    ALL="0"
+    HOST=""
+    MYHOSTS=""
+    VERBOSE="0"
+    for i in "$@"
+        do
+        case $i in
+            "-m")
+            MASTERS="1"
+            ;;
+            "-a")
+            AGENTS="1"
+            ;;
+            "-v")
+            VERBOSE="1"
+            ;;
+            "-n="*)
+            HOST="${i#*=}"
+            ;;
+            *)
+            COMMAND="$i"
+            # unknown option
+            ;;
+        esac
+    done
+
+
+    if [ "$HOST" == "" ]; then
+        if [ "$MASTERS" == "0" ] && [ "$AGENTS" == "0" ]; then
+            @go.log INFO "No host provided (with -n) and -a or -m not specified, assuming all nodes"
+            ALL=1
+        elif [ "$MASTERS" == "1" ] && [ "$AGENTS" == "1" ]; then
+            ALL=1
+        fi
+    else
+        @go.log INFO "Host provided with -n= - Ignoring other flags"
+    fi
+
+    if [ "$ALL" == "1" ]; then
+        MYHOSTS="$INTERNAL_NODES"
+    else
+        if [ "$HOST" != "" ]; then
+            MYHOSTS="$HOST"
+        else
+            if [ "$MASTERS" == "1" ]; then
+                MYHOSTS="$MASTER_NODES"
+            fi
+            if [ "$AGENTS" == "1" ]; then
+                MYHOSTS="$AGENT_NODES"
+            fi
+        fi
+    fi
+    echo ""
+    echo "Results of Commmand: "
+    echo ""
+    for NODE in $MYHOSTS; do
+        if [ "$VERBOSE" == "1" ]; then
+            @go.log INFO "Running $COMMAND on $NODE"
+            echo ""
+        fi
+        ssh $NODE "$COMMAND"
+        echo ""
+    done
+
+
+
+
+
+}
+
+_noderun "$@"
