@@ -71,14 +71,35 @@ function _nodestatus() {
 
     echo "Hosts to Check Status on: $MYHOSTS"
 
-    if [ ! -f "./bin/node_status.sh" ]; then
 cat > ./bin/node_status.sh << EOF
 #!/bin/bash
+CLUSTERNAME="$CLUSTERNAME"
+CLUSTERROOT="$CLUSTERROOT"
+IUSER="$IUSER"
 
+MNT=\$(ls /$CLUSTERROOT|grep $CLUSTERNAME)
+if [ "\$MNT" != "" ]; then
+    FUSE_MOUNTED="true"
+else
+    FUSE_MOUNTED="false"
+fi
+
+
+HNAME=\$(hostname)
+KERNEL=\$(uname -a|cut -d" " -f3)
+UP="true"
+MESOS_ROLE=\$(sudo systemctl list-units|grep -P -o "dcos-mesos-[^\.]+\.service"|sed "s/dcos-mesos-//g"|sed "s/\.service//g")
+SYS_TYPE=\$(/home/${IUSER}/system_type.sh)
+DCK_VERS=\$(sudo docker info 2> /dev/null|grep "Server Version")
+
+printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$HNAME" "$UP"  "$KERNEL" "$SYS_TYPE" "$DCK_VERS" "$MESOS_ROLE"  "$FUSE_MOUNTED"
 
 EOF
-    fi
-
+    chmod +x ./bin/node_status.sh
+    DASHES="------------------------------"
+    printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "Hostname" "Host Up" "Kernel" "System Type" "Docker Version" "Mesos SVC Role" "Fuse Mounted"
+    printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES" "$DASHES"
+    for 
 
 
 
