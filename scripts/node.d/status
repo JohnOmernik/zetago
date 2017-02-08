@@ -89,7 +89,7 @@ HNAME=\$(hostname)
 KERNEL=\$(uname -a|cut -d" " -f3)
 UP="true"
 MESOS_ROLE=\$(sudo systemctl list-units|grep -v "dns"|grep -P -o "dcos-mesos-[^\.]+\.service"|sed "s/dcos-mesos-//g"|sed "s/\.service//g")
-MESOS_STATUS=\$(sudo systemctl list-units|grep -P "dcos-mesos-${MESOS_ROLE}\.service"|grep -o -P "[a-z]+ [a-z]+ [a-z]+")
+MESOS_STATUS=\$(sudo systemctl list-units|grep -P "dcos-mesos-\${MESOS_ROLE}\.service"|grep -o -P "[a-z]+ [a-z]+ [a-z]+")
 SYS_TYPE=\$(/home/${IUSER}/system_type.sh)
 DCK_VERS=\$(sudo docker info 2> /dev/null|grep "Server Version")
 
