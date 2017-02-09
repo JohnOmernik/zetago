@@ -74,7 +74,7 @@ function _zetabase() {
     sudo chmod 755 $DIR
 
     # Group Sync
-    DIR="$CLUSTERMOUNT/zeta/kstore/zetasync"
+    DIR="./conf/zetasync"
     sudo mkdir -p $DIR
     sudo chown ${IUSER}:${IUSER} $DIR
     sudo chmod 775 $DIR
@@ -83,20 +83,21 @@ function _zetabase() {
 cat > ${DIR}/zetagroups.list << GRPEOF
 GRPEOF
     else
-        @go.log WARN "Not clobbering exiting zetagroups.list"
+        @go.log WARN "Not clobbering existing zetagroups.list"
     fi
     if [ ! -f "$DIR/zetausers.list" ]; then
 cat > ${DIR}/zetausers.list << USROF
 USROF
     else
-        @go.log WARN "Not clobbering exiting zetausers.list"
+        @go.log WARN "Not clobbering existing zetausers.list"
     fi
 
     if [ ! -f "$DIR/zetauid.list" ]; then
         touch ${DIR}/zetauid.list
     else
-        @go.log WARN "Not clobbering exiting zetauid.list"
+        @go.log WARN "Not clobbering existing zetauid.list"
     fi
+
 
     # ENV Main
     DIR="$CLUSTERMOUNT/zeta/kstore/env"

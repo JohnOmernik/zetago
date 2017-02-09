@@ -1,0 +1,33 @@
+#!/bin/bash
+#
+# ./zeta users search - Generic User Command line search
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+
+# Load the Auth lib for this cluster
+AUTH_LIB="lib${LDAP_PROVIDER}"
+. "$_GO_USE_MODULES" $AUTH_LIB
+
+function _usersearch() {
+
+
+    echo ""
+    echo "Running retmaxuid"
+    retmaxuid
+    echo ""
+    echo ""
+
+
+
+}
+
+
+_usersearch "$@"

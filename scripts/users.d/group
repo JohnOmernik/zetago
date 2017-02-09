@@ -74,7 +74,18 @@ function _group() {
             GROUP_ROLE="shared"
         fi
         if [ "$GROUP_ROLE" != "" ]; then
-            START_GID=$(cat $CLUSTERMOUNT/zeta/kstore/zetasync/zetauid.list|grep $GROUP_ROLE|cut -d":" -f2)
+            UIDLOC="./conf/zetasync/zetauid.list"
+            OLDLOC="$CLUSTERMOUNT/zeta/kstore/zetasync/zetauid.list"
+            if [ ! -f "$UIDLOC" ]; then
+                if [ -f "$OLDLOC" ]; then
+                    @go.log INFO "Copying old zetasync location to ./conf"
+                    cp $OLDLOC $UIDLOC
+                else
+                    @go.log FATAL "Cannot find zetauid.list in ./conf/zetasync or in /zeta/kstore/zetasync - Exiting"
+                fi
+            fi
+
+            START_GID=$(cat $UIDLOC|grep $GROUP_ROLE|cut -d":" -f2)
 
             if [ "$START_GID" == "" ]; then
                 @go.log FATAL "The starting GID for role $GROUP_ROLE was not found, are you sure this role is installed?"

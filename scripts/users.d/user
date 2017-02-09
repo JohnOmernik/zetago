@@ -81,7 +81,18 @@ function _user() {
             USER_ROLE="shared"
         fi
         if [ "$USER_ROLE" != "" ]; then
-            START_UID=$(cat $CLUSTERMOUNT/zeta/kstore/zetasync/zetauid.list|grep $USER_ROLE|cut -d":" -f2)
+            UIDLOC="./conf/zetasync/zetauid.list"
+            OLDLOC="$CLUSTERMOUNT/zeta/kstore/zetasync/zetauid.list"
+            if [ ! -f "$UIDLOC" ]; then
+                if [ -f "$OLDLOC" ]; then
+                    @go.log INFO "Copying old zetasync location to ./conf"
+                    cp $OLDLOC $UIDLOC
+                else
+                    @go.log FATAL "Cannot find zetauid.list in ./conf/zetasync or in /zeta/kstore/zetasync - Exiting"
+                fi
+            fi
+
+            START_UID=$(cat $UIDLOC|grep $USER_ROLE|cut -d":" -f2)
 
             if [ "$START_UID" == "" ]; then
                 @go.log FATAL "The starting UID for role $USER_ROLE was not found, are you sure this role is installed?"
