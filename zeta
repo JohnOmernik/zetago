@@ -26,6 +26,7 @@ export CLUSTER_BASE_CONF="./conf/cluster_base.conf"
 export PACKAGE_CONF="./conf/package.conf"
 export NETWORK_CONF="./conf/network.conf"
 export NODE_CONF="./conf/node.conf"
+export ROLE_CONF="./conf/role.conf"
 EOF
 fi
 . $BASE_CONF

@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+# ./zeta users search - Generic User Command line search
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+
+# Load the Auth lib for this cluster
+AUTH_LIB="lib${LDAP_PROVIDER}"
+. "$_GO_USE_MODULES" $AUTH_LIB
+
+function _usersearch() {
+    . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
+
+    UIDLOC="./conf/zetasync/zetauid.list"
+    OLDLOC="$CLUSTERMOUNT/zeta/kstore/zetasync/zetauid.list"
+    if [ ! -f "$UIDLOC" ]; then
+        if [ -f "$OLDLOC" ]; then
+            @go.log INFO "Copying old zetasync location to ./conf"
+            mkdir -p ./conf/zetasync
+            cp $OLDLOC $UIDLOC
+        else
+            @go.log FATAL "Cannot find zetauid.list in ./conf/zetasync or in /zeta/kstore/zetasync - Exiting"
+        fi
+    fi
+
+    echo ""
+    echo ""
+    retnextuid "NEXTUID" "shared"
+    echo "Next User UID for shared: $NEXTUID"
+    echo ""
+    retnextgid "NEXTUID" "shared"
+    echo "Next Group UID for shared: $NEXTUID"
+    echo ""
+    retnextuid "NEXTUID" "prod"
+    echo "Next User UID for prod: $NEXTUID"
+    echo ""
+    retnextgid "NEXTUID" "prod"
+    echo "Next Group UID for prod: $NEXTUID"
+    echo ""
+
+
+
+}
+
+
+_usersearch "$@"

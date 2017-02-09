@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# ./zeta node
+# ./zeta role
 #
-# Help with administration of nodes in Zeta Environment
+# Help with administration of roles in Zeta Environment
 #
 #
 
@@ -14,11 +14,12 @@ sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$NODE_CONF"
 
 reqshared "dockerregv2 zetaca openldap"
 
 
-function _node() {
+function _role() {
    LOCK="0"
 
     for i in "$@"
@@ -33,29 +34,29 @@ function _node() {
     esac
     done
 
-    initconf "$NODE_CONF"
+    initconf "$ROLE_CONF"
 
     echo ""
     echo "********************************"
-    echo "Node Management Scripts for Zeta"
+    echo "Role Management Scripts for Zeta"
     echo "********************************"
     echo ""
     echo "Commands to use with package:"
     echo ""
-    echo "./zeta node                          # This command"
-    echo "./zeta node status                   # Status of Nodes"
+    echo "./zeta roles                          # This command"
+    echo "./zeta roles status                   # Status of Nodes"
     echo ""
-    echo "./zeta node -l                # Lock or unlock node.conf file"
+    echo "./zeta role -l                # Lock or unlock role.conf file"
     echo ""
 
     if [ "$LOCK" == "1" ]; then
-       lockconf "$NODE_CONF"
+       lockconf "$ROLE_CONF"
     fi
 
 
 }
 
-_node "$@"
+_role "$@"
 
 
 

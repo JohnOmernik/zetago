@@ -145,6 +145,7 @@ function adduser2group(){
 }
 
 
+
 function adduser() {
 
     UNAME=$1
@@ -208,6 +209,118 @@ function addou() {
     runldapcommand "$LDIF_DATA" "ADD"
 
 }
+
+function retnextuid() {
+    local RESULT=$1
+    local MROLE=$2
+
+    STARTUID=$(cat ./conf/zetasync/zetauid.list|grep $MROLE|cut -d":" -f2)
+
+    if [ "$STARTUID" != "" ]; then
+        ENDUID=$(( $STARTUID + 499999 ))
+
+        @go.log INFO "Looking for next UID in role $MROLE with start UID of $STARTUID and end UID of $ENDUID"
+
+        MAXUID="$STARTUID"
+
+        runldapsearch "ALLUIDS" "-LLL -b \"dc=marathon,dc=mesos\" \"(uidNumber=*)\" uidNumber"
+
+        JUSTUIDS=$(echo "$ALLUIDS"|grep uidNumber|sed "s/uidNumber: //g")
+
+        for L in $JUSTUIDS; do
+            if [ "$L" -ge "$STARTUID" ] && [ "$L" -lt "$ENDUID" ]; then
+                if [ "$L" -ge "$MAXUID" ]; then
+                    MAXUID=$(( $L + 1 ))
+                fi
+            fi
+        done
+    else
+        @go.log FATAL "Role $MROLE Not Installed"
+    fi
+    eval $RESULT="'$MAXUID'"
+}
+function retnextgid() {
+    local RESULT=$1
+    local MROLE=$2
+
+    STARTGID=$(cat ./conf/zetasync/zetauid.list|grep $MROLE|cut -d":" -f2)
+    if [ "$STARTGID" != "" ]; then
+        STARTGID=$(( $STARTGID + 500000 ))
+        ENDGID=$(( $STARTGID + 499999 ))
+
+        @go.log INFO "Looking for next GID in role $MROLE with start GID of $STARTGID and end GID of $ENDGID"
+
+        MAXGID="$STARTGID"
+
+        runldapsearch "ALLGIDS" "-LLL -b \"dc=marathon,dc=mesos\" \"(gidNumber=*)\" gidNumber"
+
+        JUSTGIDS=$(echo "$ALLGIDS"|grep gidNumber|sed "s/gidNumber: //g")
+
+        for L in $JUSTGIDS; do
+            if [ "$L" -ge "$STARTGID" ] && [ "$L" -lt "$ENDGID" ]; then
+                if [ "$L" -ge "$MAXGID" ]; then
+                    MAXGID=$(( $L + 1 ))
+                fi
+            fi
+        done
+    else
+        @go.log FATAL "Role $MROLE Not Installed"
+    fi
+    eval $RESULT="'$MAXGID'"
+}
+
+function runldapsearch(){
+    local RESULT=$1
+    local SEARCH=$2
+
+    LDAP_ROOT="$CLUSTERMOUNT/zeta/shared/openldap"
+
+    if [ ! -d "$LDAP_ROOT" ]; then
+        @go.log FATAL "Open LDAP doesn't appear to be installed at $LDAP_ROOT"
+    fi
+
+
+    LDAPPASS=$(cat ${LDAP_ROOT}/initconf/default.yaml.startup|grep ADMIN|sed "s/LDAP_ADMIN_PASSWORD: //")
+
+    APP_IMG="${ZETA_DOCKER_REG_URL}/ldaputils"
+
+    buildldapclient
+
+    TMP_LDIF="`pwd`/tmpldif"
+    PASSFILE="${TMP_LDIF}/p.txt"
+    TMPPASSFILE="${TMP_LDIF}/o.txt"
+    LDIF_FILE="${TMP_LDIF}/tmpldif.ldif"
+
+    mkdir -p $TMP_LDIF
+
+    chmod -R 750 $TMP_LDIF
+    touch $PASSFILE
+    touch $TMPPASSFILE
+    chmod 600 $PASSFILE
+    chmod 600 $TMPPASSFILE
+
+cat > $TMPPASSFILE << PWF
+${LDAPPASS}
+PWF
+    cat $TMPPASSFILE|tr -d "\n" > $PASSFILE
+    rm $TMPPASSFILE
+    chmod 600 $PASSFILE
+
+    RUN_CMD="ldapsearch -H ${LDAP_URL} -x -y /tmp/ldif/p.txt -D \"cn=admin,${LDAP_BASE}\" $SEARCH"
+
+cat > ${TMP_LDIF}/runsearch.sh << ERUN
+#!/bin/bash
+$RUN_CMD
+ERUN
+    chmod +x ${TMP_LDIF}/runsearch.sh
+    @go.log INFO "Running LDAP SEARCH - Type: SEARCH"
+    DCKR="sudo docker run --rm -v=${TMP_LDIF}:/tmp/ldif:ro ${APP_IMG}"
+    OUTSTR=$($DCKR /tmp/ldif/runsearch.sh)
+    eval $RESULT="'$OUTSTR'"
+    rm -rf $TMP_LDIF
+
+}
+
 
 
 function runldapcommand() {
