@@ -268,7 +268,7 @@ ERUN
     chmod +x ${TMP_LDIF}/runsearch.sh
     @go.log INFO "Running LDAP SEARCH - Type: SEARCH"
     DCKR="sudo docker run --rm -v=${TMP_LDIF}:/tmp/ldif:ro ${APP_IMG}"
-    OUTSTR=$(DCKR /tmp/ldif/runsearch.sh)
+    OUTSTR=$($DCKR /tmp/ldif/runsearch.sh)
     eval $RESULT="'$OUTSTR'"
     rm -rf $TMP_LDIF
 
