@@ -37,7 +37,7 @@ function _node() {
 
     echo ""
     echo "********************************"
-    echo "Package Installation Scripts for Zeta"
+    echo "Node Management Scripts for Zeta"
     echo "********************************"
     echo ""
     echo "Commands to use with package:"

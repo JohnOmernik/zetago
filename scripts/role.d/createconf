@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Create conf file for node management
+# Create conf file for role management
 #
 
 sourceconf "$PREP_CONF"
@@ -11,15 +11,15 @@ sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
-
+sourceconf "$NODE_CONF"
 reqshared "dockerregv2 zetaca openldap"
 
 
-cat > $NODE_CONF << EON
+cat > $ROLE_CONF << EOR
 #!/bin/bash
 
-NODE_LOCKED="1"
-EON
+ROLE_LOCKED="1"
+EOR
 
-@go.log INFO "Node Management conf created at $NODE_CONF"
+@go.log INFO "Role Management conf created at $ROLE_CONF"
 

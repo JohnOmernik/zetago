@@ -27,6 +27,8 @@ function _fs() {
     initconf "$FS_CONF"
     initconf "$FS_PROVIDER_CONF"
     initconf "$CLUSTER_CONF"
+    initconf "$NODE_CONF"
+    initconf "$ROLE_CONF"
 
     echo ""
     echo "********************************"
