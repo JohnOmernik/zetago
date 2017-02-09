@@ -17,7 +17,7 @@ AUTH_LIB="lib${LDAP_PROVIDER}"
 . "$_GO_USE_MODULES" $AUTH_LIB
 
 function _usersearch() {
-
+    . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
 
     echo ""
     echo "Running retmaxuid"
