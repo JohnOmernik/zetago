@@ -223,7 +223,7 @@ function retnextid() {
 
     STARTUID=$(cat ./conf/zetasync/zetauid.list|grep $MROLE|cut -d":" -f2)
     STARTUID=$(( $STARTUID + $ADDUID ))
-    ENDUID=$(( $STARTUID + 1000000))
+    ENDUID=$(( $STARTUID + 500000))
 
     @go.log INFO "Looking for next UID in role $MROLE with start UID of $STARTUID and end UID of $ENDUID"
 
