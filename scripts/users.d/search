@@ -24,6 +24,7 @@ function _usersearch() {
     if [ ! -f "$UIDLOC" ]; then
         if [ -f "$OLDLOC" ]; then
             @go.log INFO "Copying old zetasync location to ./conf"
+            mkdir -p ./conf/zetasync
             cp $OLDLOC $UIDLOC
         else
             @go.log FATAL "Cannot find zetauid.list in ./conf/zetasync or in /zeta/kstore/zetasync - Exiting"
