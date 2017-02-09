@@ -222,7 +222,7 @@ function retnextuid() {
     runldapsearch "ALLUIDS" "-LLL -b \"dc=marathon,dc=mesos\" \"(uidNumber=*)\" uidNumber"
     JUSTUIDS=$(echo "$ALLUIDS"|grep uidNumber|sed "s/uidNumber: //g")
     for L in $JUSTUIDS; do
-        if [ "$L" -ge "$STARTUID"] && [ "$L" -lt "$ENDUID" ]; then
+        if [ "$L" -ge "$STARTUID" ] && [ "$L" -lt "$ENDUID" ]; then
             if [ "$L" -ge "$MAXUID" ]; then
                 MAXUID=$(( $L + 1 ))
             fi
