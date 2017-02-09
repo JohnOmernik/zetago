@@ -210,36 +210,63 @@ function addou() {
 
 }
 
-function retnextid() {
+function retnextuid() {
     local RESULT=$1
     local MROLE=$2
-    local UIDTYPE=$3
 
     STARTUID=$(cat ./conf/zetasync/zetauid.list|grep $MROLE|cut -d":" -f2)
 
-    if [ "$UIDTYPE" == "GROUP" ]; then
-        ENDUID=$(( $STARTUID + 999999 ))
-        STARTUID=$(( $STARTUID + 500001 ))
-    else
-        ENDUID=$(( $STARTUID + 500000))
-    fi
+    if [ "$STARTUID" != "" ]; then
+        ENDUID=$(( $STARTUID + 499999 ))
 
-    @go.log INFO "Looking for next UID in role $MROLE with start UID of $STARTUID and end UID of $ENDUID"
+        @go.log INFO "Looking for next UID in role $MROLE with start UID of $STARTUID and end UID of $ENDUID"
 
-    MAXUID="$STARTUID"
+        MAXUID="$STARTUID"
 
-    runldapsearch "ALLUIDS" "-LLL -b \"dc=marathon,dc=mesos\" \"(uidNumber=*)\" uidNumber"
+        runldapsearch "ALLUIDS" "-LLL -b \"dc=marathon,dc=mesos\" \"(uidNumber=*)\" uidNumber"
 
-    JUSTUIDS=$(echo "$ALLUIDS"|grep uidNumber|sed "s/uidNumber: //g")
+        JUSTUIDS=$(echo "$ALLUIDS"|grep uidNumber|sed "s/uidNumber: //g")
 
-    for L in $JUSTUIDS; do
-        if [ "$L" -ge "$STARTUID" ] && [ "$L" -lt "$ENDUID" ]; then
-            if [ "$L" -ge "$MAXUID" ]; then
-                MAXUID=$(( $L + 1 ))
+        for L in $JUSTUIDS; do
+            if [ "$L" -ge "$STARTUID" ] && [ "$L" -lt "$ENDUID" ]; then
+                if [ "$L" -ge "$MAXUID" ]; then
+                    MAXUID=$(( $L + 1 ))
+                fi
             fi
-        fi
-    done
+        done
+    else
+        @go.log FATAL "Role $MROLE Not Installed"
+    fi
     eval $RESULT="'$MAXUID'"
+}
+function retnextgid() {
+    local RESULT=$1
+    local MROLE=$2
+
+    STARTGID=$(cat ./conf/zetasync/zetauid.list|grep $MROLE|cut -d":" -f2)
+    if [ "$STARTGID" != "" ]; then
+        STARTGID=$(( $STARTUID + 500000 ))
+        ENDGID=$(( $STARTUID + 499999 ))
+
+        @go.log INFO "Looking for next GID in role $MROLE with start GID of $STARTGID and end GID of $ENDGID"
+
+        MAXGID="$STARTGID"
+
+        runldapsearch "ALLGIDS" "-LLL -b \"dc=marathon,dc=mesos\" \"(gidNumber=*)\" gidNumber"
+
+        JUSTGIDS=$(echo "$ALLGIDS"|grep gidNumber|sed "s/gidNumber: //g")
+
+        for L in $JUSTGIDS; do
+            if [ "$L" -ge "$STARTGID" ] && [ "$L" -lt "$ENDGID" ]; then
+                if [ "$L" -ge "$MAXGID" ]; then
+                    MAXGID=$(( $L + 1 ))
+                fi
+            fi
+        done
+    else
+        @go.log FATAL "Role $MROLE Not Installed"
+    fi
+    eval $RESULT="'$MAXGID'"
 }
 
 function runldapsearch(){

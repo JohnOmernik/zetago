@@ -32,18 +32,17 @@ function _usersearch() {
     fi
 
     echo ""
-    echo "Running retnextid"
     echo ""
-    retnextid "NEXTUID" "shared" "USER"
+    retnextuid "NEXTUID" "shared"
     echo "Next User UID for shared: $NEXTUID"
     echo ""
-    retnextid "NEXTUID" "shared" "GROUP"
+    retnextgid "NEXTUID" "shared"
     echo "Next Group UID for shared: $NEXTUID"
     echo ""
-    retnextid "NEXTUID" "prod"
+    retnextuid "NEXTUID" "prod"
     echo "Next User UID for prod: $NEXTUID"
     echo ""
-    retnextid "NEXTUID" "prod" "GROUP"
+    retnextgid "NEXTUID" "prod"
     echo "Next Group UID for prod: $NEXTUID"
     echo ""
 
