@@ -210,11 +210,19 @@ function addou() {
 
 }
 
-function retnextuid() {
+function retnextid() {
     local RESULT=$1
     local MROLE=$2
+    local UIDTYPE=$3
+
+    if [ "$UIDTYPE" == "GROUP" ]; then
+        ADDUID="500000"
+    else
+        ADDUID="0"
+    fi
 
     STARTUID=$(cat ./conf/zetasync/zetauid.list|grep $MROLE|cut -d":" -f2)
+    STARTUID=$(( $STARTUID + $ADDUID ))
     ENDUID=$(( $STARTUID + 1000000))
 
     @go.log INFO "Looking for next UID in role $MROLE with start UID of $STARTUID and end UID of $ENDUID"
