@@ -215,15 +215,14 @@ function retnextid() {
     local MROLE=$2
     local UIDTYPE=$3
 
-    if [ "$UIDTYPE" == "GROUP" ]; then
-        ADDUID="500000"
-    else
-        ADDUID="0"
-    fi
-
     STARTUID=$(cat ./conf/zetasync/zetauid.list|grep $MROLE|cut -d":" -f2)
-    STARTUID=$(( $STARTUID + $ADDUID ))
-    ENDUID=$(( $STARTUID + 500000))
+
+    if [ "$UIDTYPE" == "GROUP" ]; then
+        ENDUID=$(( $STARTUID + 999999 ))
+        STARTUID=$(( $STARTUID + 500001 ))
+    else
+        ENDUID=$(( $STARTUID + 500000))
+    fi
 
     @go.log INFO "Looking for next UID in role $MROLE with start UID of $STARTUID and end UID of $ENDUID"
 
