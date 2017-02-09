@@ -19,6 +19,17 @@ AUTH_LIB="lib${LDAP_PROVIDER}"
 function _usersearch() {
     . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
 
+    UIDLOC="./conf/zetasync/zetauid.list"
+    OLDLOC="$CLUSTERMOUNT/zeta/kstore/zetasync/zetauid.list"
+    if [ ! -f "$UIDLOC" ]; then
+        if [ -f "$OLDLOC" ]; then
+            @go.log INFO "Copying old zetasync location to ./conf"
+            cp $OLDLOC $UIDLOC
+        else
+            @go.log FATAL "Cannot find zetauid.list in ./conf/zetasync or in /zeta/kstore/zetasync - Exiting"
+        fi
+    fi
+
     echo ""
     echo "Running retnextuid"
     echo ""
