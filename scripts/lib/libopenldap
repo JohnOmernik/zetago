@@ -259,7 +259,7 @@ PWF
     rm $TMPPASSFILE
     chmod 600 $PASSFILE
 
-    RUN_CMD="ldapsearch -H ${LDAP_URL} -x -y /tmp/ldif/p.txt -D \"cn=admin,${LDAP_BASE}\" $SEARCH
+    RUN_CMD="ldapsearch -H ${LDAP_URL} -x -y /tmp/ldif/p.txt -D \"cn=admin,${LDAP_BASE}\" $SEARCH"
 
 cat > ${TMP_LDIF}/runsearch.sh << ERUN
 #!/bin/bash
