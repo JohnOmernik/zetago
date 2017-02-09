@@ -245,8 +245,8 @@ function retnextgid() {
 
     STARTGID=$(cat ./conf/zetasync/zetauid.list|grep $MROLE|cut -d":" -f2)
     if [ "$STARTGID" != "" ]; then
-        STARTGID=$(( $STARTUID + 500000 ))
-        ENDGID=$(( $STARTUID + 499999 ))
+        STARTGID=$(( $STARTGID + 500000 ))
+        ENDGID=$(( $STARTGID + 499999 ))
 
         @go.log INFO "Looking for next GID in role $MROLE with start GID of $STARTGID and end GID of $ENDGID"
 
