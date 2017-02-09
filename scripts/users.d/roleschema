@@ -116,7 +116,7 @@ function _roleschema() {
                     MAXUID="$RUID"
                 fi
             done < $UIDLOC
-            MAXUID=$((MAXUID + 1000000)))
+            MAXUID=$(( MAXUID + 1000000 ))
 
             read -e -p "Please enter the starting UID for role $ROLE: " -i "$MAXUID" STARTID
             echo "$ROLE:$STARTID" >> $UIDLOC
