@@ -38,11 +38,11 @@ function _group() {
             -u)
             UNATTEND="1"
             ;;
-            "-g="*)
-            GROUP_NAME="${i#*=}"
-            ;;
             "-i="*)
             GROUP_ID="${i#*=}"
+            ;;
+            "-g="*)
+            GROUP_NAME="${i#*=}"
             ;;
             "-r="*)
             GROUP_ROLE="${i#*=}"
@@ -66,9 +66,6 @@ function _group() {
         if [ "$GROUP_NAME" == "" ]; then
             @go.log FATAL "To add a group you must provide a group name with -g"
         fi
-        if [ "$GROUP_ID" == "" ]; then
-            @go.log FATAL "To add a group you must provide a group id with -i"
-        fi
         if [ "$GROUP_ROLE" == "" ]; then
             @go.log WARN "No Group Role Provided: Defaults to shared role"
             GROUP_ROLE="shared"
@@ -85,21 +82,26 @@ function _group() {
                     @go.log FATAL "Cannot find zetauid.list in ./conf/zetasync or in /zeta/kstore/zetasync - Exiting"
                 fi
             fi
-
             START_GID=$(cat $UIDLOC|grep $GROUP_ROLE|cut -d":" -f2)
 
             if [ "$START_GID" == "" ]; then
                 @go.log FATAL "The starting GID for role $GROUP_ROLE was not found, are you sure this role is installed?"
             fi
+
             VALID_GID=$(($START_GID + 500000))
         fi
-
-        if [ "$GROUP_ID" -ge $VALID_GID ] && [ "$GROUP_ID" -lt $(($VALID_GID + 500000)) ]; then
-            echo "$GROUP_ID is valid in role $GROUP_ROLE - However we do not check for duplicates (yet)"
+        if [ "$GROUP_ID" == "" ]; then
+            @go.log INFO "No gid provided with -i going to get the next gid in role $GROUP_ROLE" 
+            retnextgid "GROUP_ID" "$GROUP_ROLE"
         else
-            echo "$GROUP_ID is not valid in role $GROUP_ROLE"
+            if [ "$GROUP_ID" -ge $VALID_GID ] && [ "$GROUP_ID" -lt $(($VALID_GID + 500000)) ]; then
+                @go.log WARN "$GROUP_ID is valid in role $GROUP_ROLE - However we do not check for duplicates (yet) - Not specifying gid will auto generate!"
+            else
+                @go.log FATAL "$GROUP_ID is not valid in role $GROUP_ROLE"
+            fi
         fi
 
+        
     elif [ "$ACTION_DEL" == "1" ]; then
         if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_QUERY" == "1" ]; then
             @go.log FATAL "Requested $ACTION_SRC Delete (-d) specified with either $ACTION_SRC Add (-a) or $ACTION_SRC Query (-q) - Exiting"

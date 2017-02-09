@@ -73,9 +73,6 @@ function _user() {
         if [ "$USER_NAME" == "" ]; then
             @go.log FATAL "To add a user you must provide a user name with -n"
         fi
-        if [ "$USER_UID" == "" ]; then
-            @go.log FATAL "To add a useryou must provide a user id with -i"
-        fi
         if [ "$USER_ROLE" == "" ]; then
             @go.log WARN "No User Role Provided: Defaults to shared role"
             USER_ROLE="shared"
@@ -100,10 +97,15 @@ function _user() {
             fi
             VALID_UID="$START_UID"
         fi
-        if [ "$USER_UID" -ge $VALID_UID ] && [ "$USER_UID" -lt $(($VALID_UID + 500000)) ]; then
-            echo "$USER_UID is valid in role $USER_ROLE - However we do not check for duplicates (yet)"
+        if [ "$USER_UID" == "" ]; then
+            @go.log INFO "No UID specified, getting next available"
+            retnextuid "USER_UID" "$USER_ROLE"
         else
-            @go.log FATAL "$USER_UID is not valid in role $USER_ROLE"
+            if [ "$USER_UID" -ge $VALID_UID ] && [ "$USER_UID" -lt $(($VALID_UID + 500000)) ]; then
+                @go.log WARN "$USER_UID is valid in role $USER_ROLE - However we do not check for duplicates (yet)"
+            else
+                @go.log FATAL "$USER_UID is not valid in role $USER_ROLE"
+            fi
         fi
 
         if [ "$USER_FNAME" == "" ]; then
