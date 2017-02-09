@@ -20,9 +20,13 @@ function _usersearch() {
     . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
 
     echo ""
-    echo "Running retmaxuid"
-    retmaxuid
+    echo "Running retnextuid"
     echo ""
+    retnextuid "NEXTUID" "shared"
+    echo "Next UID for shared: $NEXTUID"
+    echo ""
+    retnextuid "NEXTUID" "prod"
+    echo "Next UID for prod: $NEXTUID"
     echo ""
 
 

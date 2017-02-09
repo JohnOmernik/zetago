@@ -210,16 +210,25 @@ function addou() {
 
 }
 
-function retmaxuid() {
+function retnextuid() {
     local RESULT=$1
     local MROLE=$2
+
+    STARTUID=$(cat ./conf/zetasync/zetauids.list|grep $MROLE)
+    ENDUID=$(( $STARTUID + 1000000))
+
+    MAXUID="$STARTUID"
 
     runldapsearch "ALLUIDS" "-LLL -b \"dc=marathon,dc=mesos\" \"(uidNumber=*)\" uidNumber"
     JUSTUIDS=$(echo "$ALLUIDS"|grep uidNumber|sed "s/uidNumber: //g")
     for L in $JUSTUIDS; do
-        echo "FUN STUFF: $L"
+        if [ "$L" -ge "$STARTUID"] && [ "$L" -lt "$ENDUID" ]; then
+            if [ "$L" -ge "$MAXUID" ]; then
+                MAXUID=$(( $L + 1 ))
+            fi
+        fi
     done
-
+    eval $RESULT="'$MAXUID'"
 }
 
 function runldapsearch(){
