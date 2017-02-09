@@ -214,13 +214,17 @@ function retnextuid() {
     local RESULT=$1
     local MROLE=$2
 
-    STARTUID=$(cat ./conf/zetasync/zetauids.list|grep $MROLE)
+    STARTUID=$(cat ./conf/zetasync/zetauids.list|grep $MROLE|cut -d":" -f2)
     ENDUID=$(( $STARTUID + 1000000))
+
+    @go.log INFO "Looking for next UID in role $MROLE with start UID of $STARTUID and end UID of $ENDUID"
 
     MAXUID="$STARTUID"
 
     runldapsearch "ALLUIDS" "-LLL -b \"dc=marathon,dc=mesos\" \"(uidNumber=*)\" uidNumber"
+
     JUSTUIDS=$(echo "$ALLUIDS"|grep uidNumber|sed "s/uidNumber: //g")
+
     for L in $JUSTUIDS; do
         if [ "$L" -ge "$STARTUID" ] && [ "$L" -lt "$ENDUID" ]; then
             if [ "$L" -ge "$MAXUID" ]; then
