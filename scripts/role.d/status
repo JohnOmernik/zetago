@@ -21,6 +21,27 @@ function _rolestatus() {
 
     echo "Role Status Comming soon"
 
+    CUR_STATUS=$(curl -s http://leader.mesos:5050/master/slaves)
+
+
+    #Pretty print json
+#    echo "$CUR_STATUS"| jq .
+
+
+    # Print the type
+#    echo "$CUR_STATUS"|jq type
+
+    # Prints all the hostsnames
+      echo "$CUR_STATUS" | jq '.[]|.[]|.'
+
+    HOSTS=$( echo "$CUR_STATUS" | jq -r '.[]|.[]|.hostname' )
+
+    for HOST in $HOSTS; do
+        echo "HOST: $HOST"
+        echo "$CUR_STATUS" | jq --arg hn "$HOST" '.[]|.[]|select(.hostname==$hn)|.resources'
+    done
+
+
 }
 
 _rolestatus "$@"

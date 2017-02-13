@@ -1,0 +1,140 @@
+#!/bin/bash
+#
+# Maintaince work for Zeta/Mesos
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$NODE_CONF"
+sourceconf "$ROLE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+
+function _maint() {
+
+
+    for i in "$@"
+        do
+        case $i in
+            -a)
+            ACTION_ADD="1"
+            ;;
+            -d)
+            ACTION_DEL="1"
+            ;;
+            -s)
+            ACTION_SCHED="1"
+            ;;
+            -m)
+            ACTION_MACHINE="1"
+            ;;
+            -u)
+            UNATTEND="1"
+            ;;
+            "-n="*)
+            NODE="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+
+
+
+    CURTIME=$(date +%s)
+    TMP_LOC="./tmp/maint"
+    mkdir -p $TMP_LOC
+
+    TFILESCHED="${TMP_LOC}/maint_$CURTIME.json"
+    TFILEMACHINE="${TMP_LOC}/machine_$CURTIME.json"
+
+    NODEIP="192.168.0.108"
+    NODEHOST="192.168.0.108"
+
+
+    SECSTOSTART="600"
+    SECSDURATION="3600"
+
+    NANOSTART=$(( $SECSTOSTART * 1000000000 ))
+    NANOCUR=$(( $CURTIME * 1000000000 ))
+
+    DURATION=$(( $SECSDURATION * 1000000000 ))
+
+    STARTTIME=$(( $NANOCUR + $NANOSTART ))
+
+
+cat > $TFILE << EOF
+{
+  "windows" : [
+    {
+      "machine_ids" : [
+        { "hostname" : "$NODEHOST", "ip" : "$NODEIP" }
+      ],
+      "unavailability" : {
+        "start" : { "nanoseconds" : $STARTTIME },
+        "duration" : { "nanoseconds" : $DURATION }
+      }
+    }
+  ]
+}
+
+EOF
+cat > $TFILE << EOL
+[
+  { "hostname" : "192.168.0.108", "ip" : "192.168.0.108" }
+]
+EOL
+
+
+    
+#    curl http://leader.mesos:5050/maintenance/schedule -H "Content-type: application/json" -X POST -d @$TFILE
+    curl http://leader.mesos:5050/machine/up -H "Content-type: application/json" -X POST -d @$TFILE
+
+
+
+    echo "Schedule"
+    CUR_STATUS=$(curl -s http://leader.mesos:5050/maintenance/schedule)
+    echo "$CUR_STATUS"
+    echo "$CUR_STATUS" | jq '.[]|.[]|.'
+
+    echo "Schedule"
+    CUR_STATUS=$(curl -s http://leader.mesos:5050/maintenance/status)
+    echo "$CUR_STATUS"
+    echo "$CUR_STATUS" | jq '.[]|.[]|.'
+
+
+
+
+    rm $TFILE
+
+
+    #Pretty print json
+#    echo "$CUR_STATUS"| jq .
+
+
+    # Print the type
+#    echo "$CUR_STATUS"|jq type
+
+    # Prints all the hostsnames
+
+#    HOSTS=$( echo "$CUR_STATUS" | jq -r '.[]|.[]|.hostname' )
+
+#    for HOST in $HOSTS; do
+#        echo "HOST: $HOST"
+#        echo "$CUR_STATUS" | jq --arg hn "$HOST" '.[]|.[]|select(.hostname==$hn)|.resources'
+#    done
+
+
+}
+
+_maint "$@"
