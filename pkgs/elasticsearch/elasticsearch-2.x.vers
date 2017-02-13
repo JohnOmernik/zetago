@@ -14,7 +14,23 @@ APP_IMG_TAG="$APP_VER"
 APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
 REQ_APP_IMG_NAME="zetabase"
 
+
+APP_ES_PLUGINS="royrusso/elasticsearch-HQ"
+
+
 if [ "$BUILD" == "Y" ]; then
+royrusso/elasticsearch-HQ
+plugin -install royrusso/elasticsearch-HQ
+
+    if [ "$APP_ES_PLUGINS" != "" ]; then
+        PINST="RUN cd /usr/share/elasticsearch/bin"
+        for P in $APP_ES_PLUGINS; do
+            PINST="${PINST} && plugin -install ${P}"
+        done 
+    else
+        PINST=""
+    fi
+
 
 cat > ./Dockerfile << EOF
 FROM ${ZETA_DOCKER_REG_URL}/${REQ_APP_IMG_NAME}
@@ -23,6 +39,8 @@ RUN apt-key adv --keyserver ${APP_APT_KEYSRV} --recv-keys ${APP_APT_KEY} && \
     echo "deb ${APP_APT_REPO} stable main" | tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends ${APP_APT_PKG}
+
+$PINST
 
 WORKDIR /usr/share/elasticsearch
 
