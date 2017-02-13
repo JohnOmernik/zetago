@@ -104,8 +104,6 @@ for NODEID in $(seq $APP_CNT); do
     fi
 done
 
-
-done
 cat > ${APP_CONF_DIR}/elasticsearch.yml << EOL5
 cluster.name: "$APP_CLUSTER_NAME"
 network.host: 0.0.0.0
