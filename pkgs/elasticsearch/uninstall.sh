@@ -51,6 +51,8 @@ if [ "$CONFIRM" == "Y" ]; then
             MAR_ID=$(cat $MY_MAR_FILE|grep "\"id\""|sed "s/\"id\"://g"|sed -r "s/ +//g"|sed -r "s/[\",]//g")
             NODE=$(cat $MY_MAR_FILE|grep "\"ZETA_ES_NODEID\""|sed "s/\"ZETA_ES_NODEID\"://g"|sed -r "s/ +//g"|sed -r "s/[\",]//g") 
 
+            ./zeta cluster marathon destroy $MAR_ID $MARATHON_SUBMIT 1
+
             VOL="${APP_DIR}.${APP_ROLE}.${APP_ID}.${NODE}"
             MNT="/${APP_DIR}/${APP_ROLE}/${APP_NAME}/${APP_ID}/data/${NODE}"
             fs_rmdir "RETCODE" "$MNT"
