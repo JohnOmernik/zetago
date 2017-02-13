@@ -39,6 +39,10 @@ if [ "$CONFIRM" == "Y" ]; then
     if [ "$APP_MAR_ID" != "" ]; then
         ./zeta cluster marathon destroy $APP_MAR_ID $MARATHON_SUBMIT 1
     fi
+    @go.log INFO "Removeing ports for $APP_ID"
+    APP_STR="${APP_ROLE}:${APP_ID}"
+    sed -i "/${APP_STR}/d" ${SERVICES_CONF}
+
     @go.log WARN "$APP_NAME instance $APP_ID unininstalled"
     if [ "$DESTROY" == "1" ]; then
 
