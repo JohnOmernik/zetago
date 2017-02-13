@@ -23,7 +23,7 @@ if [ "$BUILD" == "Y" ]; then
     if [ "$APP_ES_PLUGINS" != "" ]; then
         PINST="RUN cd /usr/share/elasticsearch/bin"
         for P in $APP_ES_PLUGINS; do
-            PINST="${PINST} && ./plugin -install ${P}"
+            PINST="${PINST} && ./plugin install ${P}"
         done
     else
         PINST=""
