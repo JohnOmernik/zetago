@@ -156,7 +156,7 @@ cat > $APP_MAR_DIR/ESNODE${NODEID}.json << EOL
     "ZETA_ES_NODEID": "$NODE",
     "ES_HEAP_SIZE": "$APP_ES_HEAP"
   },
-  "constraints": [["hostname", "UNIQUE"]]
+  "constraints": [["hostname", "UNIQUE"]],
   "ports": [],
   "container": {
     "type": "DOCKER",
