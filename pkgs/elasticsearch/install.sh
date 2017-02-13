@@ -98,9 +98,9 @@ EOL1
 APP_ZEN=""
 for NODEID in $(seq $APP_CNT); do
     if [ "$APP_ZEN" == "" ]; then
-        APP_ZEN="es_node_${NODEID}-${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
+        APP_ZEN="esnode${NODEID}-${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
     else
-        APP_ZEN="${APP_ZEN},es_node_${NODEID}-${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
+        APP_ZEN="${APP_ZEN},esnode${NODEID}-${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
     fi
 done
 
