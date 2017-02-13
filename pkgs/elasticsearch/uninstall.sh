@@ -43,8 +43,9 @@ if [ "$CONFIRM" == "Y" ]; then
     if [ "$DESTROY" == "1" ]; then
 
         for MAR_FILE in $(ls -1 $APP_MAR_DIR); do
-            MAR_ID=$(cat $MAR_FILE|grep "\"id\""|sed "s/\"id\"://g"|sed -r "s/ +//g"|sed -r "s/[\",]//g")
-            NODE=$(cat $MAR_FILE|grep "\"ZETA_ES_NODEID\""|sed "s/\"ZETA_ES_NODEID\"://g"|sed -r "s/ +//g"|sed -r "s/[\",]//g") 
+            MY_MAR_FILE="${APP_MAR_DIR}/${MAR_FILE}"
+            MAR_ID=$(cat $MY_MAR_FILE|grep "\"id\""|sed "s/\"id\"://g"|sed -r "s/ +//g"|sed -r "s/[\",]//g")
+            NODE=$(cat $MY_MAR_FILE|grep "\"ZETA_ES_NODEID\""|sed "s/\"ZETA_ES_NODEID\"://g"|sed -r "s/ +//g"|sed -r "s/[\",]//g") 
 
             VOL="${APP_DIR}.${APP_ROLE}.${APP_ID}.${NODE}"
             MNT="/${APP_DIR}/${APP_ROLE}/${APP_NAME}/${APP_ID}/data/${NODE}"

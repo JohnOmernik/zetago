@@ -60,9 +60,10 @@ function _packagestop() {
                 @go.log FATAL "APP_MAR_FILE indicated a directory of marathon files, however, the directory $APP_MAR_DIR was not found"
             fi
             for MAR_FILE in $(ls -1 $APP_MAR_DIR); do
-                MAR_ID=$(cat $MAR_FILE|grep "\"id\""|sed "s/\"id\"://g"|sed -r "s/ +//g"|sed -r "s/[\",]//g") 
+                MY_MAR_FILE="${APP_MAR_DIR}/${MAR_FILE}"
+                MAR_ID=$(cat $MY_MAR_FILE|grep "\"id\""|sed "s/\"id\"://g"|sed -r "s/ +//g"|sed -r "s/[\",]//g") 
                 @go.log INFO "Stopping $MAR_ID"
-                stopsvc "RES" "$MAR_ID" "$MAR_FILE" "$MARATHON_SUBMIT"
+                stopsvc "RES" "$MAR_ID" "$MY_MAR_FILE" "$MARATHON_SUBMIT"
                 echo ""
             done
         fi
