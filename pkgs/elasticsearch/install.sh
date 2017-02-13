@@ -141,9 +141,9 @@ for NODEID in $(seq $APP_CNT); do
 
 
 
-cat > $APP_MAR_DIR/ES_NODE_${NODEID}.json << EOL
+cat > $APP_MAR_DIR/ESNODE${NODEID}.json << EOL
 {
-  "id": "${APP_MAR_ID}/es_node_${NODEID}",
+  "id": "${APP_MAR_ID}/esnode${NODEID}",
   "cmd": "chown -R ${APP_USER}:${IUSER} /usr/share/elasticsearch && su -c /usr/share/elasticsearch/bin/elasticsearch $APP_USER",
   "cpus": ${APP_CPU},
   "mem": ${APP_MEM},
