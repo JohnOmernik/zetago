@@ -20,7 +20,7 @@ cat > ./Dockerfile << EOF
 FROM ${ZETA_DOCKER_REG_URL}/${REQ_APP_IMG_NAME}
 
 RUN apt-key adv --keyserver ${APP_APT_KEYSRV} --recv-keys ${APP_APT_KEY} && \
-    add-apt-repository -y "deb ${APP_APT_REPO}stable main" --keyserver https://${APP_APT_KEYSRV}/ && \
+    echo "deb ${APP_APT_REPO} stable main" | sudo tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends ${APP_APT_PKG}
 
