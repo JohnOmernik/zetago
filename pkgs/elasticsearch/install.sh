@@ -110,6 +110,7 @@ network.host: 0.0.0.0
 discovery.zen.ping.unicast.hosts: "${APP_ZEN}"
 http.port: $APP_HTTP_PORT
 transport.tcp.port: $APP_TRANSPORT_PORT
+network.publish_host: \${LIBPROCESS_IP}
 
 EOL5
 
