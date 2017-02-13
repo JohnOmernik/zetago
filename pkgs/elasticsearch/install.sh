@@ -1,5 +1,9 @@
 #!/bin/bash
 
+
+FS_LIB="lib${FS_PROVIDER}"
+. "$_GO_USE_MODULES" $FS_LIB
+
 ###############
 # $APP Specific
 echo "The next step will walk through instance defaults for ${APP_ID}"
@@ -66,6 +70,7 @@ APP_MAR_DIR="${APP_HOME}/marathon_files"
 APP_MAR_FILE="DIRECTORY"
 APP_DATA_DIR="$APP_HOME/data"
 APP_CONF_DIR="$APP_HOME/conf"
+APP_CONF_SCRIPTS_DIR="$APP_CONF_DIR/scripts"
 APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 
 
@@ -75,7 +80,7 @@ mkdir -p $APP_CONF_SCRIPTS_DIR
 mkdir -p $APP_MAR_DIR
 
 sudo chown -R ${APP_USER}:${IUSER} $APP_DATA_DIR
-sudo chown -R ${APP_USER}:${IUSER} $APP_CONF_SCRIPTS_DIR
+sudo chown -R ${APP_USER}:${IUSER} $APP_CONF_DIR
 sudo chown -R ${APP_USER}:${IUSER} $APP_CONF_SCRIPTS_DIR
 
 sudo chmod 770 $APP_DATA_DIR
@@ -90,10 +95,21 @@ export ZETA_${APP_NAME}_${APP_ID}_HTTP_PORT="${APP_HTTP_PORT}"
 export ZETA_${APP_NAME}_${APP_ID}_TRANSPORT_PORT="${APP_TRANSPORT_PORT}"
 EOL1
 
+APP_ZEN=""
+for NODEID in $(seq $APP_CNT); do
+    if [ "$APP_ZEN" == "" ]; then
+        APP_ZEN="es_node_${NODEID}-${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
+    else
+        APP_ZEN="${APP_ZEN},es_node_${NODEID}-${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
+    fi
+done
+
+
+done
 cat > ${APP_CONF_DIR}/elasticsearch.yml << EOL5
 cluster.name: "$APP_CLUSTER_NAME"
 network.host: 0.0.0.0
-discovery.zen.ping.unicast.hosts: "${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
+discovery.zen.ping.unicast.hosts: "${APP_ZEN}"
 http.port: $APP_HTTP_PORT
 transport.tcp.port: $APP_TRANSPORT_PORT
 
@@ -129,7 +145,7 @@ for NODEID in $(seq $APP_CNT); do
 
 cat > $APP_MAR_DIR/ES_NODE_${NODEID}.json << EOL
 {
-  "id": "${APP_MAR_ID}/ES_NODE_${NODEID}",
+  "id": "${APP_MAR_ID}/es_node_${NODEID}",
   "cmd": "chown -R ${APP_USER}:${IUSER} /usr/share/elasticsearch && su -c /usr/share/elasticsearch/bin/elasticsearch $APP_USER",
   "cpus": ${APP_CPU},
   "mem": ${APP_MEM},
