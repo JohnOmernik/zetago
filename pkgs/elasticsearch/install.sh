@@ -4,164 +4,133 @@
 # $APP Specific
 echo "The next step will walk through instance defaults for ${APP_ID}"
 echo ""
-read -e -p "Please enter the CPU shares to use with $APP_NAME: " -i "2.0" APP_CPU
+read -e -p "Please enter the CPU shares for each instance of $APP_NAME: " -i "2.0" APP_CPU
 echo ""
-read -e -p "Please enter the max cache size (this should be under the Marathon amount (Which is specified in MB) and this  specified in GB: " -i "2" APP_MEM_CACHE
+echo "----------------------"
+echo "Elastic Search Memory Notes:"
 echo ""
-read -e -p "Please enter the Marathon Memory limit to use with mongo: " -i "2560" APP_MEM
+echo "Elastic Search docs indicate using no more than half the available memory on a node, this is a bit different with mesos/zeta"
 echo ""
+echo "We will do this: Please enter the amount of Memory for Elastic search here in GB as an integer (1, 2, 4, 8 etc. ES Docs say don't exceed 32)"
+echo ""
+echo "We will Add 1G for FS cache. Then we will multiply by 1024 to get Marathon Memory"
+echo "So if you enter 4, the ES heap will be 4G, the total node memory will be 5G, and the marathon limit will be 5120)"
+echo ""
+read -e -p "Please enter the ES HEAP size to use, as an int (no G): " -i "4" APP_ES_MEM
+APP_TOTAL=$(( $APP_ES_MEM + 1 ))
+APP_ES_HEAP="${APP_ES_MEM}g"
+APP_MEM=$(( $APP_TOTAL * 1024 ))
+echo ""
+read -e -p "How many ES nodes will be part of this cluster? " -i "2" APP_CNT
+echo ""
+read -e -p "User to run ES nodes: " -i "zetasvc${APP_ROLE}" "APP_USER"
+echo ""
+read -e -p "Please enter the ES Cluster name: " -i "ZETA${APPROLE}ES" "APP_CLUSTER_NAME"
 
 
-
-PORTSTR="CLUSTER:tcp:30122:${APP_ROLE}:${APP_ID}:Port for MongoDB $APP_ID"
-getport "CHKADD" "Mongo Port" "$SERVICES_CONF" "$PORTSTR"
+PCOMMENT="Port for ES $APP_ID HTTP Port"
+PORTSTR="CLUSTER:tcp:9200:${APP_ROLE}:${APP_ID}:$PCOMMENT"
+getport "CHKADD" "$PCOMMENT" "$SERVICES_CONF" "$PORTSTR"
 
 if [ "$CHKADD" != "" ]; then
-    getpstr "MYTYPE" "MYPROTOCOL" "APP_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
-    APP_PORTSTR="$CHKADD"
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_HTTP_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_HTTP_PORTSTR="$CHKADD"
 else
     @go.log FATAL "Failed to get Port for $APP_NAME instance $APP_ID with $PSTR"
 fi
+
+PCOMMENT="Port for ES $APP_ID Transport Port"
+PORTSTR="CLUSTER:tcp:9300:${APP_ROLE}:${APP_ID}:$PCOMMENT"
+getport "CHKADD" "$PCOMMENT" "$SERVICES_CONF" "$PORTSTR"
+
+if [ "$CHKADD" != "" ]; then
+    getpstr "MYTYPE" "MYPROTOCOL" "APP_TRANSPORT_PORT" "MYROLE" "MYAPP_ID" "MYCOMMENTS" "$CHKADD"
+    APP_TRANSPORT_PORTSTR="$CHKADD"
+else
+    @go.log FATAL "Failed to get Port for $APP_NAME instance $APP_ID with $PSTR"
+fi
+
+
+
+bridgeports "APP_HTTP_JSON" "$APP_HTTP_PORT" "$APP_HTTP_PORTSTR"
+bridgeports "APP_TRANSPORT_JSON" "$APP_TRANSPORT_PORT" "$APP_TRANSPORT_PORTSTR"
+
+haproxylabel "APP_HA_PROXY" "${APP_HTTP_PORTSTR}~${APP_TRANSPORT_PORTSTR}"
 
 
 bridgeports "APP_PORT_JSON" "27017" "$APP_PORTSTR"
 haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 
 
-APP_MAR_FILE="${APP_HOME}/marathon.json"
-APP_DATA_DIR="$APP_HOME/mongo_data"
-APP_CONFDB_DIR="$APP_HOME/mongo_configdb"
-APP_CONF_DIR="$APP_HOME/mongo_conf"
-APP_LOG_DIR="$APP_HOME/mongo_logs"
+APP_MAR_DIR="${APP_HOME}/marathon_files"
+APP_MAR_FILE="DIRECTORY"
+APP_DATA_DIR="$APP_HOME/data"
+APP_CONF_DIR="$APP_HOME/conf"
 APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 
 
 mkdir -p $APP_DATA_DIR
 mkdir -p $APP_CONF_DIR
-mkdir -p $APP_CONFDB_DIR
-mkdir -p $APP_LOG_DIR
-mkdir -p ${APP_HOME}/lock
+mkdir -p $APP_CONF_SCRIPTS_DIR
+mkdir -p $APP_MAR_DIR
+
+sudo chown -R ${APP_USER}:${IUSER} $APP_DATA_DIR
+sudo chown -R ${APP_USER}:${IUSER} $APP_CONF_SCRIPTS_DIR
+sudo chown -R ${APP_USER}:${IUSER} $APP_CONF_SCRIPTS_DIR
+
 sudo chmod 770 $APP_DATA_DIR
 sudo chmod 770 $APP_CONF_DIR
-sudo chmod 770 $APP_CONFDB_DIR
-sudo chmod 770 $APP_LOG_DIR
+sudo chmod 770 $APP_CONF_SCRIPTS_DIR
+
 
 
 cat > $APP_ENV_FILE << EOL1
 #!/bin/bash
-export ZETA_${APP_NAME}_${APP_ID}_PORT="${APP_PORT}"
+export ZETA_${APP_NAME}_${APP_ID}_HTTP_PORT="${APP_HTTP_PORT}"
+export ZETA_${APP_NAME}_${APP_ID}_TRANSPORT_PORT="${APP_TRANSPORT_PORT}"
 EOL1
 
-cat > ${APP_CONF_DIR}/mongod.conf << EOL5
-systemLog:
-   destination: file
-   verbosity: 1
-   timeStampFormat: iso8601-utc
-   path: /data/log/mongod.log
-   logAppend: true
-storage:
-   dbPath: /data/db
-   engine: wiredTiger
-   directoryPerDB: true
-   journal:
-      enabled: true
-   wiredTiger:
-      engineConfig:
-         cacheSizeGB: $APP_MEM_CACHE
-operationProfiling:
-   slowOpThresholdMs: 100
-   mode: off # Set to slowOp to check things out
-processManagement:
-   fork: false
-net:
-   port: 27017
-setParameter:
-   enableLocalhostAuthBypass: false
+cat > ${APP_CONF_DIR}/elasticsearch.yml << EOL5
+cluster.name: "$APP_CLUSTER_NAME"
+network.host: 0.0.0.0
+discovery.zen.ping.unicast.hosts: "${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
+http.port: $APP_HTTP_PORT
+transport.tcp.port: $APP_TRANSPORT_PORT
+
 EOL5
 
-cat  > ${APP_HOME}/lock/run.sh << EOL2
-#!/bin/bash
-chmod +x /entrypoint.sh
-/entrypoint.sh --config /data/conf/mongod.conf
+cat  > ${APP_CONF_DIR}/logging.yml << EOL2
+rootLogger: INFO,console
+appender:
+  console:
+    type: console
+    layout:
+      type: consolePattern
+      conversionPattern: "[%d{ISO8601}][%-5p][%-25c] %m%n"
 EOL2
-chmod +x ${APP_HOME}/lock/run.sh
-
-cat > ${APP_HOME}/lock/lockfile.sh << EOL3
-#!/bin/bash
-
-#The location the lock will be attempted in
-LOCKROOT="/lock"
-LOCKDIRNAME="lock"
-LOCKFILENAME="mylock.lck"
-
-#This is the command to run if we get the lock.
-RUNCMD="/lock/run.sh"
-
-#Number of seconds to consider the Lock stale, this could be application dependent.
-LOCKTIMEOUT=60
-SLEEPLOOP=30
-
-LOCKDIR=\${LOCKROOT}/\${LOCKDIRNAME}
-LOCKFILE=\${LOCKDIR}/\${LOCKFILENAME}
 
 
-if mkdir "\${LOCKDIR}" &>/dev/null; then
-    echo "No Lockdir. Our lock"
-    # This means we created the dir!
-    # The lock is ours
-    # Run a sleep loop that puts the file in the directory
-    while true; do date +%s > \$LOCKFILE ; sleep \$SLEEPLOOP; done &
-    #Now run the real shell scrip
-    \$RUNCMD
-else
-    #Pause to allow another lock to start
-    sleep 1
-    if [ -e "\$LOCKFILE" ]; then
-        echo "lock dir and lock file Checking Stats"
-        CURTIME=\`date +%s\`
-        FILETIME=\`cat \$LOCKFILE\`
-        DIFFTIME=\$((\$CURTIME-\$FILETIME))
-        echo "Filetime \$FILETIME"
-        echo "Curtime \$CURTIME"
-        echo "Difftime \$DIFFTIME"
-
-        if [ "\$DIFFTIME" -gt "\$LOCKTIMEOUT" ]; then
-            echo "Time is greater then Timeout We are taking Lock"
-            # We should take the lock! First we remove the current directory because we want to be atomic
-            rm -rf \$LOCKDIR
-            if mkdir "\${LOCKDIR}" &>/dev/null; then
-                while true; do date +%s > \$LOCKFILE ; sleep \$SLEEPLOOP; done &
-                \$RUNCMD
-            else
-                echo "Cannot Establish Lock file"
-                exit 1
-            fi
-        else
-            # The lock is not ours.
-            echo "Cannot Estblish Lock file - Active "
-            exit 1
-        fi
-    else
-        # We get to be the locker. However, we need to delete the directory and recreate so we can be all atomic about
-        rm -rf \$LOCKDIR
-        if mkdir "\${LOCKDIR}" &>/dev/null; then
-            while true; do date +%s > \$LOCKFILE ; sleep \$SLEEPLOOP; done &
-            \$RUNCMD
-        else
-            echo "Cannot Establish Lock file - Issue"
-            exit 1
-        fi
-    fi
-fi
-EOL3
-
-chmod +x ${APP_HOME}/lock/lockfile.sh
 
 
-cat > $APP_MAR_FILE << EOL
+for NODEID in $(seq $APP_CNT); do
+    echo "Creating Marathon file and directories for for node: $NODEID"
+
+        NODE="node${NODEID}"
+        VOL="${APP_DIR}.${APP_ROLE}.${APP_ID}.${NODE}"
+
+        MNT="/${APP_DIR}/${APP_ROLE}/${APP_NAME}/${APP_ID}/data/${NODE}"
+        NFSLOC="${APP_HOME}/data/${NODE}/"
+
+        fs_mkvol "RETCODE" "$MNT" "$VOL" "770"
+        sudo chown -R ${APP_USER}:${IUSER} $NFSLOC
+
+
+
+
+cat > $APP_MAR_DIR/ES_NODE_${NODEID}.json << EOL
 {
-  "id": "${APP_MAR_ID}",
-  "cmd": "/lock/lockfile.sh",
+  "id": "${APP_MAR_ID}/ES_NODE_${NODEID}",
+  "cmd": "chown -R ${APP_USER}:${IUSER} /usr/share/elasticsearch && su -c /usr/share/elasticsearch/bin/elasticsearch $APP_USER",
   "cpus": ${APP_CPU},
   "mem": ${APP_MEM},
   "instances": 1,
@@ -169,6 +138,11 @@ cat > $APP_MAR_FILE << EOL
    $APP_HA_PROXY
    "CONTAINERIZER":"Docker"
   },
+  "env": {
+    "ZETA_ES_NODEID": "$NODE",
+    "ES_HEAP_SIZE": "$APP_ES_HEAP"
+  },
+  "constraints": [["hostname", "UNIQUE"]]
   "ports": [],
   "container": {
     "type": "DOCKER",
@@ -176,21 +150,19 @@ cat > $APP_MAR_FILE << EOL
       "image": "${APP_IMG}",
       "network": "BRIDGE",
       "portMappings": [
-        $APP_PORT_JSON
+        $APP_HTTP_JSON,
+        $APP_TRANSPORT_JSON
       ]
     },
     "volumes": [
-      { "containerPath": "/data/db", "hostPath": "${APP_DATA_DIR}", "mode": "RW" },
-      { "containerPath": "/data/configdb", "hostPath": "${APP_CONFDB_DIR}", "mode": "RW" },
-      { "containerPath": "/data/conf", "hostPath": "${APP_CONF_DIR}", "mode": "RO" },
-      { "containerPath": "/data/log", "hostPath": "${APP_LOG_DIR}", "mode": "RW" },
-      { "containerPath": "/lock", "hostPath": "${APP_HOME}/lock", "mode": "RW" }
+      { "containerPath": "/usr/share/elasticsearch/config", "hostPath": "${APP_CONF_DIR}", "mode": "RO" },
+      { "containerPath": "/usr/share/elasticsearch/data/", "hostPath": "${APP_DATA_DIR}/${NODE}", "mode": "RW" }
     ]
 
   }
 }
 EOL
-
+done
 
 
 

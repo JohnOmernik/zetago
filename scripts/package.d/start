@@ -55,11 +55,25 @@ function _packagestart() {
         . $APP_PKG_BASE/start.sh
     else
         @go.log INFO "Using default start instance"
-        submitstartsvc "RES" "$APP_MAR_ID" "$APP_MAR_FILE" "$MARATHON_SUBMIT"
-        if [ "$RES" != "0" ]; then
-            @go.log WARN "$MAR_ID not started - is it already running?"
+        if [ "$APP_MAR_FILE" != "DIRECTORY" ]; then
+            submitstartsvc "RES" "$APP_MAR_ID" "$APP_MAR_FILE" "$MARATHON_SUBMIT"
+            if [ "$RES" != "0" ]; then
+                @go.log WARN "$MAR_ID not started - is it already running?"
+            fi
+            echo ""
+        else
+            if [ ! -d "$APP_MAR_DIR" ]; then
+                @go.log FATAL "APP_MAR_FILE indicated a directory of marathon files, however, the directory $APP_MAR_DIR was not found"
+            fi
+            for MAR_FILE in $(ls -1 $APP_MAR_DIR); do
+                MAR_ID=$(cat $MAR_FILE|grep "\"id\""|sed "s/\"id\"://g"|sed -r "s/ +//g"|sed -r "s/[\",]//g")
+                submitstartsvc "RES" "$MAR_ID" "$MAR_FILE" "$MARATHON_SUBMIT"
+                if [ "$RES" != "0" ]; then
+                    @go.log WARN "$MAR_ID not started - is it already running?"
+                fi
+                echo ""
+            done
         fi
-        echo ""
     fi
 
     echo ""
