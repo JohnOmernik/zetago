@@ -144,7 +144,7 @@ for NODEID in $(seq $APP_CNT); do
 cat > $APP_MAR_DIR/ESNODE${NODEID}.json << EOL
 {
   "id": "${APP_MAR_ID}/esnode${NODEID}",
-  "cmd": "chown -R ${APP_USER}:${IUSER} /usr/share/elasticsearch && su -c /usr/share/elasticsearch/bin/elasticsearch $APP_USER",
+  "cmd": "chown -R ${APP_USER}:${IUSER} /usr/share/elasticsearch && sleep 10 && su -c /usr/share/elasticsearch/bin/elasticsearch $APP_USER",
   "cpus": ${APP_CPU},
   "mem": ${APP_MEM},
   "instances": 1,
@@ -169,7 +169,7 @@ cat > $APP_MAR_DIR/ESNODE${NODEID}.json << EOL
       ]
     },
     "volumes": [
-      { "containerPath": "/usr/share/elasticsearch/config", "hostPath": "${APP_CONF_DIR}", "mode": "RO" },
+      { "containerPath": "/usr/share/elasticsearch/config", "hostPath": "${APP_CONF_DIR}", "mode": "RW" },
       { "containerPath": "/usr/share/elasticsearch/data/", "hostPath": "${APP_DATA_DIR}/${NODE}", "mode": "RW" }
     ]
 
