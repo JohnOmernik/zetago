@@ -19,14 +19,12 @@ APP_ES_PLUGINS="royrusso/elasticsearch-HQ"
 
 
 if [ "$BUILD" == "Y" ]; then
-royrusso/elasticsearch-HQ
-plugin -install royrusso/elasticsearch-HQ
 
     if [ "$APP_ES_PLUGINS" != "" ]; then
         PINST="RUN cd /usr/share/elasticsearch/bin"
         for P in $APP_ES_PLUGINS; do
-            PINST="${PINST} && plugin -install ${P}"
-        done 
+            PINST="${PINST} && ./plugin -install ${P}"
+        done
     else
         PINST=""
     fi
