@@ -23,6 +23,7 @@ function _ldapusers() {
     echo "Cluster specfic tasks:"
     echo "./zeta users user - Add user to Zeta"
     echo "./zeta users group  - Add group to Zeta"
+    echo "./zeta users usergroups - Add user to group in Zeta"
     echo "./zeta users roleschema - Add Role Schema (OUs etc for new role) to Zeta"
     echo ""
 
