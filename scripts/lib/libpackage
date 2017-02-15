@@ -227,19 +227,15 @@ function getpackagebase() {
         @go.log WARN "Package: $APP_NAME not found in core package location or search additional location first selected, checking additional package locations"
         for LOC in $ADD_PKG_LOC; do
             if [ -d "${LOC}/${APP_NAME}" ]; then
-                echo "Package $APP_NAME found in ${LOC}"
-                read -e -p "User ${APP_NAME} Package found in ${LOC}? " -i "N" USELOC
-                if [ "$USELOC" == "Y" ]; then
-                    MYRESULT="${LOC}/${APP_NAME}"
-                    break
-                    @go.log "Using package $APP_NAME in $LOC"
-                fi
+                MYRESULT="${LOC}/${APP_NAME}"
+                break
+                @go.log WARN "Using package $APP_NAME in $LOC"
             fi
         done
         if [ "$MYRESULT" == "" ]; then
             if [ -d "${CORE_PKG_LOC}/{$APP_NAME}" ]; then
                 echo "Package $APP_NAME not found in Additional package location but it was found in the core package location, should we use the core package location?"
-                read -e -p "User Core Package Location version of $APP_NAME? " -i "Y" USECORE
+                read -e -p "Use Core Package Location version of $APP_NAME? " -i "Y" USECORE
                 if [ "$USECORE" == "Y" ]; then
                     MYRESULT="${CORE_PKG_LOC}/${APP_NAME}"
                 fi
