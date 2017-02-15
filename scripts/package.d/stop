@@ -51,8 +51,22 @@ function _packagestop() {
         @go.log INFO "Using Package stop.sh information"
         . $APP_PKG_BASE/stop.sh
     else
-        @go.log INFO "Using default stop script"
-        stopsvc "RES" "$APP_MAR_ID" "$APP_MAR_FILE" "$MARATHON_SUBMIT"
+        @go.log INFO "Using default start instance"
+        if [ "$APP_MAR_FILE" != "DIRECTORY" ]; then
+            stopsvc "RES" "$APP_MAR_ID" "$APP_MAR_FILE" "$MARATHON_SUBMIT"
+            echo ""
+        else
+            if [ ! -d "$APP_MAR_DIR" ]; then
+                @go.log FATAL "APP_MAR_FILE indicated a directory of marathon files, however, the directory $APP_MAR_DIR was not found"
+            fi
+            for MAR_FILE in $(ls -1 $APP_MAR_DIR); do
+                MY_MAR_FILE="${APP_MAR_DIR}/${MAR_FILE}"
+                MAR_ID=$(cat $MY_MAR_FILE|grep "\"id\""|sed "s/\"id\"://g"|sed -r "s/ +//g"|sed -r "s/[\",]//g") 
+                @go.log INFO "Stopping $MAR_ID"
+                stopsvc "RES" "$MAR_ID" "$MY_MAR_FILE" "$MARATHON_SUBMIT"
+                echo ""
+            done
+        fi
     fi
 
 }

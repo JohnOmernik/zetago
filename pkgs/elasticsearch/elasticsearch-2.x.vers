@@ -1,0 +1,56 @@
+#!/bin/bash
+
+APP_VER="2.x"
+
+APP_APT_REPO="http://packages.elastic.co/elasticsearch/2.x/debian"
+APP_APT_PKG="elasticsearch"
+
+APP_APT_KEY="46095ACC8548582C1A2699A9D27D666CD88E42B4"
+APP_APT_KEYSRV="pgp.mit.edu"
+
+APP_IMG_NAME="elasticsearch"
+APP_IMG_TAG="$APP_VER"
+
+APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
+REQ_APP_IMG_NAME="zetabase"
+
+
+APP_ES_PLUGINS="royrusso/elasticsearch-HQ"
+
+
+if [ "$BUILD" == "Y" ]; then
+
+    if [ "$APP_ES_PLUGINS" != "" ]; then
+        PINST="RUN cd /usr/share/elasticsearch/bin"
+        for P in $APP_ES_PLUGINS; do
+            PINST="${PINST} && ./plugin install ${P}"
+        done
+    else
+        PINST=""
+    fi
+
+
+cat > ./Dockerfile << EOF
+FROM ${ZETA_DOCKER_REG_URL}/${REQ_APP_IMG_NAME}
+
+RUN apt-key adv --keyserver ${APP_APT_KEYSRV} --recv-keys ${APP_APT_KEY} && \
+    echo "deb ${APP_APT_REPO} stable main" | tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends ${APP_APT_PKG}
+
+$PINST
+
+WORKDIR /usr/share/elasticsearch
+
+RUN set -ex && for path in data logs config config/scripts; do \
+        mkdir -p "\$path"; \
+        chown -R ${IUSER}:${IUSER} "\$path"; \
+    done
+
+ENV PATH=\$PATH:/usr/share/elasticsearch/bin
+
+CMD ["elasticsearch"]
+
+EOF
+
+fi
