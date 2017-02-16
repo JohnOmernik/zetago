@@ -13,8 +13,6 @@ sourceconf "$FS_CONF"
 sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 
-reqshared "dockerregv2 zetaca openldap"
-
 
 function _role() {
    LOCK="0"

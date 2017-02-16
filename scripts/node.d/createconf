@@ -10,9 +10,6 @@ sourceconf "$FS_CONF"
 sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 
-reqshared "dockerregv2 zetaca openldap"
-
-
 cat > $NODE_CONF << EON
 #!/bin/bash
 

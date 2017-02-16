@@ -9,9 +9,6 @@ sourceconf "$NETWORK_CONF"
 sourceconf "$FS_CONF"
 sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
-sourceconf "$NODE_CONF"
-reqshared "dockerregv2 zetaca openldap"
-
 
 cat > $ROLE_CONF << EOR
 #!/bin/bash
