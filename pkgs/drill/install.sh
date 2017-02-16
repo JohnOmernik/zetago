@@ -41,7 +41,7 @@ else
     @go.log FATAL "Failed to get Port for Drill $PSTR"
 fi
 
-nonbridgeports "APP_PORT_LIST" "${APP_WEB_PORTSTR}~${APP_USER_PORTSTR}~${APP_BIT_PORTSTR}"
+portslist "APP_PORT_LIST" "${APP_WEB_PORTSTR}~${APP_USER_PORTSTR}~${APP_BIT_PORTSTR}"
 haproxylabel "APP_HA_PROXY" "${APP_WEB_PORTSTR}~${APP_USER_PORTSTR}~${APP_BIT_PORTSTR}"
 
 echo ""

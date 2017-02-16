@@ -18,7 +18,7 @@ else
     @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
 fi
 
-nonbridgeports "APP_PORT_LIST" "${APP_PORTSTR}"
+portslist "APP_PORT_LIST" "${APP_PORTSTR}"
 haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 
 
@@ -91,7 +91,7 @@ EOL1
 
 
 
-nonbridgeports "APP_PORT_LIST" "${APP_PORTSTR}"
+portslist "APP_PORT_LIST" "${APP_PORTSTR}"
 haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
 cat > $APP_MAR_FILE << EOL
 {

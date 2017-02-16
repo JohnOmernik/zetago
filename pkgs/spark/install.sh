@@ -84,7 +84,7 @@ if [ "$CHKADD" != "" ]; then
 else
     @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
 fi
-nonbridgeports "APP_SHUF_PORT_LIST" "$APP_SHUF_PORTSTR"
+portslist "APP_SHUF_PORT_LIST" "$APP_SHUF_PORTSTR"
 haproxylabel "APP_SHUF_HA_PROXY" "${APP_SHUF_PORTSTR}"
 
 

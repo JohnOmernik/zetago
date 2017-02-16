@@ -137,7 +137,7 @@ function bridgeports() {
 
 #
 #
-# function nonbridgeports() - Return a port list for non-docker tasks or docker HOST tasks running on the cluster based on a ~ sepearated list of ports
+# function portslist() - Return a port list for non-docker tasks or docker HOST tasks running on the cluster based on a ~ sepearated list of ports
 #
 # Arguments:
 # $1 - Result variables
@@ -146,7 +146,7 @@ function bridgeports() {
 # Return
 # an array for use in the marathon ports json
 #
-nonbridgeports(){
+portslist(){
 
     local RESULT=$1
     local PSTRS=$2
