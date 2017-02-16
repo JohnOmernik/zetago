@@ -19,11 +19,22 @@ APP_ES_PLUGINS="royrusso/elasticsearch-HQ"
 
 
 if [ "$BUILD" == "Y" ]; then
+    if [ "$ZETA_DOCKER_PROXY" != "" ]; then
+        parseproxy "$ZETA_DOCKER_PROXY" "M_HOST" "M_PORT" "M_USER" "M_PASS"
+        DOCKERLINE="-Dhttp.proxyHost=$M_HOST -Dhttp.proxyPort=$M_PORT -Dhttps.proxyHost=$M_HOST -Dhttps.proxyPort=$M_PORT"
+        if [ "$M_USER" != "" ]; then
+            DOCKERLINE="$DOCKERLINE -Dhttp.proxyUser=$M_USER -Dhttp.proxyPassword=$M_PASS -Dhttps.proxyUser=$M_USER -Dhttps.proxyPassword=$M_PASS "
+        fi
+    else
+        DOCKERLINE=""
+    fi
+
+
 
     if [ "$APP_ES_PLUGINS" != "" ]; then
         PINST="RUN cd /usr/share/elasticsearch/bin"
         for P in $APP_ES_PLUGINS; do
-            PINST="${PINST} && ./plugin install ${P}"
+            PINST="${PINST} && ./plugin ${DOCKERLINE}install ${P}"
         done
     else
         PINST=""
