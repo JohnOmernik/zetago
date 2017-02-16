@@ -84,6 +84,8 @@ function _openldapperf() {
         fi
     fi
 
+
+
     echo ""
     echo "****************************************"
     echo "This attempts to enable caches and indexes to make openldap faster with Zeta"
@@ -108,7 +110,7 @@ function _openldapperf() {
         if [ -f "$LDAP_INDEX_FILE" ]; then
             @go.log WARN "Indexes already added to this install - skipping"
         else
-            addindexcache "gidNumber" "eq"
+            addindexcache "gidNumber" "eq" 
             addindexcache "uidNumber" "eq"
             addindexcache "cn" "eq"
             addindexcache "memberUid" "eq"
