@@ -12,8 +12,6 @@ sourceconf "$NETWORK_CONF"
 sourceconf "$FS_CONF"
 sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
-sourceconf "$CLUSTER_ZETACA_CONF"
-sourceconf "$CLUSTER_BASE_CONF"
 
 reqshared "dockerregv2 zetaca openldap"
 
