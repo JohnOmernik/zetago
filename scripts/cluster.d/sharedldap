@@ -84,7 +84,15 @@ function _installldap() {
     fi
 
     getpass "ldapadmin" LDAP_PASS
-
+    echo ""
+    echo "This install of Openldap allows for two options for backend. mdb or hdb."
+    echo "hdb is the older way, and may still work for you"
+    echo "mdb is the new backend and provides numerous performance benefits. It's recommeneded to use mdb unless you have good reason to use hdb"
+    echo ""
+    read -e -p "Which backend should we use? (hdb/mdb): " -i "mdb" APP_LDAP_BACKEND
+    if [ "$APP_LDAP_BACKEND" != "mdb" ] && [ "$APP_LDAP_BACKEND" != "hdb" ]; then
+        @go.log FATAL "Backend MUST be either mdb or hdb - exiting"
+    fi
 
     mkdir -p ${APP_ROOT}
     mkdir -p ${APP_ROOT}/ldap
@@ -134,7 +142,7 @@ LDAP_ADMIN_PASSWORD: $LDAP_PASS
 LDAP_READONLY_USER: true
 LDAP_READONLY_USER_USERNAME: readonly
 LDAP_READONLY_USER_PASSWORD: readonly
-
+LDAP_BACKEND: $APP_LDAP_BACKEND
 EOL1
 
 cat > ${APP_ROOT}/initconf/default.yaml.startup << EOL2
@@ -152,6 +160,8 @@ LDAP_ADMIN_PASSWORD: $LDAP_PASS
 LDAP_READONLY_USER: true
 LDAP_READONLY_USER_USERNAME: readonly
 LDAP_READONLY_USER_PASSWORD: readonly
+LDAP_BACKEND: $APP_LDAP_BACKEND
+
 EOL2
 
     sudo chmod +x $CLUSTERMOUNT/zeta/kstore/env/env_shared/openldap.sh
@@ -167,7 +177,8 @@ cat > $MARFILE << EOF
             "HOSTNAME":"openldap-shared.marathon.slave.mesos",
             "LDAP_TLS_CRT_FILENAME":"cert.pem",
             "LDAP_TLS_KEY_FILENAME":"key-no-password.pem",
-            "LDAP_TLS_CA_CRT_FILENAME":"cacert.pem"
+            "LDAP_TLS_CA_CRT_FILENAME":"cacert.pem",
+            "LDAP_BACKEND": "$APP_LDAP_BACKEND"
          },
   "instances": 1,
   "labels": {
