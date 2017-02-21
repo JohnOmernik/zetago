@@ -1,0 +1,4 @@
+#!/bin/bash
+
+DEF_APP_VERS="nginx-latest.vers"
+REC_DIR="zeta"

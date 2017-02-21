@@ -1,0 +1,16 @@
+#!/bin/bash
+
+APP_VER="latest"
+
+APP_IMG_NAME="nginx"
+
+APP_IMG_TAG="$APP_VER"
+
+APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
+
+if [ "$BUILD" == "Y" ]; then
+    @go.log WARN "This build only using the latest image of nginx":
+    sudo docker pull nginx:latest
+    sudo docker tag $APP_IMG nginx:latest
+    sudo docker push $APP_IMG
+fi
