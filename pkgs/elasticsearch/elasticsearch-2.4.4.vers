@@ -1,9 +1,9 @@
 #!/bin/bash
 
-APP_VER="2.x"
+APP_VER="2.4.4"
 
-APP_APT_REPO="http://packages.elastic.co/elasticsearch/2.x/debian"
-APP_APT_PKG="elasticsearch"
+APP_DEB_ROOT="https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/${APP_VER}/"
+APP_DEB_FILE="elasticsearch-${APP_VER}.deb"
 
 APP_APT_KEY="46095ACC8548582C1A2699A9D27D666CD88E42B4"
 APP_APT_KEYSRV="pgp.mit.edu"
@@ -14,9 +14,7 @@ APP_IMG_TAG="$APP_VER"
 APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
 REQ_APP_IMG_NAME="zetabase"
 
-
 APP_ES_PLUGINS="royrusso/elasticsearch-HQ"
-
 
 if [ "$BUILD" == "Y" ]; then
     if [ "$ZETA_DOCKER_PROXY" != "" ]; then
@@ -44,10 +42,7 @@ if [ "$BUILD" == "Y" ]; then
 cat > ./Dockerfile << EOF
 FROM ${ZETA_DOCKER_REG_URL}/${REQ_APP_IMG_NAME}
 
-RUN apt-key adv --keyserver ${APP_APT_KEYSRV} --recv-keys ${APP_APT_KEY} && \
-    echo "deb ${APP_APT_REPO} stable main" | tee -a /etc/apt/sources.list.d/elasticsearch-2.x.list && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends ${APP_APT_PKG}
+RUN apt-key adv --keyserver ${APP_APT_KEYSRV} --recv-keys ${APP_APT_KEY} && wget ${APP_DEB_ROOT}${APP_DEB_FILE} && dpkg -i $APP_DEB_FILE && rm -f ${APP_DEB_FILE}
 
 $PINST
 
