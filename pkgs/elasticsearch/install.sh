@@ -25,6 +25,36 @@ APP_TOTAL=$(( $APP_ES_MEM + 1 ))
 APP_ES_HEAP="${APP_ES_MEM}g"
 APP_MEM=$(( $APP_TOTAL * 1024 ))
 echo ""
+echo ""
+echo "####################################################################"
+echo "Swap Control"
+echo ""
+echo "ES recommends you disable swap, this is interesting, since we are trying to fit more into a cluster, disabling swap, can have issues (potentially)"
+echo "However, not disabling can lead to performance issues"
+echo ""
+echo "We recommend disabling, but monitoring closely for any issues"
+echo "This does add security capbilities to the docker container running: They are:"
+echo ""
+echo "--ulimit memlock=-1:-1"
+echo ""
+echo "and"
+echo ""
+echo "--cap-add=IPC_LOCK"
+echo""
+read -e -p "Do you wish to disable swap on your ES containers?" -i "Y" APP_DISABLE_SWAP
+if [ "$APP_DISABLE_SWAP" == "Y" ]; then
+    APP_PARAM="\"parameters\": ["$'\n'
+    APP_PARAM="${APP_PARAM}{ \"key\": \"ulimit\", \"value\": \"memlock=-1:-1\" },"$'\n'
+    APP_PARAM="${APP_PARAM}{ \"key\": \"cap-add\", \"value\": \"IPC_LOCK\" }"$'\n'
+    APP_PARAM="${APP_PARAM}],"$'\n'
+    APP_SWAP_CONF="bootstrap.mlockall: true"
+
+else
+    APP_PARAM="\"parameters\":[],"
+    APP_SWAP_CONF=""
+
+fi
+
 read -e -p "How many ES nodes will be part of this cluster? " -i "2" APP_CNT
 echo ""
 read -e -p "User to run ES nodes: " -i "zetasvc${APP_ROLE}" "APP_USER"
@@ -112,7 +142,7 @@ discovery.zen.ping.unicast.hosts: "${APP_ZEN}"
 http.port: $APP_HTTP_PORT
 transport.tcp.port: $APP_TRANSPORT_PORT
 network.publish_host: \${LIBPROCESS_IP}
-
+$APP_SWAP_CONF
 EOL5
 
 cat  > ${APP_CONF_DIR}/logging.yml << EOL2
@@ -165,6 +195,7 @@ cat > $APP_MAR_DIR/ESNODE${NODEID}.json << EOL
     "docker": {
       "image": "${APP_IMG}",
       "network": "BRIDGE",
+$APP_PARAM
       "portMappings": [
         $APP_HTTP_JSON,
         $APP_TRANSPORT_JSON
