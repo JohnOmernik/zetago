@@ -41,7 +41,7 @@ echo "and"
 echo ""
 echo "--cap-add=IPC_LOCK"
 echo""
-read -e -p "Do you wish to disable swap on your ES containers?" -i "Y" APP_DISABLE_SWAP
+read -e -p "Do you wish to disable swap on your ES containers? (Y/N): " -i "Y" APP_DISABLE_SWAP
 if [ "$APP_DISABLE_SWAP" == "Y" ]; then
     APP_PARAM="\"parameters\": ["$'\n'
     APP_PARAM="${APP_PARAM}{ \"key\": \"ulimit\", \"value\": \"memlock=-1:-1\" },"$'\n'
