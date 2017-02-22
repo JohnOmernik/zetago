@@ -87,11 +87,14 @@ cat > ${APP_CONF_DIR}/default.conf << EOL5
         zone elasticsearch_servers 64K;
    $ES_SERVERS
     }
-
+    access_log /var/log/nginx/access.log combined;
+    error_log /var/log/nginx/error.log warn;
     server {
         listen              443 ssl;
         server_name         $CN_GUESS;
         keepalive_timeout   70;
+        access_log /var/log/nginx/es_access.log combined;
+        error_log /var/log/nginx/es_error.log warn;
 
         ssl_certificate     /etc/nginx/certs/cert.pem;
         ssl_certificate_key /etc/nginx/certs/key-no-password.pem;
@@ -111,7 +114,6 @@ cat > ${APP_CONF_DIR}/default.conf << EOL5
     location = /50x.html {
         root /usr/share/nginx/html;
     }
-    access_log /var/log/nginx/es_access.log combined;
 
 
     }
