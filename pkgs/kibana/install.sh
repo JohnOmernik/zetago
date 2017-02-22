@@ -97,11 +97,11 @@ server.ssl.key: /opt/kibana/certs/key-no-password.pem
 
 # If you need to provide a CA certificate for your Elasticsearch instance, put
 # the path of the pem file here.
-# elasticsearch.ssl.ca: /path/to/your/CA.pem
+elasticsearch.ssl.ca: /opt/kibana/certs/cacert.pem
 
 # Set to false to have a complete disregard for the validity of the SSL
 # certificate.
-# elasticsearch.ssl.verify: true
+elasticsearch.ssl.verify: true
 
 # Time in milliseconds to wait for elasticsearch to respond to pings, defaults to
 # request_timeout setting
