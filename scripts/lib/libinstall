@@ -23,7 +23,7 @@ if [ "$APP_DIR" == "" ]; then
     read -e -p "Which install location do you wish to use for $APP_NAME? " -i "$REC_DIR" APP_DIR
 fi
 if [ ! -d "$CLUSTERMOUNT/$APP_DIR" ]; then
-    @go.log FATAL "The install directory selected for $APP_NAME does not exist at $CLUSTERMOUNT/"
+    @go.log FATAL "The install directory selected for $APP_NAME does not exist at $CLUSTERMOUNT/$APP_DIR"
 fi
 
 if [ ! -d "$CLUSTERMOUNT/$APP_DIR/$APP_ROLE" ]; then
