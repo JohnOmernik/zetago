@@ -72,11 +72,18 @@ function _packagestart() {
                 if [ "$RES" != "0" ]; then
                     @go.log WARN "$MAR_ID not started - is it already running?"
                 fi
+
                 echo ""
             done
         fi
     fi
-
+    if [ "$APP_API_URL" != "" ]; then
+        echo ""
+        echo "Application API URL:"
+        echo ""
+        echo "$APP_API_URL"
+        echo ""
+    fi
     echo ""
     echo "If your package added EDGE ports now is the time to reload the firewall to expose those ports:"
     echo ""

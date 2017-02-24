@@ -72,8 +72,9 @@ APP_CERT_REQ="\${APP_CERT_LOC}/request.csr"
 APP_CERT_KEY="\${APP_CERT_LOC}/key-no-password.pem"
 APP_CERT_SRV="\${APP_CERT_LOC}/srv_cert.pem"
 APP_CERT="\${APP_CERT_LOC}/cert.pem"
-APP_CERT_SUB="/C=\${CERT_C}/ST=\${CERT_ST}/L=\${CERT_L}/O=\${CERT_O}/OU=\${CERT_OU}/CN=\${CERT_CN}"
 APP_CERT_CA="\${APP_CERT_LOC}/cacert.pem"
+APP_CERT_SUB="/C=\${CERT_C}/ST=\${CERT_ST}/L=\${CERT_L}/O=\${CERT_O}/OU=\${CERT_OU}/CN=\${CERT_CN}"
+#APP_CERT_SUB="/C=\${CERT_C}/ST=\${CERT_ST}/L=\${CERT_L}/O=\${CERT_O}/OU=\${CERT_OU}/CN=\${CERT_CN}/subjectAltName=DNS.1=\${CERT_CN}"
 
 openssl req -nodes -newkey rsa:2048 -keyout \${APP_CERT_KEY} -out \${APP_CERT_REQ} -subj "\$APP_CERT_SUB"
 
