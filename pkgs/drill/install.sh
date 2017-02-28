@@ -224,6 +224,9 @@ else
         echo "Need to create SPILL LOCATION: \${SPILLLOC}"
         mkdir -p $CLUSTERMOUNT\${SPILLLOC}
     fi
+    chown -R $FSUSER:zeta${APP_ROLE}data $CLUSTERMOUNT\${SPILLLOC}
+    chmod -R 775 $CLUSTERMOUNT\${SPILLLOC}
+
 fi
 EOF
 
