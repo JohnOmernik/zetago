@@ -53,7 +53,7 @@ done
 
 FS_HADOOP_HOME="/opt/mapr/hadoop/hadoop-2.7.0"
 FS_HOME="/opt/mapr"
-FS_PROVIDER_LOCAL="/var/local"
+FS_PROVIDER_LOCAL="/var/mapr/local"
 FS_HDFS_PREFIX="maprfs:///"
 FS_PROVIDER_FUSE_SVC="/etc/init.d/mapr-posix-client-basic"
 
