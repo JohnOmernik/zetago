@@ -13,7 +13,7 @@ sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
 sourceconf "$NODE_CONF"
 
-reqshared "dockerregv2 zetaca openldap"
+#reqshared "dockerregv2 zetaca openldap"
 
 
 function _noderun() {

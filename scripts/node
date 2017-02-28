@@ -44,6 +44,7 @@ function _node() {
     echo ""
     echo "./zeta node                          # This command"
     echo "./zeta node status                   # Status of Nodes"
+    echo "./zeta node run                      # Run a command on all nodes "
     echo ""
     echo "./zeta node -l                # Lock or unlock node.conf file"
     echo ""
