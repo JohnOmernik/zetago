@@ -12,13 +12,10 @@ if [ "$FW_FIRST_RUN" != "1" ]; then
     @go.log FATAL "Before Installing or Bootstrapping DCOS, it's required to run the network firewall deploy via ./zeta network deployfw"
 fi
 
-
 ssh $BOOTSTRAP_NODE "mkdir -p $BOOTSTRAP_LOC/genconf"
-
 ./zeta dcos createipdetect "$IP_DETECT" "1"
 
 CHKIP=$(ssh $BOOTSTRAP_NODE "cd $BOOTSTRAP_LOC && cd genconf && ls ip-detect" 2> /dev/null)
-
 if [ "$CHKIP" == "" ]; then
     scp ./conf/ip-detect $BOOTSTRAP_NODE:$BOOTSTRAP_LOC/genconf/
 else

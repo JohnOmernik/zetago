@@ -132,11 +132,11 @@ function addtoconfvar(){
 
     VARLINE=$(cat $CONF_FILE|grep "$CONF_VAR")
     if [ "$VARLINE" == "" ]; then
-        go.log WARN "Variables $CONF_VAR not found in $CONF_FILE - No changes made"
+        @go.log WARN "Variables $CONF_VAR not found in $CONF_FILE - No changes made"
     else
         CHKVAL=$(echo "$VARLINE"|grep "$NEWVAL")
         if [ "$CHKVAL" != "" ]; then
-            go.log WARN "Value $NEWVAL already exists in $CONF_VAR in $CONF_FILE - No Changes Made"
+            @go.log WARN "Value $NEWVAL already exists in $CONF_VAR in $CONF_FILE - No Changes Made"
         else
             CHKEMP=$(echo "$VARLINE"|grep '""')
             if [ "$CHKEMP" == "" ]; then
