@@ -141,7 +141,7 @@ function _stopmapr() {
     if [ "$NODE_HOSTS" != "" ]; then
         for NH in $NODE_HOSTS; do
             CLDB_TEST=$(echo "$CLDBS"|grep "$NH")
-            INODE_TEST=$(echo "INODES"|grep "$NH")
+            INODE_TEST=$(echo "$INODES"|grep "$NH")
             ZK_TEST=$(echo "$ZK_STRING"|grep "$NH")
             if [ "$INODE_TEST" != "" ]; then
                 @go.log WARN "Found $NH in $INODES"
