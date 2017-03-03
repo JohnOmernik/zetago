@@ -122,17 +122,6 @@ function _startmapr() {
     fi
     echo "=================================================="
 
-    if [ "$UNATTEND" == "1" ]; then
-        @go.log WARN "Unattended Selected - Will not prompt"
-        OPER="Y"
-    else
-        read -e -p "Are you SURE you wish to run start operations on your MapR Install? (Y/N): " -i "N" OPER
-    fi
-    if [ "$OPER" != "Y" ]; then
-        _displayhelp
-        @go.log FATAL "Exiting out of the start operation due to general cowardice"
-    fi
-
     FUSE_HOSTS=""
     CLDB_HOSTS=""
     STD_HOSTS=""
@@ -238,6 +227,19 @@ function _startmapr() {
     echo ""
     echo "ZK_HOSTS: $ZK_HOSTS"
     echo ""
+
+    if [ "$UNATTEND" == "1" ]; then
+        @go.log WARN "Unattended Selected - Will not prompt"
+        OPER="Y"
+    else
+        read -e -p "Are you SURE you wish to run start operations on your MapR Install? (Y/N): " -i "N" OPER
+    fi
+    if [ "$OPER" != "Y" ]; then
+        _displayhelp
+        @go.log FATAL "Exiting out of the start operation due to general cowardice"
+    fi
+
+
 
     DCHK=$(./zeta cluster marathon getinfo "shared/fsdocker" state)
     C=$(echo "$DCHK"|grep "TASK_RUNNING")

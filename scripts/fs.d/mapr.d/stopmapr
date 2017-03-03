@@ -127,17 +127,6 @@ function _stopmapr() {
     fi
     echo "=================================================="
 
-    if [ "$UNATTEND" == "1" ]; then
-        @go.log WARN "Unattended Selected - Will not prompt"
-        OPER="Y"
-    else
-        read -e -p "Are you SURE you wish to run stop operations on your MapR Install? This could take down your cluster. (Y/N): " -i "N" OPER
-    fi
-    if [ "$OPER" != "Y" ]; then
-        _displayhelp
-        @go.log FATAL "Exiting out of the Install due to general cowardice"
-    fi
-
     FUSE_HOSTS=""
     CLDB_HOSTS=""
     STD_HOSTS=""
@@ -243,6 +232,19 @@ function _stopmapr() {
     echo ""
     echo "ZK_HOSTS: $ZK_HOSTS"
     echo ""
+    echo "STOP FS Docker: $FSDOCKER"
+    echo ""
+
+    if [ "$UNATTEND" == "1" ]; then
+        @go.log WARN "Unattended Selected - Will not prompt"
+        OPER="Y"
+    else
+        read -e -p "Are you SURE you wish to run stop operations on your MapR Install? This could take down your cluster. (Y/N): " -i "N" OPER
+    fi
+    if [ "$OPER" != "Y" ]; then
+        _displayhelp
+        @go.log FATAL "Exiting out of the Install due to general cowardice"
+    fi
 
     if [ "$FUSE_NODES" == "1" ]; then
         @go.log WARN "Stopping all FUSE clients in $FUSE_HOSTS - Note if there are active containers using FUSE it will fail and cause unpredictable results"
