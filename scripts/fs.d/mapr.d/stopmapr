@@ -251,7 +251,7 @@ function _stopmapr() {
         done
         echo ""
         if [ "$WAIT" == "1" ]; then
-            if [ "$CLDB_NODES" == "1"] || [ "$STD_NODES" == "1" ] || [ "$ZK_NODES" == "1" ]; then
+            if [ "$CLDB_NODES" == "1" ] || [ "$STD_NODES" == "1" ] || [ "$ZK_NODES" == "1" ]; then
                 @go.log INFO "Waiting 15 seconds"
                 sleep 15
             fi
@@ -305,7 +305,7 @@ function _stopmapr() {
             sleep 5
         fi
         echo ""
-        @go.log WARN "Stopping Filesystem Docker per arguments"
+        @go.log WARN "Stopping Filesysytem Docker per arguments"
         MAR_ID="shared/fsdocker"
         ./zeta cluster marathon scale $MAR_ID 0 $WAIT
     fi

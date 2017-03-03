@@ -239,14 +239,17 @@ function _startmapr() {
     echo "ZK_HOSTS: $ZK_HOSTS"
     echo ""
 
-    @go.log WARN "Ensuring fsdocker is running"
-    MAR_ID="shared/fsdocker"
-    ./zeta cluster marathon scale $MAR_ID 1 $WAIT
-    if [ "$WAIT" == "1" ]; then
-        if [ "$ZK_NODES" == "1"] || [ "$CLDB_NODES" == "1" ] || [ "$STD_NODES" == "1" ] || [ "$FUSE_NODES" == "1"]; then
-            echo ""
-            @go.log INFO "Waiting 5 seconds"
-            sleep 5
+    DCHK=$(./zeta cluster marathon getinfo "shared/fsdocker" state)
+    if [ "$DCHK" != "TASK_RUNNING" ]; then
+       @go.log WARN "Didn't find FS Docker in TASK_RUNNING state, going to scale to 1"
+       MAR_ID="shared/fsdocker"
+        ./zeta cluster marathon scale $MAR_ID 1 $WAIT
+        if [ "$WAIT" == "1" ]; then
+            if [ "$ZK_NODES" == "1" ] || [ "$CLDB_NODES" == "1" ] || [ "$STD_NODES" == "1" ] || [ "$FUSE_NODES" == "1" ]; then
+                echo ""
+                @go.log INFO "Waiting 15 seconds"
+                sleep 15
+            fi
         fi
     fi
     echo ""
@@ -258,7 +261,7 @@ function _startmapr() {
             ./zeta cluster marathon scale $MAR_ID 1 $WAIT
         done
         if [ "$WAIT" == "1" ]; then
-            if [ "$CLDB_NODES" == "1" ] || [ "$STD_NODES" == "1" ] || [ "$FUSE_NODES" == "1"]; then
+            if [ "$CLDB_NODES" == "1" ] || [ "$STD_NODES" == "1" ] || [ "$FUSE_NODES" == "1" ]; then
                 @go.log INFO "Waiting 30 seconds"
                 sleep 30
             fi
@@ -274,7 +277,7 @@ function _startmapr() {
         done
         echo ""
         if [ "$WAIT" == "1" ]; then
-            if [ "$STD_NODES" == "1" ] || [ "$FUSE_NODES" == "1"]; then
+            if [ "$STD_NODES" == "1" ] || [ "$FUSE_NODES" == "1" ]; then
                 @go.log INFO "Waiting 60 seconds"
                 sleep 60
             fi
@@ -291,7 +294,7 @@ function _startmapr() {
         done
         echo ""
         if [ "$WAIT" == "1" ]; then
-            if [ "$FUSE_NODES" == "1"]; then
+            if [ "$FUSE_NODES" == "1" ]; then
                 @go.log INFO "Waiting 15 seconds"
                 sleep 15
             fi
