@@ -26,9 +26,6 @@ if [ "$MEUSER" != "${IUSER}" ]; then
     @go.log FATAL "This script needs to be un as ${IUSER}. Current User: $MEUSER"
 fi
 
-if [ "$MAPR_SECURE" != "0" ]; then
-    @go.log FATAL "MAPR_SECURE is potentially already enabled, will not run this process"
-fi
 
 
 function _enablesec() {
@@ -48,19 +45,67 @@ function _enablesec() {
             ;;
         esac
     done
+    if [ "$MAPR_SECURE" != "0" ]; then
+        @go.log FATAL "MAPR_SECURE is potentially already enabled, will not run this process"
+    fi
 
     @go.log WARN "MapR Security is Experimental and is not recommended in Zeta yet. If you are testing, go ahead and enable at your own risk, but some packages may fail."
     if [ "$UNATTEND" == "1" ]; then
         @go.log WARN "Unattended Selected, assuming you know what you are doing"
         ENABLESEC="Y"
     else
+        @go.log WARN "Ensure you have no services using FUSE mounts and are ready to have your cluster stopped (i.e. unreachedable)"
         read -e -p "Are you SURE you wish to enable security in MapR Filesystem. This likely cannont be undone. (Y/N): " -i "N" ENABLESEC
     fi
     if [ "$ENABLESEC" != "Y" ]; then
         @go.log FATAL "Exiting out of the Install due to general cowardice"
     fi
 
-    echo "This is where we would enable Security"
+    FIRST_CLDB=$(echo $CLDBS|cut -d"," -f1|cut -d":" -f1)
+    #ZKS is the MapR Configure Script
+    #CLDBS is the MapR Configure format
+
+
+    @go.log WARN "Stopping MapR Services Now"
+    ./zeta fs mapr stopmapr -z -c -s -f -d
+
+    VOL1="-v=/opt/maprdocker/conf:/opt/mapr/conf:rw"
+    VOL2="-v=/opt/maprdocker/logs:/opt/mapr/logs:rw"
+    VOL3="-v=/opt/maprdocker/roles:/opt/mapr/roles:rw"
+    VOL4="-v=/etc/localtime:/etc/localtime:ro"
+
+    IMG="${FS_DOCKER_REG_URL}/maprdocker:${MAPR_DOCKER_TAG}"
+    PRIV="--priveleged --ipc=host"
+    NET="--net=host"
+    ENV1="-e CLDBS='$CLDBS'"
+    ENV2="-e ZKS='$ZKS'"
+    ENV3="-e CLUSTERNAME='$CLUSTERNAME'"
+    ENV4="-e FSUSER='$FSUSER'"
+    ENV5="-e MAPR_CONF_OPTS='-secure -genkeys'"
+    CMD="/opt/mapr/server/dockerreconf.sh"
+
+    GEN_KEYS_CMD="sudo docker run -t $ENV1 $ENV2 $ENV3 $ENV4 $ENV5 $VOL1 $VOL2 $VOL3 $VOL4 $NET $PRIV $IMG $CMD"
+
+    ./zeta node run -n="$FIRST_CLDB" "$GEN_KEYS_CMD"
+    SECURE_CONF="./conf/mapr_secure"
+    mkdir -p $SECURE_CONF
+    R_LOC="/home/$IUSER/secmapr"
+    R_SRC="/opt/maprdocker/conf"
+    ./zeta node run -n="$FIRST_CLDB" "mkdir -p $R_LOC && sudo cp ${R_SRC}/cldb.key ${R_LOC}/ && sudo cp ${R_SRC}/maprserverticket ${R_LOC}/ && sudo cp ${R_SRC}/ssl_keystore ${R_LOC}/ && sudo cp ${R_SRC}/ssl_truststore ${R_LOC}/"
+    ./zeta node run -n="$FIRST_CLDB" "sudo chown -R ${IUSER}:${IUSER} $R_LOC && tar zcf /home/$IUSER/mapr_secure.tgz $R_LOC && rm -rf $R_LOC"
+    scp $IUSER@$FIRST_CLDB:/home/$IUSER/mapr_secure.tgz ./conf
+    cd ./conf
+    tar zxf mapr_secure.tgz
+#    rm mapr_secure.tgz
+    sudo chown $IUSER:$IUSER ./secmapr
+    sudo chmod 770 ./secmapr
+    # Next copy maprserverticket ssl_keystore ssl_truststore to all nodes
+    # Next copy cldb.key to any node running CLDB or Zookeeper
+    # Make all 4 files owned by $FSUSER:$FSUSER
+    # chmod 600 maprserverticket ssl_keystore
+    # chmod 644 ssl_truststore
+    # Docker Reconf all nodes with --secure
+    # Update MapR Zookeeper stufd manually...
 
 
 }
