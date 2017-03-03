@@ -101,10 +101,10 @@ function _stopmapr() {
        @go.log FATAL "None of the following specified (-c, -s, -f, -z) - Nothing to do!"
     fi
 
-    if [ "$NODE_HOST" == "" ]; then
+    if [ "$NODE_HOSTS" == "" ]; then
         NODE_STR="All Nodes in fs_mapr.conf"
     else
-        NODE_STR="$NODE_HOST"
+        NODE_STR="$NODE_HOSTS"
     fi
     echo "=================================================="
     @go.log WARN "Stopping the Following MapR Services on $NODE_STR"
@@ -144,6 +144,7 @@ function _stopmapr() {
             INODE_TEST=$(echo "INODES"|grep "$NH")
             ZK_TEST=$(echo "$ZK_STRING"|grep "$NH")
             if [ "$INODE_TEST" != "" ]; then
+                @go.log WARN "Found $NH in $INODES"
                 if [ "$FUSE_NODES" == "1" ]; then
                     if [ "$FUSE_HOSTS" == "" ]; then
                         FUSE_HOSTS="$NH"
