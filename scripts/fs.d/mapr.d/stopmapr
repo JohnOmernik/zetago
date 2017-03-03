@@ -136,7 +136,7 @@ function _stopmapr() {
         if [ "$CLDB_HOSTS" == "" ]; then
             STD_TEST=$(echo "$INODES"| grep "$NODE_HOST")
             if [ "$STD_TEST" != "" ]; then
-                STD_HOSTS="$STD_HOSTS"
+                STD_HOSTS="$NODE_HOST"
             fi
         fi
         ZK_TEST=$(echo "$ZK_STRING"|grep "$NODE_HOST")
