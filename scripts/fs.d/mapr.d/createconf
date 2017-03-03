@@ -50,7 +50,7 @@ for N in $AGENT_NODES; do
     H=$(ssh $N "hostname -f")
     AGENT_HOSTS="${AGENT_HOSTS}$N - $H"$'\n'
 done
-
+MAPR_SECURE="0"
 FS_HADOOP_HOME="/opt/mapr/hadoop/hadoop-2.7.0"
 FS_HOME="/opt/mapr"
 FS_PROVIDER_LOCAL="/var/mapr/local"
@@ -232,6 +232,7 @@ export ZK_CLIENT_PORT="$ZK_CLIENT_PORT"
 export ZK_MASTER_ELECTION_PORT="$ZK_MASTER_ELECTION_PORT"
 export ZK_QUORUM_PORT="$ZK_QUORUM_PORT"
 
+export MAPR_SECURE="$MAPR_SECURE"
 export NFS_NODES="$NFS_NODES"
 export MAPR_CONF_OPTS=""
 export SUBNETS="$SUBNETS"
