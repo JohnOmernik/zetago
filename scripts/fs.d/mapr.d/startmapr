@@ -308,4 +308,4 @@ function _startmapr() {
     @go.log INFO "Requested MapR Start Completed"
 }
 
-_stopmapr "$@"
+_startmapr "$@"
