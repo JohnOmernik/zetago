@@ -98,7 +98,7 @@ function _stopmapr() {
 
     if [ "$FUSE_NODES" == "0" ] && [ "$CLDB_NODES" == "0" ] && [ "$STD_NODES" == "0" ] && [ "$ZK_NODES" == "0" ]; then
        _displayhelp
-       @go.log FATAL "No NODE_HOST specified with -n and none of the follow specified (-c, -s, -f, -z) - Nothing to do!"
+       @go.log FATAL "None of the following specified (-c, -s, -f, -z) - Nothing to do!"
     fi
 
     if [ "$NODE_HOST" == "" ]; then
@@ -144,30 +144,38 @@ function _stopmapr() {
             INODE_TEST=$(echo "INODES"|grep "$NH")
             ZK_TEST=$(echo "$ZK_STRING"|grep "$NH")
             if [ "$INODE_TEST" != "" ]; then
-                if [ "$FUSE_HOSTS" == "" ]; then
-                    FUSE_HOSTS="$NH"
-                else
-                    FUSE_HOSTS="${FUSE_HOSTS} $NH"
+                if [ "$FUSE_NODES" == "1" ]; then
+                    if [ "$FUSE_HOSTS" == "" ]; then
+                        FUSE_HOSTS="$NH"
+                    else
+                        FUSE_HOSTS="${FUSE_HOSTS} $NH"
+                    fi
                 fi
                 if [ "$CLDB_TEST" != "" ]; then
-                     if [ "$CLDB_HOSTS" == "" ]; then
-                        CLDB_HOSTS="$NH"
-                    else
-                        CLDB_HOSTS="${CLDB_HOSTS} $NH"
+                    if [ "$CLDB_NODES" == "1" ]; then
+                        if [ "$CLDB_HOSTS" == "" ]; then
+                            CLDB_HOSTS="$NH"
+                        else
+                            CLDB_HOSTS="${CLDB_HOSTS} $NH"
+                        fi
                     fi
                 else
-                    if [ "$STD_HOSTS" == "" ]; then
-                        STD_HOSTS="$NH"
-                    else
-                        STD_HOSTS="${STD_HOSTS} $NH"
+                    if [ "$STD_NODES" == "1" ]; then
+                        if [ "$STD_HOSTS" == "" ]; then
+                            STD_HOSTS="$NH"
+                        else
+                            STD_HOSTS="${STD_HOSTS} $NH"
+                        fi
                     fi
                 fi
             fi
             if [ "$ZK_TEST" != "" ]; then
-                if [ "$ZK_HOSTS" == "" ]; then
-                    ZK_HOSTS="$NH"
-                else
-                    ZK_HOSTS="${ZK_HOSTS} $NH"
+                if [ "$ZK_NODES" == "1" ]; then
+                    if [ "$ZK_HOSTS" == "" ]; then
+                        ZK_HOSTS="$NH"
+                    else
+                        ZK_HOSTS="${ZK_HOSTS} $NH"
+                    fi
                 fi
             fi
         done
