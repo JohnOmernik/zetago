@@ -240,7 +240,9 @@ function _startmapr() {
     echo ""
 
     DCHK=$(./zeta cluster marathon getinfo "shared/fsdocker" state)
-    if [ "$DCHK" != "TASK_RUNNING" ]; then
+    C=$(echo "$DCHK"|grep "TASK_RUNNING")
+
+    if [ "$C" == "" ]; then
        @go.log WARN "Didn't find FS Docker in TASK_RUNNING state, going to scale to 1"
        MAR_ID="shared/fsdocker"
         ./zeta cluster marathon scale $MAR_ID 1 $WAIT
