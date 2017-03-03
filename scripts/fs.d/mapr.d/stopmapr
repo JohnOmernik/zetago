@@ -244,41 +244,60 @@ function _stopmapr() {
     echo "ZK_HOSTS: $ZK_HOSTS"
     echo ""
 
-    @go.log WARN "Stopping all FUSE clients in $FUSE_HOSTS - Note if there are active containers using FUSE it will fail and cause unpredictable results"
-    for HOST in $FUSE_HOSTS; do
-        ./zeta node run -n="$HOST" "sudo ${FS_PROVIDER_FUSE_SVC} stop"
-    done
-    echo ""
-    @go.log WARN "Now we will attempt to stop CLDBs in $CLDB_HOSTS - Understanding that CLDBs (all of them) going down will cause a cluster stop"
-    for HOST in $CLDB_HOSTS; do
-        MAR_ID="shared/mapr/cldbs/cldb${HOST}"
-        @go.log WARN "Stopping CLDB: $HOST"
-        ./zeta cluster marathon scale $MAR_ID 0 $WAIT
-    done
-    echo ""
-    if [ "$WAIT" == "1" ]; then
-        @go.log INFO "Waiting 30 seconds"
-        sleep 30
+    if [ "$FUSE_NODES" == "1" ]; then
+        @go.log WARN "Stopping all FUSE clients in $FUSE_HOSTS - Note if there are active containers using FUSE it will fail and cause unpredictable results"
+        for HOST in $FUSE_HOSTS; do
+            ./zeta node run -n="$HOST" "sudo ${FS_PROVIDER_FUSE_SVC} stop"
+        done
+        echo ""
+        if [ "$WAIT" == "1" ]; then
+            if [ "$CLDB_NODES" == "1"] || [ "$STD_NODES" == "1" ] || [ "$ZK_NODES" == "1" ]; then
+                @go.log INFO "Waiting 15 seconds"
+                sleep 15
+            fi
+        fi
     fi
     echo ""
-    @go.log WARN "Now we will stop all standard nodes in $STD_HOSTS"
-    for HOST in $STD_HOSTS; do
-        MAR_ID="shared/mapr/stdnodes/std${HOST}"
-        @go.log WARN "Stopping Standard Node: $HOST"
-        ./zeta cluster marathon scale $MAR_ID 0 $WAIT
-    done
-    echo ""
-    if [ "$WAIT" == "1" ]; then
-        @go.log INFO "Waiting 30 seconds"
-        sleep 30
+    if [ "$CLDB_NODES" == "1" ]; then
+        @go.log WARN "Now we will attempt to stop CLDBs in $CLDB_HOSTS - Understanding that CLDBs (all of them) going down will cause a cluster stop"
+        for HOST in $CLDB_HOSTS; do
+            MAR_ID="shared/mapr/cldbs/cldb${HOST}"
+            @go.log WARN "Stopping CLDB: $HOST"
+            ./zeta cluster marathon scale $MAR_ID 0 $WAIT
+        done
+        echo ""
+        if [ "$WAIT" == "1" ]; then
+            if [ "$STD_NODES" == "1" ] || [ "$ZK_NODES" == "1" ]; then
+                @go.log INFO "Waiting 30 seconds"
+                sleep 30
+            fi
+        fi
     fi
     echo ""
-    @go.log WARN "Now we will stop all ZK nodes in $ZK_HOSTS"
-    for HOST in $ZK_HOSTS; do
-        MAR_ID="shared/mapr/zks/zk${HOST}"
-        @go.log WARN "Stopping ZK Node: $HOST"
-        ./zeta cluster marathon scale $MAR_ID 0 $WAIT
-    done
+    if [ "$STD_NODES" == "1" ]; then
+        @go.log WARN "Now we will stop all standard nodes in $STD_HOSTS"
+        for HOST in $STD_HOSTS; do
+            MAR_ID="shared/mapr/stdnodes/std${HOST}"
+            @go.log WARN "Stopping Standard Node: $HOST"
+            ./zeta cluster marathon scale $MAR_ID 0 $WAIT
+        done
+        echo ""
+        if [ "$WAIT" == "1" ]; then
+            if [ "$ZK_NODES" == "1" ]; then
+                @go.log INFO "Waiting 30 seconds"
+                sleep 30
+            fi
+        fi
+    fi
+    echo ""
+    if [ "$ZK_NODES" == "1" ]; then
+        @go.log WARN "Now we will stop all ZK nodes in $ZK_HOSTS"
+        for HOST in $ZK_HOSTS; do
+            MAR_ID="shared/mapr/zks/zk${HOST}"
+            @go.log WARN "Stopping ZK Node: $HOST"
+            ./zeta cluster marathon scale $MAR_ID 0 $WAIT
+        done
+    fi
     if [ "$FSDOCKER" == "1" ]; then
         echo ""
         if [ "$WAIT" == "1" ]; then
@@ -290,6 +309,7 @@ function _stopmapr() {
         MAR_ID="shared/fsdocker"
         ./zeta cluster marathon scale $MAR_ID 0 $WAIT
     fi
+
     @go.log INFO "Requested MapR Stop Completed"
 }
 

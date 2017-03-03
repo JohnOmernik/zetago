@@ -243,52 +243,68 @@ function _startmapr() {
     MAR_ID="shared/fsdocker"
     ./zeta cluster marathon scale $MAR_ID 1 $WAIT
     if [ "$WAIT" == "1" ]; then
+        if [ "$ZK_NODES" == "1"] || [ "$CLDB_NODES" == "1" ] || [ "$STD_NODES" == "1" ] || [ "$FUSE_NODES" == "1"]; then
+            echo ""
+            @go.log INFO "Waiting 5 seconds"
+            sleep 5
+        fi
+    fi
+    echo ""
+    if [ "$ZK_NODES" == "1" ]; then
+        @go.log WARN "Now we will start all ZK nodes in $ZK_HOSTS"
+        for HOST in $ZK_HOSTS; do
+            MAR_ID="shared/mapr/zks/zk${HOST}"
+            @go.log WARN "Starting ZK Node: $HOST"
+            ./zeta cluster marathon scale $MAR_ID 1 $WAIT
+        done
+        if [ "$WAIT" == "1" ]; then
+            if [ "$CLDB_NODES" == "1" ] || [ "$STD_NODES" == "1" ] || [ "$FUSE_NODES" == "1"]; then
+                @go.log INFO "Waiting 30 seconds"
+                sleep 30
+            fi
+        fi
+    fi
+    echo ""
+    if [ "$CLDB_NODES" == "1" ]; then
+        @go.log WARN "Now we will attempt to start CLDBs in $CLDB_HOSTS"
+        for HOST in $CLDB_HOSTS; do
+            MAR_ID="shared/mapr/cldbs/cldb${HOST}"
+            @go.log WARN "Starting CLDB: $HOST"
+            ./zeta cluster marathon scale $MAR_ID 1 $WAIT
+        done
         echo ""
-        @go.log INFO "Waiting 5 seconds"
-        sleep 5
-    fi
-    echo ""
-    @go.log WARN "Now we will start all ZK nodes in $ZK_HOSTS"
-    for HOST in $ZK_HOSTS; do
-        MAR_ID="shared/mapr/zks/zk${HOST}"
-        @go.log WARN "Starting ZK Node: $HOST"
-        ./zeta cluster marathon scale $MAR_ID 1 $WAIT
-    done
-    if [ "$WAIT" == "1" ]; then
-        @go.log INFO "Waiting 30 seconds"
-        sleep 30
-    fi
-    echo ""
-    @go.log WARN "Now we will attempt to start CLDBs in $CLDB_HOSTS"
-    for HOST in $CLDB_HOSTS; do
-        MAR_ID="shared/mapr/cldbs/cldb${HOST}"
-        @go.log WARN "Starting CLDB: $HOST"
-        ./zeta cluster marathon scale $MAR_ID 1 $WAIT
-    done
-    echo ""
-    if [ "$WAIT" == "1" ]; then
-        @go.log INFO "Waiting 60 seconds"
-        sleep 60
-    fi
-    echo ""
-    @go.log WARN "Now we will start all standard nodes in $STD_HOSTS"
-    for HOST in $STD_HOSTS; do
-        MAR_ID="shared/mapr/stdnodes/std${HOST}"
-        @go.log WARN "Starting Standard Node: $HOST"
-        ./zeta cluster marathon scale $MAR_ID 1 $WAIT
-    done
-    echo ""
-    if [ "$WAIT" == "1" ]; then
-        @go.log INFO "Waiting 15 seconds"
-        sleep 15
-    fi
-    echo ""
+        if [ "$WAIT" == "1" ]; then
+            if [ "$STD_NODES" == "1" ] || [ "$FUSE_NODES" == "1"]; then
+                @go.log INFO "Waiting 60 seconds"
+                sleep 60
+            fi
+        fi
 
-    @go.log WARN "Starting all FUSE clients in $FUSE_HOSTS"
-    for HOST in $FUSE_HOSTS; do
-        ./zeta node run -n="$HOST" "sudo ${FS_PROVIDER_FUSE_SVC} start"
-    done
+    fi
     echo ""
+    if [ "$STD_NODES" == "1" ]; then
+        @go.log WARN "Now we will start all standard nodes in $STD_HOSTS"
+        for HOST in $STD_HOSTS; do
+            MAR_ID="shared/mapr/stdnodes/std${HOST}"
+            @go.log WARN "Starting Standard Node: $HOST"
+            ./zeta cluster marathon scale $MAR_ID 1 $WAIT
+        done
+        echo ""
+        if [ "$WAIT" == "1" ]; then
+            if [ "$FUSE_NODES" == "1"]; then
+                @go.log INFO "Waiting 15 seconds"
+                sleep 15
+            fi
+        fi
+    fi
+    echo ""
+    if [ "$FUSE_NODES" == "1" ]; then
+        @go.log WARN "Starting all FUSE clients in $FUSE_HOSTS"
+        for HOST in $FUSE_HOSTS; do
+            ./zeta node run -n="$HOST" "sudo ${FS_PROVIDER_FUSE_SVC} start"
+        done
+        echo ""
+    fi
     @go.log INFO "Requested MapR Start Completed"
 }
 
