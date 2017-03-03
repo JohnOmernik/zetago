@@ -1,0 +1,68 @@
+#!/bin/bash
+#
+# fs mapr enablesec - Enabled Cluster Security features in MapR Filesystem
+#
+# Will only run if MAPR_SECURE is set to 0 which is the default
+#
+# Arguments:
+# -u - Unattended
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+. ./vers/mapr/$MAPR_VERS
+
+MYDIR=$(pwd)
+
+MEUSER=$(whoami)
+
+if [ "$MEUSER" != "${IUSER}" ]; then
+    @go.log FATAL "This script needs to be un as ${IUSER}. Current User: $MEUSER"
+fi
+
+if [ "$MAPR_SECURE" != "0" ]; then
+    @go.log FATAL "MAPR_SECURE is potentially already enabled, will not run this process"
+fi
+
+
+function _enablesec() {
+
+
+    UNATTEND="0"
+    NODE_HOST=""
+
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+    @go.log WARN "MapR Security is Experimental and is not recommended in Zeta yet. If you are testing, go ahead and enable at your own risk, but some packages may fail."
+    if [ "$UNATTEND" == "1" ]; then
+        @go.log WARN "Unattended Selected, assuming you know what you are doing"
+        ENABLESEC="Y"
+    else
+        read -e -p "Are you SURE you wish to enable security in MapR Filesystem. This likely cannont be undone. (Y/N): " -i "N" ENABLESEC
+    fi
+    if [ "$ENABLESEC" != "Y" ]; then
+        @go.log FATAL "Exiting out of the Install due to general cowardice"
+    fi
+
+    echo "This is where we would enable Security"
+
+
+}
+
+_enablesec "$@"
