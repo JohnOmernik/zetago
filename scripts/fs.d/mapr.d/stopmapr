@@ -36,17 +36,15 @@ function _displayhelp() {
     echo "To Stop MapR Services or a specific Node's MapR Services"
     echo ""
     echo "You can either:"
-    echo "1. Stop all mapr Services (fuse, cldb, standard, or zk) on a single node by running ./zeta fs mapr stopmapr -n=%HOSTNAMEOFNODE%"
+    echo "1. Stop specifc (or all) mapr Services (fuse, cldb, standard, or zk) on a single node by running ./zeta fs mapr stopmapr -n=%HOSTNAMEOFNODE% with (-s, -c, -z, and/or -f) specified"
     echo ""
     echo "or"
     echo ""
-    echo "2. Stop specific group(s) of services on all nodes per fs_mapr.conf via:"
+    echo "2. Stop specific group(s) of services on all nodes per fs_mapr.conf by providing no -n argument and then specifying:"
     echo "-c Stop all CLDB Services"
     echo "-s Stop all Standard node Services"
     echo "-f Stop all fuse Services"
     echo "-z Stop all ZK Services"
-    echo ""
-    echo "You may not specify both -n=%NODEHOSTNAME% AND (-z, -s, -c or -h) together"
     echo ""
     echo "In addition there are two other options:"
     echo "-u Run unattended (do not prompt, just take the command line arguments as is and do not verify with interactive use... use with caution"
@@ -62,7 +60,7 @@ function _stopmapr() {
     CLDB_NODES="0"
     STD_NODES="0"
     ZK_NODES="0"
-    NODE_HOST=""
+    NODE_HOSTS=""
 
     for i in "$@"
         do
@@ -74,7 +72,7 @@ function _stopmapr() {
             WAIT=""
             ;;
             "-n="*)
-            NODE_HOST="${i#*=}"
+            NODE_HOSTS="${i#*=}"
             ;;
             -f)
             FUSE_NODES="1"
@@ -94,20 +92,35 @@ function _stopmapr() {
         esac
     done
 # Sanity Checks
-    if [ "$NODE_HOST" != "" ]; then
-        if [ "$FUSE_NODES" == "1" ] || [ "$CLDB_NODES" == "1" ] || [ "STD_NODES" == "1" ] || [ "$ZK_NODES" == "1" ]; then
-            _displayhelp
-            @go.log FATAL "Cannot specify an individual node via -n and then any of (-c, -s, -f, or -z) - Exiting"
-        fi
-        @go.log WARN "Stopping All Services on $NODE_HOST, starting with FUSE, then CLDB or Standard Node then Zookeeper"
-    else
-        if [ "$FUSE_NODES" == "0" ] && [ "$CLDB_NODES" == "0" ] && [ "$STD_NODES" == "0" ] && [ "$ZK_NODES" == "0" ]; then
-            _displayhelp
-            @go.log FATAL "No NODE_HOST specified with -n and none of the follow specified (-c, -s, -f, -z) - Nothing to do!"
-        fi
+    if [ "$NODE_HOSTS" != "" ]; then
+        @go.log WARN "NODE_HOSTS Provided: $NODE_HOSTS"
     fi
 
+    if [ "$FUSE_NODES" == "0" ] && [ "$CLDB_NODES" == "0" ] && [ "$STD_NODES" == "0" ] && [ "$ZK_NODES" == "0" ]; then
+       _displayhelp
+       @go.log FATAL "No NODE_HOST specified with -n and none of the follow specified (-c, -s, -f, -z) - Nothing to do!"
+    fi
 
+    if [ "$NODE_HOST" == "" ]; then
+        NODE_STR="All Nodes in fs_mapr.conf"
+    else
+        NODE_STR="$NODE_HOST"
+    fi
+    echo "=================================================="
+    @go.log WARN "Stopping the Following MapR Services on $NODE_STR"
+    if [ "$FUSE_NODES" == "1" ]; then
+        @go.log WARN "FUSE"
+    fi
+    if [ "$CLDB_NODES" == "1" ]; then
+        @go.log WARN "CLDB"
+    fi
+    if [ "$STD_NODES" == "1" ]; then
+        @go.log WARN "STDNODE"
+    fi
+    if [ "$ZK_NODES" == "1" ]; then
+        @go.log WARN "ZK"
+    fi
+    echo "=================================================="
 
     if [ "$UNATTEND" == "1" ]; then
         @go.log WARN "Unattended Selected - Will not prompt"
@@ -120,29 +133,44 @@ function _stopmapr() {
         @go.log FATAL "Exiting out of the Install due to general cowardice"
     fi
 
-
-
     FUSE_HOSTS=""
     CLDB_HOSTS=""
     STD_HOSTS=""
     ZK_HOSTS=""
 
-    if [ "$NODE_HOST" != "" ]; then
-        FUSE_HOSTS="$NODE_HOST"
-        CLDB_TEST=$(echo "$CLDBS"|grep "$NODE_HOST")
-        if [ "$CLDB_TEST" != "" ]; then
-            CLDB_HOSTS="$NODE_HOST"
-        fi
-        if [ "$CLDB_HOSTS" == "" ]; then
-            STD_TEST=$(echo "$INODES"| grep "$NODE_HOST")
-            if [ "$STD_TEST" != "" ]; then
-                STD_HOSTS="$NODE_HOST"
+    if [ "$NODE_HOSTS" != "" ]; then
+        for NH in $NODE_HOSTS; do
+            CLDB_TEST=$(echo "$CLDBS"|grep "$NH")
+            INODE_TEST=$(echo "INODES"|grep "$NH")
+            ZK_TEST=$(echo "$ZK_STRING"|grep "$NH")
+            if [ "$INODE_TEST" != "" ]; then
+                if [ "$FUSE_HOSTS" == "" ]; then
+                    FUSE_HOSTS="$NH"
+                else
+                    FUSE_HOSTS="${FUSE_HOSTS} $NH"
+                fi
+                if [ "$CLDB_TEST" != "" ]; then
+                     if [ "$CLDB_HOSTS" == "" ]; then
+                        CLDB_HOSTS="$NH"
+                    else
+                        CLDB_HOSTS="${CLDB_HOSTS} $NH"
+                    fi
+                else
+                    if [ "$STD_HOSTS" == "" ]; then
+                        STD_HOSTS="$NH"
+                    else
+                        STD_HOSTS="${STD_HOSTS} $NH"
+                    fi
+                fi
             fi
-        fi
-        ZK_TEST=$(echo "$ZK_STRING"|grep "$NODE_HOST")
-        if [ "$ZK_TEST" != "" ]; then
-            ZK_HOSTS="$NODE_HOST"
-        fi
+            if [ "$ZK_TEST" != "" ]; then
+                if [ "$ZK_HOSTS" == "" ]; then
+                    ZK_HOSTS="$NH"
+                else
+                    ZK_HOSTS="${ZK_HOSTS} $NH"
+                fi
+            fi
+        done
     else
         if [ "$FUSE_NODES" == "1" ]; then
             T=$(echo "$INODES"|tr ";" " ")
