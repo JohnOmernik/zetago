@@ -57,6 +57,9 @@ FS_PROVIDER_LOCAL="/var/mapr/local"
 FS_HDFS_PREFIX="maprfs:///"
 FS_PROVIDER_FUSE_SVC="/etc/init.d/mapr-posix-client-basic"
 
+
+
+
 echo ""
 echo "$AGENT_HOSTS"
 echo ""
@@ -174,6 +177,19 @@ if [ ! -f "./vers/mapr/$MAPR_VERS" ]; then
     @go.log FATAL "./vers/mapr/$MAPR_VERS not found"
 fi
 
+# Adding CLDB Nodes at minimum to FSNODES
+
+FSNODES=""
+CS=$(echo "$CLDB_STRING"|tr "," " ")
+for C in $CS; do
+    CH=$(echo "$C"|cut -d":" -f1)
+    if [ "$FSNODES" == "" ]; then
+        FSNODES="$CH"
+    else
+        FSNODES="${FSNODES} $CH"
+    fi
+done
+
 @go.log INFO "Adding MapR Ports to $SERVICES_CONF"
 echo "CLUSTER:tcp:2049:shared:mapr:MapR NFS Services" >> $SERVICES_CONF
 echo "CLUSTER:tcp:9997:shared:mapr:MapR NFS Services" >> $SERVICES_CONF
@@ -209,6 +225,9 @@ FS_CAP="$FS_CAP"
 # Need a list of nodes we'll be working on. In the future, we will get this auto matically, but for now you have to put a space separated list of the IP address of all nodes in your cluster. 
 export INODES="$INITIAL_NODES"
 
+# This is a list of nodes, Space separated,  that are running either CLDB or STD FS. (Zookeeper is it's own list) INODES is only the initial nodes in the cluster, FSNODES are the current nodes.
+# Scripts should remove hosts when decommed or add nodes . This should be full hosts names
+export FSNODES="$FSNODES"
 #########################
 # Comma separated list of the hostnames for CLDBs. 
 # You can include ports (if no port is provided, 7222, the default is used)

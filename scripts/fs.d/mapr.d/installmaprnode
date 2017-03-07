@@ -346,6 +346,35 @@ cat > $MARFILE << MAREOF
   }
 }
 MAREOF
+
+    if [ "$MAPR_SECURE" == "1" ]; then
+        @go.log INFO "MAPR_SECURE set to 1 attempting to copy key information over"
+        ZCHK=$(echo "$ZK_STRING"|grep "$NODE_HOST")
+        CCHK=$(echo "$CLDBS"|grep "$NODE_HOST")
+
+        if [ -d "./conf/secmapr" ]; then
+            ssh ${IUSER}@${NODE_HOST} "mkdir -p /home/$IUSER/maprsec && chmod 770 /home/$IUSER/maprsec"
+            scp ./conf/secmapr/maprserverticket ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
+            scp ./conf/secmapr/ssl_keystore ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
+            scp ./conf/secmapr/ssl_truststore ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
+            ssh ${IUSER}@${NODE_HOST} "sudo mv /home/${IUSER}/maprsec/* ${MAPR_INST}/conf/ && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_keystore && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_truststore && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/maprserverticket"
+            ssh ${IUSER}@${NODE_HOST} "sudo chmod 600 ${MAPR_INST}/conf/maprserverticket && sudo chmod 600 ${MAPR_INST}/conf/ssl_keystore && sudo chmod 664 ${MAPR_INST}/conf/ssl_truststore"
+            if [ "$ZCHK" != "" ] || [ "$CCHK" != "" ]; then
+                scp ./conf/secmapr/cldb.key ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
+                ssh ${IUSER}@${NODE_HOST} "sudo mv /home/${IUSER}/maprsec/cldb.key ${MAPR_INST}/conf/ && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/cldb.key && sudo chmod 600 ${MAPR_INST}/conf/cldb.key"
+            fi
+             ssh ${IUSER}@${NODE_HOST} "rm -rf /home/${IUSER}/maprsec"
+        else
+            @go.log WARN "MAPR_SECURE is set to 1 however no ./conf/secmapr directory found!!! Your nodes may not start without this information"
+        fi
+
+    fi
     @go.log INFO "MapR Setup complete for $NODE_HOST"
+    @go.log INFO "Adding Nodes to FSNODES"
+    addtoconfvar "$NODE_HOST" " " "FSNODES" "./conf/fs_mapr.conf" "1"
+
+
+    @go.log INFO "To start host run: ./zeta fs mapr submitmaprnode $NODEHOST"
+
 }
 _installmaprnode "$@"
