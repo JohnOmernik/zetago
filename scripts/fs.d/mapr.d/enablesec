@@ -143,7 +143,7 @@ function _enablesec() {
         ssh ${IUSER}@$ZK "sudo sed -i -e 's/authMech=.*$/authMech=MAPR-SECURITY/g' $MAPR_INST/zookeeper/conf/zoo.cfg"
         ssh ${IUSER}@${ZK} "mkdir -p /home/$IUSER/maprsec && chmod 770 /home/$IUSER/maprsec"
         scp ./conf/secmapr/cldb.key ${IUSER}@${ZK}:/home/${IUSER}/maprsec/
-        ssh ${IUSER}@${NODE_HOST} "sudo mv /home/${IUSER}/maprsec/cldb.key ${MAPR_INST}/conf/ && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/cldb.key && sudo chmod 600 ${MAPR_INST}/conf/cldb.key"
+        ssh ${IUSER}@${ZK} "sudo mv /home/${IUSER}/maprsec/cldb.key ${MAPR_INST}/conf/ && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/cldb.key && sudo chmod 600 ${MAPR_INST}/conf/cldb.key"
         ssh ${IUSER}@${ZK} "rm -rf /home/${IUSER}/maprsec"
     done
 
