@@ -136,6 +136,14 @@ for ZK in $ZK_STRING; do
     echo ""
     echo "Creating MapR Conf Dir if it doesn't exist"
     ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/conf && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf && sudo chmod 755 ${MAPR_INST}/conf"
+cat > /tmp/daemon.conf << EOY
+mapr.daemon.user=mapr
+mapr.daemon.group=mapr
+mapr.daemon.runuser.warden=1
+EOY
+    scp /tmp/daemon.conf $IUSER@$ZK_HOST:/home/$IUSER/
+    rm /tmp/daemon.conf
+    ssh $ZK_HOST "sudo cp /home/${IUSER}/daemon.conf /opt/maprdocker/conf/ && sudo rm /home/$IUSER/daemon.conf"
     echo "Creating zkdata location and setting myid"
     ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/zkdata && echo $ZK_ID|sudo tee ${MAPR_INST}/zkdata/myid && sudo chown -R ${FSUSER}:${FSUSER} ${MAPR_INST}/zkdata && sudo chmod 750 ${MAPR_INST}/zkdata"
     echo "Creating ZK conf and log location on the host"
