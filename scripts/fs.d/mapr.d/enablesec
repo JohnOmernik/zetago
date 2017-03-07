@@ -33,12 +33,15 @@ function _enablesec() {
 
     UNATTEND="0"
     NODE_HOST=""
-
+    NOSTOP="0"
     for i in "$@"
         do
         case $i in
             -u)
             UNATTEND="1"
+            ;;
+            -n)
+            NOSTOP="1"
             ;;
             *)
             # unknown option
@@ -67,8 +70,9 @@ function _enablesec() {
 
 
     @go.log WARN "Stopping MapR Services Now"
-    ./zeta fs mapr stopmapr -z -c -s -f -d
-
+    if [ "$NOSTOP" != "1" ]; then
+        ./zeta fs mapr stopmapr -z -c -s -f -d
+    fi
     VOL1="-v=/opt/maprdocker/conf:/opt/mapr/conf:rw"
     VOL2="-v=/opt/maprdocker/logs:/opt/mapr/logs:rw"
     VOL3="-v=/opt/maprdocker/roles:/opt/mapr/roles:rw"
@@ -108,6 +112,7 @@ function _enablesec() {
         NEW_CONF="${MAPR_CONF_OPTS} -secure"
     fi
     sed -i -e "s/export MAPR_CONF_OPTS=.*$/export MAPR_CONF_OPTS=\"${NEW_CONF}\"/" ./conf/fs_mapr.conf
+    sed -i -e "s/export MAPR_SECURE=.*$/export MAPR_SECURE=\"1\"/" ./conf/fs_mapr.conf
     . ./conf/fs_mapr.conf
 
 
