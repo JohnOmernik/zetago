@@ -96,11 +96,11 @@ function _enablesec() {
     R_LOC="/home/$IUSER/secmapr"
     R_SRC="/opt/maprdocker/conf"
     ./zeta node run -n="$FIRST_CLDB" "mkdir -p $R_LOC && sudo cp ${R_SRC}/cldb.key ${R_LOC}/ && sudo cp ${R_SRC}/maprserverticket ${R_LOC}/ && sudo cp ${R_SRC}/ssl_keystore ${R_LOC}/ && sudo cp ${R_SRC}/ssl_truststore ${R_LOC}/"
-    ./zeta node run -n="$FIRST_CLDB" "sudo chown -R ${IUSER}:${IUSER} $R_LOC && tar zcf /home/$IUSER/mapr_secure.tgz $R_LOC && rm -rf $R_LOC"
-    scp $IUSER@$FIRST_CLDB:/home/$IUSER/mapr_secure.tgz ./conf
-    ./zeta node run -n="$FIRST_CLDN" "rm /home/$IUSER/mapr_secure.tgz"
+    ./zeta node run -n="$FIRST_CLDB" "sudo chown -R ${IUSER}:${IUSER} $R_LOC && tar zcf /home/$IUSER/secmapr.tgz $R_LOC && rm -rf $R_LOC"
+    scp $IUSER@$FIRST_CLDB:/home/$IUSER/secmapr.tgz ./conf
+    ./zeta node run -n="$FIRST_CLDB" "rm /home/$IUSER/secmapr.tgz"
     cd ./conf
-    tar zxf mapr_secure.tgz
+    tar zxf secmapr.tgz
 #    rm mapr_secure.tgz
     sudo chown $IUSER:$IUSER ./secmapr
     sudo chmod 770 ./secmapr
