@@ -75,7 +75,7 @@ function _enablesec() {
     VOL4="-v=/etc/localtime:/etc/localtime:ro"
 
     IMG="${FS_DOCKER_REG_URL}/maprdocker:${MAPR_DOCKER_TAG}"
-    PRIV="--priveleged --ipc=host"
+    PRIV="--privileged --ipc=host"
     NET="--net=host"
     ENV1="-e CLDBS='$CLDBS'"
     ENV2="-e ZKS='$ZKS'"
