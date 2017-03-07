@@ -122,10 +122,53 @@ function _build_zk() {
     fi
 
 
-cat > $BUILD_TMP/runzkdocker.sh << EOL3
+cat > $BUILD_TMP/runzkdocker.sh << EOL9
 #!/bin/bash
-su -c "/opt/mapr/zookeeper/zookeeper-3.4.5/bin/zkServer.sh start-foreground" $FSUSER
+#su -c "/opt/mapr/zookeeper/zookeeper-3.4.5/bin/zkServer.sh start-foreground" $FSUSER
+service mapr-zookeeper start
+tail -f /dev/null
+
+EOL9
+
+cat > $BUILD_TMP/dockerrun.sh << EOL3
+#!/bin/bash
+#This is run if there is no disktab in /opt/mapr/conf
+
+service rpcbind start
+
+if [ ! -f "/opt/mapr/conf/mapr-clusters.conf" ]; then
+    echo "No mapr-clusters.conf found - Assuming New Install Running Config based on settings"
+    /opt/mapr/server/mruuidgen > /opt/mapr/hostid
+    cat /opt/mapr/hostid > /opt/mapr/conf/hostid.init
+    sed -i 's/AddUdevRules(list/#AddUdevRules(list/' /opt/mapr/server/disksetup
+    /opt/mapr/server/configure.sh -C \${CLDBS} -Z \${ZKS} -F /opt/mapr/conf/initial_disks.txt -N \${CLUSTERNAME} -u ${FSUSER} -g ${FSUSER} -no-autostart \${MAPR_CONF_OPTS}
+else
+    echo "mapr-clusters.conf found, running warden"
+    sed -i 's/AddUdevRules(list/#AddUdevRules(list/' /opt/mapr/server/disksetup
+    cat /opt/mapr/conf/hostid.init > /opt/mapr/hostid
+    /opt/mapr/server/configure.sh -R
+fi
+
+/opt/mapr/server/dockerwarden.sh
+
 EOL3
+
+cat > $BUILD_TMP/dockerreconf.sh << EOL7
+#!/bin/bash
+
+/opt/mapr/server/configure.sh -C \${CLDBS} -Z \${ZKS} -N \${CLUSTERNAME} -no-autostart \${MAPR_CONF_OPTS}
+
+#/opt/mapr/server/dockerrun.sh
+
+EOL7
+
+cat > $BUILD_TMP/dockerwarden.sh << EOL4
+#!/bin/bash
+service mapr-warden start
+
+tail -f /dev/null
+EOL4
+
 
 cat > $BUILD_TMP/Dockerfile << EOL
 FROM ubuntu:latest
@@ -162,6 +205,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --al
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --allow-unauthenticated mapr-zookeeper mapr-zk-internal${DOCKER_PATCH}  && rm -rf /var/lib/apt/lists/* && apt-get clean
 
 ADD runzkdocker.sh /opt/mapr/
+ADD dockerrun.sh /opt/mapr/server/
+ADD dockerwarden.sh /opt/mapr/server/
+ADD dockerreconf.sh /opt/mapr/server/
 
 RUN chown -R $FSUSER:$FSUSER /opt/mapr/zookeeper && chown $FSUSER:root /opt/mapr/runzkdocker.sh && chmod 755 /opt/mapr/runzkdocker.sh
 

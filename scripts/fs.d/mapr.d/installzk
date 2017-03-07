@@ -150,6 +150,7 @@ for ZK in $ZK_STRING; do
     ssh $ZK_HOST "sudo mv /home/${IUSER}/zk_default.tgz ${MAPR_INST}/zookeeper/conf/ && sudo tar zxf ${MAPR_INST}/zookeeper/conf/zk_default.tgz -C ${MAPR_INST}/zookeeper/conf && sudo rm ${MAPR_INST}/zookeeper/conf/zk_default.tgz"
     ssh $ZK_HOST "sudo mv /home/${IUSER}/zoo.cfg ${MAPR_INST}/zookeeper/conf/"
     ssh $ZK_HOST "sudo chown -R $FSUSER:$FSUSER ${MAPR_INST}/zookeeper && sudo chmod 777 ${MAPR_INST}/zookeeper/logs"
+    ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/zookeeper/roles && sudo touch ${MAPR_INST}/zookeeper/roles/zookeeper"
 
 
     echo "Creating marathon scripts"
@@ -185,6 +186,7 @@ for ZK in $ZK_STRING; do
     },
     "volumes": [
       { "containerPath": "/opt/mapr/conf", "hostPath": "${MAPR_INST}/conf", "mode": "RW" },
+      { "containerPath": "/opt/mapr/roles", "hostPath": "${MAPR_INST}/zookeeper/roles", "mode": "RW" },
       { "containerPath": "/opt/mapr/zookeeper/zookeeper-3.4.5/logs", "hostPath": "${MAPR_INST}/zookeeper/logs", "mode": "RW" },
       { "containerPath": "/opt/mapr/zookeeper/zookeeper-3.4.5/conf", "hostPath": "${MAPR_INST}/zookeeper/conf", "mode": "RW" },
       { "containerPath": "/opt/mapr/zkdata", "hostPath": "${MAPR_INST}/zkdata", "mode": "RW" },
