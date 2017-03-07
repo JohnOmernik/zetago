@@ -225,7 +225,7 @@ FS_CAP="$FS_CAP"
 # Need a list of nodes we'll be working on. In the future, we will get this auto matically, but for now you have to put a space separated list of the IP address of all nodes in your cluster. 
 export INODES="$INITIAL_NODES"
 
-# This is a list of nodes, Space separated,  that are running either CLDB or STD FS. (Zookeeper is it's own list) INODES is only the initial nodes in the cluster, FSNODES are the current nodes.
+# This is a list of nodes, Space separated,  that are running either CLDB or STD FS. (Zookeeper is it's own list) INODES is only the initial nodes in the cluster, this var is the current nodes.
 # Scripts should remove hosts when decommed or add nodes . This should be full hosts names
 export FSNODES="$FSNODES"
 #########################
