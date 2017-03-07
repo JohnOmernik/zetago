@@ -134,7 +134,7 @@ function _enablesec() {
 
 
     ZKNODES=$(echo "$ZK_STRING"|tr "," " ")
-    for Z in $ZKNODES;
+    for Z in $ZKNODES; do
         ZK=$(echo "$Z"|cut -d":" -f2)
         ssh ${IUSER}@$ZK "sudo sed -i -e 's/authMech=.*$/authMech=MAPR-SECURITY/g' $MAPR_INST/zookeeper/conf/zoo.cfg"
         ssh ${IUSER}@${ZK} "mkdir -p /home/$IUSER/maprsec && chmod 770 /home/$IUSER/maprsec"
