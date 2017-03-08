@@ -61,7 +61,7 @@ function _fuseinstall() {
 
 
     if [ "$MAPR_SECURE" == "1" ]; then
-        if [ ! -f "./conf/secmapr/maprticket_2000" ]; then
+        if [ ! -f "./conf/secmapr/fuseticket" ]; then
             @go.log WARN "It appears you are running a secure cluster without the initial mapr ticket generated (for the mapr user)"
             read -e -p "Do you wish to generate that ticket? (Y/N): " -i "Y" GENTICK
             if [ "$GENTICK" != "Y" ]; then
@@ -71,9 +71,13 @@ function _fuseinstall() {
             if [ "$DCHK" == "" ]; then
                 @go.log FATAL "Could not find MapR image running on this node"
             fi
-            sudo docker exec -it $DCHK su -c "maprlogin password" mapr
-            sudo docker cp $DCHK:/tmp/maprticket_2000 ./conf/secmapr/
-            sudo chown ${IUSER}:${IUSER} ./conf/secmapr/maprticket_2000
+            @go.log INFO "Logging into to cluster to generate service Ticket"
+            sudo docker exec -it $DCHK su -c "maprlogin password -duration 86400" mapr
+            @go.log INFO "Generating Service Ticket"
+            sudo docker exec -it $DCHK su -c "maprlogin generateticket -type service -out /tmp/fuseticket -duration 180:0:0 -renewal 365:0:0" mapr
+            sudo docker cp $DCHK:/tmp/fuseticket ./conf/secmapr/
+            sudo docker exec -it $DCHK rm /tmp/fuseticket
+            sudo chown ${IUSER}:${IUSER} ./conf/secmapr/fuseticket
         fi
     fi
 
@@ -207,8 +211,8 @@ EOL1
         @go.log WARN "Setting MapR Secure and copying truststore"
         scp ./conf/secmapr/ssl_truststore ${IUSER}@${NODE_HOST}:/home/${IUSER}/
         ssh $NODE_HOST "sudo mv /home/${IUSER}/ssl_truststore /opt/mapr/conf/ && sudo chmod 664 /opt/mapr/conf/ssl_truststore && sudo mkdir -p /opt/mapr/conf/mapr_tickets"
-        scp ./conf/secmapr/maprticket_2000 ${IUSER}@${NODE_HOST}:/home/${IUSER}/
-        ssh ${NODE_HOST} "sudo mv /home/${IUSER}/maprticket_2000 /opt/mapr/conf/mapr_tickets/ && sudo chown ${FSUSER}:${FSUSER} /opt/mapr/conf/mapr_tickets/maprticket_2000 && sudo chmod 600 /opt/mapr/conf/mapr_tickets/maprticket_2000"
+        scp ./conf/secmapr/fuseticket ${IUSER}@${NODE_HOST}:/home/${IUSER}/
+        ssh ${NODE_HOST} "sudo mv /home/${IUSER}/fuseticket /opt/mapr/conf/mapr_tickets/ && sudo chown ${FSUSER}:${FSUSER} /opt/mapr/conf/mapr_tickets/fuseticket && sudo chmod 600 /opt/mapr/conf/mapr_tickets/fuseticket"
         MSEC="-secure"
     else
         @go.log INFO "Non-Secure Cluster Install"
@@ -218,7 +222,7 @@ EOL1
     ssh $NODE_HOST "sudo mkdir -p /$CLUSTERBASE"
     ssh $NODE_HOST "sudo $INST_CMD $INST_POSIX"
     if [ "$MAPR_SECURE" == "1" ]; then
-        ssh ${NODE_HOST} "sudo sed -i -e 's@#fuse\.ticketfile\.location=.*\$@fuse.ticketfile.location=/opt/mapr/conf/mapr_tickets/maprticket_2000@g' /opt/mapr/conf/fuse.conf"
+        ssh ${NODE_HOST} "sudo sed -i -e 's@#fuse\.ticketfile\.location=.*\$@fuse.ticketfile.location=/opt/mapr/conf/mapr_tickets/fuseticket@g' /opt/mapr/conf/fuse.conf"
     fi
 
     if [ "$UBUNTU_MAPR_PATCH_POSIX_FILE" != "" ]; then
