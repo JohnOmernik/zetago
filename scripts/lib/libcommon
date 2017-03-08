@@ -130,7 +130,7 @@ function addtoconfvar(){
     CONF_FILE=$4
     UNATTEND=$5
 
-    VARLINE=$(cat $CONF_FILE|grep "$CONF_VAR")
+    VARLINE=$(cat $CONF_FILE|grep -v -P "^#"|grep "$CONF_VAR")
     if [ "$VARLINE" == "" ]; then
         @go.log WARN "Variables $CONF_VAR not found in $CONF_FILE - No changes made"
     else

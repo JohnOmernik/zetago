@@ -1,0 +1,318 @@
+#!/bin/bash
+#
+# fs mapr start - Start MapR Cluster Components
+#
+# Arguments:
+# -u - Unattended - Will not ask "Are you sure"
+# -w - Nowait. I.e. when asking for the start, don't wait for each to complete prior to going to the next one not recommended
+# -n="%NODES SEP" Provide specific nodes to do stuff on (combine with which services you wish to work with)
+# -f - Start Fuse Clients
+# -c - Start CLDBS
+# -s - Start Standard Nodes
+# -z - Start Zookeepers
+# -d - Start FS docker
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+. ./vers/mapr/$MAPR_VERS
+
+MYDIR=$(pwd)
+
+MEUSER=$(whoami)
+
+if [ "$MEUSER" != "${IUSER}" ]; then
+    @go.log FATAL "This script needs to be un as ${IUSER}. Current User: $MEUSER"
+fi
+
+function _displayhelp() {
+    echo ""
+    echo "./zeta fs mapr startmapr"
+    echo "To Start MapR Services or a specific Node's MapR Services"
+    echo ""
+    echo "You can either:"
+    echo "1. Start specifc (or all) mapr Services (fuse, cldb, standard, or zk) on a single node(s) by running ./zeta fs mapr startmapr -n=%HOSTNAMEOFNODE% with (-s, -c, -z, and/or -f) specified"
+    echo "You can specify more than one node, just ensure -n=\"node1 node2\" is followed for formatting (i.e. use double quotes and spaces to separate"
+    echo ""
+    echo "or"
+    echo ""
+    echo "2. Start specific group(s) of services on all nodes per fs_mapr.conf by providing no -n argument and then specifying:"
+    echo "-c Start all CLDB Services"
+    echo "-s Start all Standard node Services"
+    echo "-f Start all fuse Services"
+    echo "-z Start all ZK Services"
+    echo ""
+    echo "In addition there are three other options:"
+    echo "-u Run unattended (do not prompt, just take the command line arguments as is and do not verify with interactive use... use with caution"
+    echo "-w Do not wait for each service: As Services are changed, -w will not wait for each one prior to issuing the next... use with caution"
+    echo ""
+}
+
+function _startmapr() {
+
+    UNATTEND="0"
+    WAIT="1"
+    FUSE_NODES="0"
+    CLDB_NODES="0"
+    STD_NODES="0"
+    ZK_NODES="0"
+    NODE_HOSTS=""
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            -w)
+            WAIT=""
+            ;;
+            "-n="*)
+            NODE_HOSTS="${i#*=}"
+            ;;
+            -f)
+            FUSE_NODES="1"
+            ;;
+            -c)
+            CLDB_NODES="1"
+            ;;
+            -s)
+            STD_NODES="1"
+            ;;
+            -z)
+            ZK_NODES="1"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+# Sanity Checks
+    if [ "$NODE_HOSTS" != "" ]; then
+        @go.log WARN "NODE_HOSTS Provided: $NODE_HOSTS"
+    fi
+
+    if [ "$FUSE_NODES" == "0" ] && [ "$CLDB_NODES" == "0" ] && [ "$STD_NODES" == "0" ] && [ "$ZK_NODES" == "0" ]; then
+       _displayhelp
+       @go.log FATAL "None of the following specified (-c, -s, -f, -z) - Nothing to do!"
+    fi
+
+    if [ "$NODE_HOSTS" == "" ]; then
+        NODE_STR="All Nodes in fs_mapr.conf"
+    else
+        NODE_STR="$NODE_HOSTS"
+    fi
+    echo "=================================================="
+    @go.log WARN "Starting the Following MapR Services on $NODE_STR"
+    if [ "$FUSE_NODES" == "1" ]; then
+        @go.log WARN "FUSE"
+    fi
+    if [ "$CLDB_NODES" == "1" ]; then
+        @go.log WARN "CLDB"
+    fi
+    if [ "$STD_NODES" == "1" ]; then
+        @go.log WARN "STDNODE"
+    fi
+    if [ "$ZK_NODES" == "1" ]; then
+        @go.log WARN "ZK"
+    fi
+    echo "=================================================="
+
+    FUSE_HOSTS=""
+    CLDB_HOSTS=""
+    STD_HOSTS=""
+    ZK_HOSTS=""
+
+    if [ "$NODE_HOSTS" != "" ]; then
+        for NH in $NODE_HOSTS; do
+            CLDB_TEST=$(echo "$CLDBS"|grep "$NH")
+            INODE_TEST=$(echo "$INODES"|grep "$NH")
+            ZK_TEST=$(echo "$ZK_STRING"|grep "$NH")
+            if [ "$INODE_TEST" != "" ]; then
+                @go.log WARN "Found $NH in $INODES"
+                if [ "$FUSE_NODES" == "1" ]; then
+                    if [ "$FUSE_HOSTS" == "" ]; then
+                        FUSE_HOSTS="$NH"
+                    else
+                        FUSE_HOSTS="${FUSE_HOSTS} $NH"
+                    fi
+                fi
+                if [ "$CLDB_TEST" != "" ]; then
+                    if [ "$CLDB_NODES" == "1" ]; then
+                        if [ "$CLDB_HOSTS" == "" ]; then
+                            CLDB_HOSTS="$NH"
+                        else
+                            CLDB_HOSTS="${CLDB_HOSTS} $NH"
+                        fi
+                    fi
+                else
+                    if [ "$STD_NODES" == "1" ]; then
+                        if [ "$STD_HOSTS" == "" ]; then
+                            STD_HOSTS="$NH"
+                        else
+                            STD_HOSTS="${STD_HOSTS} $NH"
+                        fi
+                    fi
+                fi
+            fi
+            if [ "$ZK_TEST" != "" ]; then
+                if [ "$ZK_NODES" == "1" ]; then
+                    if [ "$ZK_HOSTS" == "" ]; then
+                        ZK_HOSTS="$NH"
+                    else
+                        ZK_HOSTS="${ZK_HOSTS} $NH"
+                    fi
+                fi
+            fi
+        done
+    else
+        if [ "$FUSE_NODES" == "1" ]; then
+            T=$(echo "$INODES"|tr ";" " ")
+            for H in $T; do
+                M=$(echo "$H"|cut -d":" -f1)
+                if [ "$FUSE_HOSTS" == "" ]; then
+                    FUSE_HOSTS="$M"
+                else
+                    FUSE_HOSTS="${FUSE_HOSTS} $M"
+                fi
+            done
+        fi
+        if [ "$CLDB_NODES" == "1" ]; then
+            T=$(echo "$CLDBS"|tr "," " ")
+            for H in $T; do
+                M=$(echo "$H"|cut -d":" -f1)
+                if [ "$CLDB_HOSTS" == "" ]; then
+                    CLDB_HOSTS="$M"
+                else
+                    CLDB_HOSTS="${CLDB_HOSTS} $M"
+                fi
+            done
+        fi
+        if [ "$STD_NODES" == "1" ]; then
+            T=$(echo "$INODES"|tr ";" " ")
+            for H in $T; do
+                M=$(echo "$H"|cut -d":" -f1)
+                CLDB_CHK=$(echo "$CLDBS"|grep "$M")
+                if [ "$CLDB_CHK" == "" ]; then
+                    if [ "$STD_HOSTS" == "" ]; then
+                        STD_HOSTS="$M"
+                    else
+                        STD_HOSTS="${STD_HOSTS} $M"
+                    fi
+                fi
+            done
+        fi
+        if [ "$ZK_NODES" == "1" ]; then
+            T=$(echo "$ZK_STRING"|tr "," " ")
+            for H in $T; do
+                M=$(echo "$H"|cut -d":" -f2)
+                if [ "$ZK_HOSTS" == "" ]; then
+                    ZK_HOSTS="$M"
+                else
+                    ZK_HOSTS="${ZK_HOSTS} $M"
+                fi
+            done
+        fi
+    fi
+    echo ""
+    echo "FUSE_HOSTS: $FUSE_HOSTS"
+    echo ""
+    echo "CLDB_HOSTS: $CLDB_HOSTS"
+    echo ""
+    echo "STD_HOSTS: $STD_HOSTS"
+    echo ""
+    echo "ZK_HOSTS: $ZK_HOSTS"
+    echo ""
+
+    if [ "$UNATTEND" == "1" ]; then
+        @go.log WARN "Unattended Selected - Will not prompt"
+        OPER="Y"
+    else
+        read -e -p "Are you SURE you wish to run start operations on your MapR Install? (Y/N): " -i "N" OPER
+    fi
+    if [ "$OPER" != "Y" ]; then
+        _displayhelp
+        @go.log FATAL "Exiting out of the start operation due to general cowardice"
+    fi
+
+
+
+    DCHK=$(./zeta cluster marathon getinfo "shared/fsdocker" state)
+    C=$(echo "$DCHK"|grep "TASK_RUNNING")
+
+    if [ "$C" == "" ]; then
+       @go.log WARN "Didn't find FS Docker in TASK_RUNNING state, going to scale to 1"
+       MAR_ID="shared/fsdocker"
+        ./zeta cluster marathon scale $MAR_ID 1 $WAIT
+        if [ "$WAIT" == "1" ]; then
+            if [ "$ZK_NODES" == "1" ] || [ "$CLDB_NODES" == "1" ] || [ "$STD_NODES" == "1" ] || [ "$FUSE_NODES" == "1" ]; then
+                echo ""
+                @go.log INFO "Waiting 15 seconds"
+                sleep 15
+            fi
+        fi
+    fi
+    echo ""
+    if [ "$ZK_NODES" == "1" ]; then
+        @go.log WARN "Now we will start all ZK nodes in $ZK_HOSTS"
+        for HOST in $ZK_HOSTS; do
+            MAR_ID="shared/mapr/zks/zk${HOST}"
+            @go.log WARN "Starting ZK Node: $HOST"
+            ./zeta cluster marathon scale $MAR_ID 1 $WAIT
+        done
+        if [ "$WAIT" == "1" ]; then
+            if [ "$CLDB_NODES" == "1" ] || [ "$STD_NODES" == "1" ] || [ "$FUSE_NODES" == "1" ]; then
+                @go.log INFO "Waiting 30 seconds"
+                sleep 30
+            fi
+        fi
+    fi
+    echo ""
+    if [ "$CLDB_NODES" == "1" ]; then
+        @go.log WARN "Now we will attempt to start CLDBs in $CLDB_HOSTS"
+        for HOST in $CLDB_HOSTS; do
+            MAR_ID="shared/mapr/cldbs/cldb${HOST}"
+            @go.log WARN "Starting CLDB: $HOST"
+            ./zeta cluster marathon scale $MAR_ID 1 $WAIT
+        done
+        echo ""
+        if [ "$WAIT" == "1" ]; then
+            if [ "$STD_NODES" == "1" ] || [ "$FUSE_NODES" == "1" ]; then
+                @go.log INFO "Waiting 60 seconds"
+                sleep 60
+            fi
+        fi
+
+    fi
+    echo ""
+    if [ "$STD_NODES" == "1" ]; then
+        @go.log WARN "Now we will start all standard nodes in $STD_HOSTS"
+        for HOST in $STD_HOSTS; do
+            MAR_ID="shared/mapr/stdnodes/std${HOST}"
+            @go.log WARN "Starting Standard Node: $HOST"
+            ./zeta cluster marathon scale $MAR_ID 1 $WAIT
+        done
+        echo ""
+        if [ "$WAIT" == "1" ]; then
+            if [ "$FUSE_NODES" == "1" ]; then
+                @go.log INFO "Waiting 15 seconds"
+                sleep 15
+            fi
+        fi
+    fi
+    echo ""
+    if [ "$FUSE_NODES" == "1" ]; then
+        @go.log WARN "Starting all FUSE clients in $FUSE_HOSTS"
+        for HOST in $FUSE_HOSTS; do
+            ./zeta node run -n="$HOST" "sudo ${FS_PROVIDER_FUSE_SVC} start"
+        done
+        echo ""
+    fi
+    @go.log INFO "Requested MapR Start Completed"
+}
+
+_startmapr "$@"

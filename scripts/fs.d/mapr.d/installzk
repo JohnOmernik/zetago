@@ -136,6 +136,14 @@ for ZK in $ZK_STRING; do
     echo ""
     echo "Creating MapR Conf Dir if it doesn't exist"
     ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/conf && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf && sudo chmod 755 ${MAPR_INST}/conf"
+cat > /tmp/daemon.conf << EOY
+mapr.daemon.user=mapr
+mapr.daemon.group=mapr
+mapr.daemon.runuser.warden=1
+EOY
+    scp /tmp/daemon.conf $IUSER@$ZK_HOST:/home/$IUSER/
+    rm /tmp/daemon.conf
+    ssh $ZK_HOST "sudo cp /home/${IUSER}/daemon.conf /opt/maprdocker/conf/ && sudo rm /home/$IUSER/daemon.conf"
     echo "Creating zkdata location and setting myid"
     ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/zkdata && echo $ZK_ID|sudo tee ${MAPR_INST}/zkdata/myid && sudo chown -R ${FSUSER}:${FSUSER} ${MAPR_INST}/zkdata && sudo chmod 750 ${MAPR_INST}/zkdata"
     echo "Creating ZK conf and log location on the host"
@@ -150,6 +158,7 @@ for ZK in $ZK_STRING; do
     ssh $ZK_HOST "sudo mv /home/${IUSER}/zk_default.tgz ${MAPR_INST}/zookeeper/conf/ && sudo tar zxf ${MAPR_INST}/zookeeper/conf/zk_default.tgz -C ${MAPR_INST}/zookeeper/conf && sudo rm ${MAPR_INST}/zookeeper/conf/zk_default.tgz"
     ssh $ZK_HOST "sudo mv /home/${IUSER}/zoo.cfg ${MAPR_INST}/zookeeper/conf/"
     ssh $ZK_HOST "sudo chown -R $FSUSER:$FSUSER ${MAPR_INST}/zookeeper && sudo chmod 777 ${MAPR_INST}/zookeeper/logs"
+    ssh $ZK_HOST "sudo mkdir -p ${MAPR_INST}/zookeeper/roles && sudo touch ${MAPR_INST}/zookeeper/roles/zookeeper && sudo chown -R $FSUSER:$FSUSER ${MAPR_INST}/zookeeper/roles"
 
 
     echo "Creating marathon scripts"
@@ -185,6 +194,7 @@ for ZK in $ZK_STRING; do
     },
     "volumes": [
       { "containerPath": "/opt/mapr/conf", "hostPath": "${MAPR_INST}/conf", "mode": "RW" },
+      { "containerPath": "/opt/mapr/roles", "hostPath": "${MAPR_INST}/zookeeper/roles", "mode": "RW" },
       { "containerPath": "/opt/mapr/zookeeper/zookeeper-3.4.5/logs", "hostPath": "${MAPR_INST}/zookeeper/logs", "mode": "RW" },
       { "containerPath": "/opt/mapr/zookeeper/zookeeper-3.4.5/conf", "hostPath": "${MAPR_INST}/zookeeper/conf", "mode": "RW" },
       { "containerPath": "/opt/mapr/zkdata", "hostPath": "${MAPR_INST}/zkdata", "mode": "RW" },
