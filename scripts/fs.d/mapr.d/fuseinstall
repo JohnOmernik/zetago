@@ -60,6 +60,24 @@ function _fuseinstall() {
     fi
 
 
+    if [ "$MAPR_SECURE" == "1" ]; then
+        if [ ! -f "./conf/secmapr/maprticket_2000" ]; then
+            @go.log WARN "It appears you are running a secure cluster without the initial mapr ticket generated (for the mapr user)"
+            read -e -p "Do you wish to generate that ticket? (Y/N): " -i "Y" GENTICK
+            if [ "$GENTICK" != "Y" ]; then
+                @go.log FATAL "Cannot proceed with install due to a lack of MapR Ticket"
+            fi
+            DCHK=$(sudo docker ps|grep maprdocker|cut -d" " -f1)
+            if [ "$DCHK" == "" ]; then
+                @go.log FATAL "Could not find MapR image running on this node"
+            fi
+            sudo docker exec -it $DCHK su -c "maprlogin password" mapr
+            sudo docker cp $DCHK:/tmp/maprticket_2000 ./conf/secmapr/
+            sudo chown ${IUSER}:${IUSER} ./conf/secmapr/maprticket_2000
+        fi
+    fi
+
+
 
     # Need to update for Cent/RH detection We are only detecting Ubuntu right now
     DIST=$(ssh $NODE_HOST "grep DISTRIB_ID /etc/lsb-release")
@@ -188,7 +206,12 @@ EOL1
     if [ "$MAPR_SECURE" == "1" ]; then
         @go.log WARN "Setting MapR Secure and copying truststore"
         scp ./conf/secmapr/ssl_truststore ${IUSER}@${NODE_HOST}:/home/${IUSER}/
-        ssh $NODE_HOST "sudo mv /home/${IUSER}/ssl_truststore /opt/mapr/conf/ && sudo chmod 664 /opt/mapr/conf/ssl_truststore"
+        ssh $NODE_HOST "sudo mv /home/${IUSER}/ssl_truststore /opt/mapr/conf/ && sudo chmod 664 /opt/mapr/conf/ssl_truststore && sudo mkdir -p /opt/mapr/conf/mapr_tickets"
+        scp ./conf/secmapr/maprticket_2000 ${IUSER}@${NODE_HOST}:/home/${IUSER}/
+        ssh ${NODE_HOST} "sudo mv /home/${IUSER}/maprticket_2000 /opt/mapr/conf/mapr_tickets/ && sudo chown ${FSUSER}:${FSUSER} /opt/mapr/conf/maprticket_2000 && sudo chmod 600 /opt/mapr/conf/maprticket_2000"
+
+        ssh ${NODE_HOST} "sudo sed -i -e 's@#fuse\.ticketfile\.location=.*@fuse.ticketfile.location=/opt/mapr/conf/mapr_tickets/maprticket_2000@g' /opt/mapr/conf/fuse.conf"
+
         MSEC="-secure"
     else
         @go.log INFO "Non-Secure Cluster Install"
