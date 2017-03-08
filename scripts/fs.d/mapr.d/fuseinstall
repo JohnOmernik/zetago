@@ -209,7 +209,7 @@ EOL1
         ssh $NODE_HOST "sudo mv /home/${IUSER}/ssl_truststore /opt/mapr/conf/ && sudo chmod 664 /opt/mapr/conf/ssl_truststore && sudo mkdir -p /opt/mapr/conf/mapr_tickets"
         scp ./conf/secmapr/maprticket_2000 ${IUSER}@${NODE_HOST}:/home/${IUSER}/
         ssh ${NODE_HOST} "sudo mv /home/${IUSER}/maprticket_2000 /opt/mapr/conf/mapr_tickets/ && sudo chown ${FSUSER}:${FSUSER} /opt/mapr/conf/mapr_tickets/maprticket_2000 && sudo chmod 600 /opt/mapr/conf/mapr_tickets/maprticket_2000"
-        ssh ${NODE_HOST} "sudo sed -i -e 's@#fuse\.ticketfile\.location=.*$@fuse.ticketfile.location=/opt/mapr/conf/mapr_tickets/maprticket_2000@g' /opt/mapr/conf/fuse.conf"
+        ssh ${NODE_HOST} "sudo sed -e -i \"s@#fuse\.ticketfile\.location=.*$@fuse.ticketfile.location=/opt/mapr/conf/mapr_tickets/maprticket_2000@g\" /opt/mapr/conf/fuse.conf"
 
         MSEC="-secure"
     else
