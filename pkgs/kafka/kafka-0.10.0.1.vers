@@ -34,7 +34,7 @@ cat > ./Dockerfile << EOL
 FROM ${ZETA_DOCKER_REG_URL}/${REQ_APP_IMG_NAME}
 $DOCKERLINE
 RUN git clone ${APP_GIT_URL}/${APP_GIT_USER}/$APP_GIT_REPO
-RUN cd ${APP_GIT_REPO} && echo "\$JAVA_OPTS" && ./gradlew jar -x test && cd ..
+RUN cd ${APP_GIT_REPO} && git checkout v0.10 && echo "\$JAVA_OPTS" && ./gradlew jar -x test && cd ..
 RUN mkdir -p kafka-mesos && cp ./$APP_GIT_REPO/kafka-mesos-*.jar ./kafka-mesos/ && cp ./$APP_GIT_REPO/kafka-mesos.sh ./kafka-mesos/
 RUN wget $APP_URL && mv $APP_URL_FILE ./kafka-mesos/
 CMD ["/bin/sleep 10"]
