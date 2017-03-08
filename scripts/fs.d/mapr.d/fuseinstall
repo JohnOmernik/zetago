@@ -187,7 +187,7 @@ EOL1
     ssh $NODE_HOST "echo \"$NODE_HOST-fuse\"|sudo tee /opt/mapr/hostname"
     if [ "$MAPR_SECURE" == "1" ]; then
         @go.log WARN "Setting MapR Secure and copying truststore"
-        scp ./conf/secmapr/ssl_truststore ${IUSER}@${NODE_HOST}/home/${IUSER}/
+        scp ./conf/secmapr/ssl_truststore ${IUSER}@${NODE_HOST}:/home/${IUSER}/
         ssh $NODE_HOST "sudo mv /home/${IUSER}/ssl_truststore /opt/mapr/conf/ && sudo chmod 664 /opt/mapr/conf/ssl_truststore"
         MSEC="-secure"
     else
