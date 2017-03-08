@@ -26,7 +26,21 @@ if [ "$MEUSER" != "${IUSER}" ]; then
     @go.log FATAL "This script needs to be un as ${IUSER}. Current User: $MEUSER"
 fi
 
-
+echo ""
+echo "************************************************"
+echo "WARNING"
+@go.log WARN "DO NOT USE THIS SCRIPT UNLESS YOU ARE ONLY TESTING or UNDERSTAND THE RISKS"
+echo "MapR Security, while working, has not been tested with downstream packages"
+echo "We need to ensure proper ticket handling occurs, especially for those thing using the HDFS API like Drill, Spark etc"
+echo "Expect Errors if you convert your cluster"
+echo "And it's very difficult to return your cluster"
+echo "************************************************"
+echo ""
+echo ""
+read -e -p "ARE YOU SURE YOU wish to convert your cluster to MapR Secure? (Y/N/N/N/N): " -i "N" SECUREIT
+if [ "$SECUREIT" != "Y" ]; then
+    @go.log FATAL "Wisely Exited, there may be hope for you yet..."
+fi
 
 function _enablesec() {
 
