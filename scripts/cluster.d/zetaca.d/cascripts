@@ -161,7 +161,7 @@ chmod +x ${ZETACA_HOME}/CA/init_ca.sh
 
 cat > ${ZETACA_HOME}/CA/init_all.sh << EOL2
 #!/bin/bash
-chown -R ${IUSER}:${IUSER} /root
+chown -R ${IUSER}:${IUSER} /root/ca_rest/CA
 su ${IUSER} -c /root/ca_rest/CA/init_ca.sh
 EOL2
 chmod +x ${ZETACA_HOME}/CA/init_all.sh
