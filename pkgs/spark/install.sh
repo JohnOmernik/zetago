@@ -159,10 +159,15 @@ if [ "\$ME" == "root" ]; then
     chown -R $IUSER:zeta${APP_ROLE}zeta \$TMP_LOC
     chmod -R 775 \$TMP_LOC
 fi
-ln -s \$TMP_LOC /tmp/spark
 
-ls -ls ${CLUSTERMOUNT}${FS_PROVIDER_LOCAL}/\$HNAME/local/spark
-
+if [ "$ZETA_SPARK_SVC" == "shuffle" ] || [ "$ZETA_SPARK_SVC" == "history" ]; then
+    echo "Running History or Shuffle - Linking /tmp/spark to cluster local space"
+    ln -s \$TMP_LOC /tmp/spark
+else
+    echo "Not running history or shuffle, using container local space"
+    mkdir /tmp/spark
+    chmod 777 /tmp/spark
+fi
 
 export HADOOP_CONF_DIR=\${HADOOP_HOME}/etc/hadoop
 MAPR_HADOOP_CLASSPATH=\`\${HADOOP_HOME}/bin/hadoop classpath\`:\`ls \$MAPR_HOME/lib/slf4j-log*\`:
@@ -236,7 +241,8 @@ cat > $APP_MAR_SHUF_FILE << EOQ
   },
   "env": {
     "SPARK_NO_DAEMONIZE": "1",
-    "SPARK_DAEMON_MEMORY": "1g"
+    "SPARK_DAEMON_MEMORY": "1g",
+    "ZETA_SPARK_SVC": "shuffle"
   },
   "constraints": [
     [ "hostname", "UNIQUE"]
@@ -286,7 +292,8 @@ cat > $APP_MAR_HIST_FILE << EOM
    "CONTAINERIZER":"Docker"
   },
   "env": {
-    "SPARK_NO_DAEMONIZE": "1"
+    "SPARK_NO_DAEMONIZE": "1",
+    "ZETA_SPARK_SVC": "history"
   },
   "container": {
     "type": "DOCKER",
