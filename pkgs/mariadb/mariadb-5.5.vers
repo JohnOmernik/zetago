@@ -7,7 +7,6 @@ REQ_APP_IMG_NAME="zetabase"
 APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
 
 
-
 if [ "$BUILD" == "Y" ]; then
 
 cat > Dockerfile << EOL
@@ -17,10 +16,13 @@ RUN apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a
     echo 'deb http://mirrors.syringanetworks.net/mariadb/repo/5.5/ubuntu trusty main' >> /etc/apt/sources.list && \
     echo 'deb-src http://mirrors.syringanetworks.net/mariadb/repo/5.5/ubuntu trusty main' >> /etc/apt/sources.list && \
     apt-get update && \
-    apt-get install -y mariadb-server pwgen git && \
+    apt-get install -y mariadb-server pwgen git rsyslog && \
     rm -rf /var/lib/mysql/* && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+#Added to avoid in container connection to the database with mysql client error message "TERM environment variable not set"
+ENV TERM xterm
 
 #change bind address to 0.0.0.0
 RUN sed -i -r 's/bind-address.*$/bind-address = 0.0.0.0/' /etc/mysql/mariadb.conf.d/50-server.cnf
@@ -29,19 +31,25 @@ RUN sed -i -r 's/bind-address.*$/bind-address = 0.0.0.0/' /etc/mysql/mariadb.con
 RUN sed -i -r 's/query_cache_size/innodb_buffer_pool_size = 1024M\nquery_cache_size/' /etc/mysql/mariadb.conf.d/50-server.cnf
 
 # Need to set binlog
-
 RUN sed -i -r 's/max_binlog_size         = 100M/max_binlog_size         = 100M\nbinlog_format = MIXED\n/' /etc/mysql/mariadb.conf.d/50-server.cnf
 
-# Pull the current version of the mesos-lockfile. This should work as is no changes.
+# setup general logs
+RUN sed -i -r 's/#general_log_file[\x09\x20]+= \/var\/log\/mysql\/mysql\.log/general_log_file = \/logs\/mysql.log/' /etc/mysql/mariadb.conf.d/50-server.cnf
+RUN sed -i -r 's/#general_log[\x09\x20]+= 1/general_log = 1/' /etc/mysql/mariadb.conf.d/50-server.cnf
 
+# setup slow query log
+RUN sed -i -r 's/#slow_query_log_file[\x09\x20]+= \/var\/log\/mysql\/mariadb-slow\.log/slow_query_log_file = \/logs\/mariadb-slow.log/' /etc/mysql/mariadb.conf.d/50-server.cnf
+RUN sed -i -r 's/#long_query_time = 10/long_query_time = 10/' /etc/mysql/mariadb.conf.d/50-server.cnf
+
+# disable dns lookups for auth
+RUN sed -i -r 's/skip-external-locking/skip-external-locking\nskip-name-resolve/' /etc/mysql/mariadb.conf.d/50-server.cnf
+
+# Pull the current version of the mesos-lockfile. This should work as is no changes.
 ADD lockfile.sh /lockfile.sh
 ADD create_mariadb_admin_user.sh /create_mariadb_admin_user.sh
 ADD run.sh /run.sh
 
 RUN chmod 775 /*.sh
-
-#Added to avoid in container connection to the database with mysql client error message "TERM environment variable not set"
-ENV TERM dumb
 
 EXPOSE 3306
 CMD ["/lockfile.sh"]
@@ -51,7 +59,10 @@ EOL
 cat > create_mariadb_admin_user.sh << EOL1
 #!/bin/bash
 
-/usr/bin/mysqld_safe 2>&1 &
+MYSQL_PIDS=$(ps aux | grep /usr/bin/mysql | wc -l)
+if [ \$MYSQL_PIDS -lt 2 ]; then
+  /usr/sbin/service mysql restart
+fi
 
 RET=1
 while [[ RET -ne 0 ]]; do
@@ -61,9 +72,8 @@ while [[ RET -ne 0 ]]; do
     RET=\$?
 done
 
-
 PASS=\${MARIADB_PASS:-\$(pwgen -s 12 1)}
-_word=\$( [ \${MARIADB_PASS} ] && echo "preset" || echo "random" )
+_word=$( [ \${MARIADB_PASS} ] && echo "preset" || echo "random" )
 echo "=> Creating MariaDB admin user with \${_word} password"
 
 mysql -uroot -e "CREATE USER 'admin'@'%' IDENTIFIED BY '\$PASS'"
@@ -82,6 +92,8 @@ MariaDB user 'root' has no password but only allows local connections
 ========================================================================
 EOL10
 
+cat /creds/creds.txt
+
 mysqladmin -uroot shutdown
 EOL1
 
@@ -93,16 +105,19 @@ VOLUME_HOME="/var/lib/mysql"
 if [[ ! -d \$VOLUME_HOME/mysql ]]; then
     echo "=> An empty or uninitialized MariaDB volume is detected in \$VOLUME_HOME"
     echo "=> Installing MariaDB ..."
-    mysql_install_db > /dev/null 2>&1
+    /usr/bin/mysql_install_db --user=mysql --ldata=/var/lib/mysql/ > /dev/null 2>&1
     echo "=> Done!"
     /create_mariadb_admin_user.sh
 else
     echo "=> Using an existing volume of MariaDB"
 fi
 
-exec mysqld_safe
+/usr/sbin/service mysql restart
 
+while true; do sleep 60 && echo "$(date) - still goin.."; done
 EOL2
+
+
 
 cat > lockfile.sh << EOL3
 #!/bin/bash
@@ -173,7 +188,6 @@ else
     fi
 fi
 EOL3
-
 
 
 

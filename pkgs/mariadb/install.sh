@@ -17,10 +17,8 @@ else
     @go.log FATAL "Failed to get Port for $APP_NAME $PSTR"
 fi
 
-bridgeports "APP_PORT_JSON" "$APP_PORT" "$APP_PORTSTR"
+bridgeports "APP_PORT_JSON" "3306" "$APP_PORTSTR"
 haproxylabel "APP_HA_PROXY" "${APP_PORTSTR}"
-
-
 
 read -e -p "Please enter the CPU shares to use with $APP_NAME: " -i "1.0" APP_CPU
 echo ""
@@ -32,16 +30,22 @@ APP_MAR_FILE="${APP_HOME}/marathon.json"
 APP_DATA_DIR="$APP_HOME/data"
 APP_LOCK_DIR="$APP_HOME/lock"
 APP_CRED_DIR="$APP_HOME/creds"
+APP_LOG_DIR="$APP_HOME/logs"
 APP_ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/env_${APP_ROLE}/${APP_NAME}_${APP_ID}.sh"
 
 mkdir -p $APP_DATA_DIR
 mkdir -p $APP_LOCK_DIR
 mkdir -p $APP_CRED_DIR
+mkdir -p $APP_LOG_DIR
 
 sudo chown -R ${IUSER}:zeta${APP_ROLE}apps $APP_CRED_DIR
 sudo chmod 770 $APP_CRED_DIR
 
+sudo chown -R ${IUSER}:zeta${APP_ROLE}apps $APP_LOCK_DIR
+sudo chmod 770 $APP_LOCK_DIR
 
+sudo chown -R ${IUSER}:zeta${APP_ROLE}apps $APP_LOG_DIR
+sudo chmod 770 $APP_LOG_DIR
 
 cat > $APP_ENV_FILE << EOL1
 #!/bin/bash
@@ -82,6 +86,11 @@ cat > $APP_MAR_FILE << EOL
         "containerPath": "/creds",
         "hostPath": "${APP_CRED_DIR}",
         "mode": "RW"
+      },
+      {
+        "containerPath": "/logs",
+        "hostPath": "${APP_LOG_DIR}",
+        "mode": "RW"
       }
     ]
   }
@@ -99,5 +108,3 @@ echo "To start please run: "
 echo ""
 echo "$ ./zeta package start ${APP_HOME}/$APP_ID.conf"
 echo ""
-
-
