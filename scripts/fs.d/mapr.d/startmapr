@@ -131,9 +131,9 @@ function _startmapr() {
         for NH in $NODE_HOSTS; do
             CLDB_TEST=$(echo "$CLDBS"|grep "$NH")
             INODE_TEST=$(echo "$INODES"|grep "$NH")
+            FSNODE_TEST=$(echo "$FSNODES"|grep "$NH")
             ZK_TEST=$(echo "$ZK_STRING"|grep "$NH")
-            if [ "$INODE_TEST" != "" ]; then
-                @go.log WARN "Found $NH in $INODES"
+            if [ "$FSNODE_TEST" != "" ]; then
                 if [ "$FUSE_NODES" == "1" ]; then
                     if [ "$FUSE_HOSTS" == "" ]; then
                         FUSE_HOSTS="$NH"
@@ -141,6 +141,9 @@ function _startmapr() {
                         FUSE_HOSTS="${FUSE_HOSTS} $NH"
                     fi
                 fi
+            fi
+            if [ "$INODE_TEST" != "" ]; then
+                @go.log WARN "Found $NH in $INODES"
                 if [ "$CLDB_TEST" != "" ]; then
                     if [ "$CLDB_NODES" == "1" ]; then
                         if [ "$CLDB_HOSTS" == "" ]; then
