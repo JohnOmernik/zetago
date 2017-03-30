@@ -179,7 +179,7 @@ function _stopmapr() {
         done
     else
         if [ "$FUSE_NODES" == "1" ]; then
-            T=$(echo "$INODES"|tr ";" " ")
+            T=$(echo "$FSNODES"|tr ";" " ")
             for H in $T; do
                 M=$(echo "$H"|cut -d":" -f1)
                 if [ "$FUSE_HOSTS" == "" ]; then
