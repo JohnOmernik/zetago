@@ -49,7 +49,7 @@ function _installmaprnode(){
     done
 
     if [ "$NODE_HOST" == "" ]; then
-        @go.log FATAL "This script must be passed a hostname and then an optional list of disks"
+        @go.log FATAL "This script must be passed a hostname and then an optional list of disks -n=node -d=disks"
     fi
 
 
