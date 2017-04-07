@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DOCKER_VER="1.11.2-0~xenial"
+DOCKER_VER="1.13.1-0~ubuntu-xenial"
 DOCKER_GPG="58118E89F3A912897C070ADBF76221572C52609D"
 DOCKER_REPO="deb https://apt.dockerproject.org/repo ubuntu-xenial main"
 REPO_TOOLS="ipset unzip bc nfs-common syslinux nano git jq"
