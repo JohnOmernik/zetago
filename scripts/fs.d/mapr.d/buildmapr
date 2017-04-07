@@ -131,7 +131,7 @@ if [ ! -f "/opt/mapr/conf/mapr-clusters.conf" ]; then
     /opt/mapr/server/mruuidgen > /opt/mapr/hostid
     cat /opt/mapr/hostid > /opt/mapr/conf/hostid.init
     sed -i 's/AddUdevRules(list/#AddUdevRules(list/' /opt/mapr/server/disksetup
-    /opt/mapr/server/configure.sh -C \${CLDBS} -Z \${ZKS} -F /opt/mapr/conf/initial_disks.txt -N \${CLUSTERNAME} -u ${FSUSER} -g ${FSUSER} -no-autostart \${MAPR_CONF_OPTS}
+    /opt/mapr/server/configure.sh -C \${CLDBS} -Z \${ZKS} -F /opt/mapr/conf/initial_disks.txt -N \${CLUSTERNAME} -u \${FSUSER} -g \${FSUSER} -no-autostart \${MAPR_CONF_OPTS}
 else
     echo "mapr-clusters.conf found, running warden"
     sed -i 's/AddUdevRules(list/#AddUdevRules(list/' /opt/mapr/server/disksetup
