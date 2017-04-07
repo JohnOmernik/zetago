@@ -113,7 +113,7 @@ fi
 cat > $APP_ENV_FILE << EOL1
 #!/bin/bash
 export ZETA_${APP_ID}_ENV="${APP_ID}"
-export ZETA_${APP_ID}_WEB_HOST="${APP_ID}.\${ZETA_MARATHON_ENV}.slave.\${ZETA_MESOS_DOMAIN}"
+export ZETA_${APP_ID}_WEB_HOST="${APP_ID}-${APP_ROLE}.marathon.slave.mesos"
 export ZETA_${APP_ID}_WEB_PORT="${APP_WEB_PORT}"
 export ZETA_${APP_ID}_USER_PORT="${APP_USER_PORT}"
 export ZETA_${APP_ID}_BIT_PORT="${APP_BIT_PORT}"
@@ -173,7 +173,6 @@ APP_ID="${APP_ID}"
 . $CLUSTERMOUNT/zeta/kstore/env/zeta_${APP_ROLE}.sh
 
 echo "Webhost: \${ZETA_${APP_ID}_WEB_HOST}:\${ZETA_${APP_ID}_WEB_PORT}"
-
 
 export DRILL_HEAP="${APP_HEAP_MEM}"
 
