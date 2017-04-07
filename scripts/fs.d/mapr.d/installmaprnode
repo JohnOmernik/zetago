@@ -70,16 +70,20 @@ function _installmaprnode(){
 
     if [ ! -f "${MAPR_DEFAULTS}/conf_default.tgz" ] || [ ! -f "${MAPR_DEFAULTS}/roles_default.tgz" ]; then
         @go.log INFO "Missing conf/role defaults - Grabbing from a container now"
+        if [ ! -d "$MAPR_DEFAULTS" ]; then
+            mkdir -p $MAPR_DEFAULTS
+        else
+            sudo chown -R ${IUSER}:${IUSER} $MAPR_DEFAULTS
+        fi
+        sudo rm -rf ${MAPR_DEFAULTS}/conf
+        sudo rm -rf ${MAPR_DEFAULTS}/roles
 
-        rm -f ${MAPR_DEFAULTS}/conf/*
-        rm -f ${MAPR_DEFAULTS}/roles/*
 
         CID=$(sudo docker run -d ${FS_DOCKER_REG_URL}/maprdocker:$MAPR_DOCKER_TAG sleep 15)
 
         sudo docker cp ${CID}:/opt/mapr/conf ${MAPR_DEFAULTS}
         sudo docker cp ${CID}:/opt/mapr/roles ${MAPR_DEFAULTS}
-        sudo chown ${IUSER}:${IUSER} ${MAPR_DEFAULTS}/conf/*
-        sudo chown ${IUSER}:${IUSER} ${MAPR_DEFAULTS}/roles/*
+        sudo chown -R ${IUSER}:${IUSER} $MAPR_DEFAULTS
 
         cd $MAPR_DEFAULTS
         cd conf
