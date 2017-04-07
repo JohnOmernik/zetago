@@ -310,13 +310,19 @@ function checkapi(){
 
     API_URL=$1
     CHK_CNT=$2
+    SKIP_HTTPS=$3
+    if [ "$SKIP_HTTPS" == "1" ]; then
+        CARGS="-s -k"
+    else
+        CARGS="-s"
+    fi
     if [ "$CHK_CNT" == "" ]; then
         CHK_CNT=10
     fi
 
     @go.log INFO "Waiting for API Respond at $API_URL"
     TESTOUT=""
-    TESTOUT=$(curl -s ${API_URL})
+    TESTOUT=$(curl $CARGS ${API_URL})
     TESTCNT=1
 
     while [ "$TESTOUT" == "" ]; do

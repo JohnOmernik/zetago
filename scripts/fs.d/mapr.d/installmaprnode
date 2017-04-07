@@ -377,7 +377,7 @@ MAREOF
     @go.log INFO "MapR Setup complete for $NODE_HOST"
     @go.log INFO "Adding Nodes to FSNODES"
     addtoconfvar "$NODE_HOST" " " "FSNODES" "./conf/fs_mapr.conf" "1"
-
+    
 
     @go.log INFO "To start host run: ./zeta fs mapr submitmaprnode $NODEHOST"
 
