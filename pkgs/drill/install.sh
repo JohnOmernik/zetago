@@ -104,10 +104,13 @@ if [ "$FS_PROVIDER" == "mapr" ]; then
     TICKETS="export MAPR_TICKETFILE_LOCATION=/opt/mapr/conf/mapruserticket"
     IMPERSON="export MAPR_IMPERSONATION_ENABLED=true"
     JAVO="export DRILL_JAVA_OPTS=\"\${DRILL_JAVA_OPTS} -Djava.security.auth.login.config=/opt/mapr/conf/mapr.login.conf -Dzookeeper.sasl.client=false\""
+    SQLLINE="export SQLLINE_JAVA_OPTS=\"\${SQLLINE_JAVA_OPTS} -Djava.security.auth.login.config=/opt/mapr/conf/mapr.login.conf -Dzookeeper.sasl.client=false\""
 else
     TICKETS=""
     IMPERSON=""
     JAVO="export DRILL_JAVA_OPTS=\"\${DRILL_JAVA_OPTS} -Dzookeeper.sasl.client=false\""
+    SQLLINE="export SQLLINE_JAVA_OPTS=\"\${SQLLINE_JAVA_OPTS} -Dzookeeper.sasl.client=false\""
+
 fi
 
 cat > $APP_ENV_FILE << EOL1
@@ -144,7 +147,7 @@ export HADOOP_HOME="$FS_HADOOP_HOME"
 $JAVO
 $TICKETS
 $IMPERSON
-
+$SQLLINE
 EOM
 
 chmod +x ${APP_HOME}/conf.std/distrib-env.sh
