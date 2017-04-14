@@ -60,11 +60,17 @@ function _packageuninstall() {
     else
         if [ "$UNATTEND" == "1" ]; then
             CONFIRM="Y"
+            if [ "$DESTROY" != "1" ]; then
+                echo "*********************************"
+                @go.log WARN "You have selected unattended uninstall with out the -d (Destroy) field. While your app will be uninstalled, the data will remain."
+                echo "*********************************"
+
         else
             echo ""
             echo "You have requested to uninstall the instance $APP_ID in role $APP_ROLE of the applicaiton $APP_NAME"
             echo "Uninstall stops the app, removes it from Marathon, and removes the ENV files for the application but leaves data/conf available"
             echo ""
+
             if [ "$DESTROY" == "1" ]; then
                 echo ""
                 echo "********************************"
@@ -75,6 +81,15 @@ function _packageuninstall() {
                 echo ""
                 echo "********************************"
                 echo ""
+            else
+                echo "*********************************"
+                @go.log WARN "You have selected uninstall with out the -d (Destroy) field. While your app will be uninstalled, the data will remain."
+                echo "Since this is not an unattended uninstall, you have the option to Destroy you data here"
+                read -e -p "When uninstalling, do you also wish to remove all data for this app? - This Action is irreversible (Y/N): " -i "N" CHK_DEST
+                if [ "$CHK_DEST" == "Y" ]; then
+                    @go.log WARN "Also Destroying data per user!"
+                    DESTROY="1"
+                fi
             fi
 
             read -e -p "Are you sure you wish to go on with this action? " -i "N" CONFIRM
