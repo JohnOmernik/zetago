@@ -366,7 +366,7 @@ function reqdockerimg() {
                 sudo docker pull ${ZETA_DOCKER_REG_URL}/${PULLIMG}
                 TST=$?
             fi
-            if [ "$PULLDCK" != "Y"] || [ "$TST" != 0 ]; then
+            if [ "$PULLDCK" != "Y" ] || [ "$TST" != 0 ]; then
                 echo "Required image not on host (perhaps even after pull attempt). Should we attempt to build with ./zeta package build $IMG ?"
                 read -e -p "Try to build required image? (Y/N): " -i "Y" DCK
                 if [ "$DCK" != "Y" ]; then
