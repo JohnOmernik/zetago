@@ -1,4 +1,5 @@
-#!/bin/bash#
+#!/bin/bash
+
 # uninstall a package for use with Zeta
 #
 # Arguments:
