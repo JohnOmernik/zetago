@@ -353,12 +353,27 @@ function reqdockerimg() {
     for IMG in $REQ_IMGS; do
         ICHK=$(sudo docker images|grep "${IMG}")
         if [ "$ICHK" == "" ]; then
-            @go.log WARN "Required Image $IMG not found on host - Attempt to build with ./zeta package build $IMG ?"
-            read -e -p "Try to build required image? " -i "Y" DCK
-            if [ "$DCK" != "Y" ]; then
-                @go.log FATAL "Cannont continue installed of $APP_NAME without image $IMG"
+            @go.log WARN "Required Image $IMG not found on host - Should we attempt to pull the image?"
+            read -e -p "Pull Image (Answering no here will allow you to build)? (Y/N): " -i "Y" PULLDCK
+            TST=0
+            if [ "$PULLDCK" == "Y" ]; then
+                CCHK=$(echo "${IMG}"|grep ":")
+                if [ "$CHK" == "" ]; then
+                    PULLIMG="${IMG}:latest"
+                else
+                    PULLIMG="$IMG"
+                fi
+                sudo docker pull ${ZETA_DOCKER_REG_URL}/${PULLIMG}
+                TST=$?
             fi
-            ./zeta package build $IMG
+            if [ "$PULLDCK" != "Y"] || [ "$TST" != 0 ]; then
+                echo "Required image not on host (perhaps even after pull attempt). Should we attempt to build with ./zeta package build $IMG ?"
+                read -e -p "Try to build required image? (Y/N): " -i "Y" DCK
+                if [ "$DCK" != "Y" ]; then
+                    @go.log FATAL "Cannont continue installed of $APP_NAME without image $IMG"
+                fi
+                ./zeta package build $IMG
+            fi
         fi
     done
 
