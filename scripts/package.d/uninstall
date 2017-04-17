@@ -1,5 +1,4 @@
-#!/bin/bash
-#
+#!/bin/bash#
 # uninstall a package for use with Zeta
 #
 # Arguments:
@@ -64,7 +63,7 @@ function _packageuninstall() {
                 echo "*********************************"
                 @go.log WARN "You have selected unattended uninstall with out the -d (Destroy) field. While your app will be uninstalled, the data will remain."
                 echo "*********************************"
-            fi
+
         else
             echo ""
             echo "You have requested to uninstall the instance $APP_ID in role $APP_ROLE of the applicaiton $APP_NAME"
