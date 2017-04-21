@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# createipdetect
+#
+# Creates an ip-detect script if it doesn't already exist
+#
+# One argument: Path to check and create script
+#
+sourceconf "$PREP_CONF"
+
+function _createipdetect() {
+
+    DETECT=$1
+    UNATTEND=$2
+
+    echo ""
+    echo "ip-detect"
+    echo "---------"
+    echo "Mesos  and zeta itself requires that each node provide an IP address using a predictable interface"
+    echo "To that end, this creates a ip-detect script that should work to pull that IP address"
+    echo "This script is located at $DETECT and uses the following list to walk through interfaces, the first one not being blank it returns:"
+    echo ""
+    echo "$INTERFACE_LIST"
+
+
+    if [ -f "$DETECT" ]; then
+        if [ "$UNATTEND" != "1" ]; then
+            @go.log WARN "IP Detect Script already exists at $DETECT"
+            read -e -p "Do you wish to replace IP Detect script located at $DETECT? (Y/N): " -i "N" CREATE
+        else
+            CREATE="N"
+        fi
+    else
+        CREATE="Y"
+    fi
+    if [ "$CREATE" == "Y" ]; then
+        @go.log INFO "Creating IP Detect at $DETECT"
+
+
+cat > $DETECT << EOF
+#!/bin/bash
+. /etc/profile
+INTS="$INTERFACE_LIST"
+
+for INT in \$INTS; do
+#    echo "Interface: \$INT"
+    T=\$(ip addr|grep "\$INT")
+    if [ "\$T" != "" ]; then
+        MEIP=\$(ip addr show \$INT | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
+        if [ "\$MEIP" != "" ]; then
+            echo \$MEIP
+            break
+        fi
+    fi
+done
+EOF
+        chmod +x $DETECT
+        echo "Running it on this node, ip-detect prodices this as a result:"
+        echo ""
+        $DETECT
+        echo ""
+        echo "If nothing is returned, or the returned result is incorrect, please edit $DETECT manually, if this is not working, Zeta install will fail"
+        echo ""
+        echo ""
+    fi
+
+}
+
+
+_createipdetect "$@"

@@ -1,0 +1,64 @@
+#!/bin/bash
+#
+# sshhosts
+#
+# A helper script to add ssh host keys to the init node
+#
+# Arguments - None
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$MESOS_CONF"
+
+function _addsshhosts() {
+
+    UNATTEND="0"
+    for i in "$@"
+       do
+        case $i in
+             -u)
+             UNATTEND="1"
+             ;;
+            "-n="*)
+            HOST="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ "$HOST" == "" ]; then
+        RUN_NODES="$INTERNAL_NODES"
+    else
+        RUN_NODES="$HOST"
+    fi
+
+    if [ "$UNATTEND" == "1" ]; then
+        @go.log WARN "We are automatically trusting all host keys due to UNATTEND being set"
+    else
+        read -e -p "Do you wish to automatically trust host keys provided? - Please understand the risks here: (Y/N): " -i "N" TRST
+        if [ "$TRST" != "Y" ]; then
+            @go.log FATAL "User choose not to accept SSH Keys - Exiting"
+        fi
+    fi
+
+    for IP in $RUN_NODES; do
+        CHK=$(grep "$IP" ~/.ssh/known_hosts)
+        if [ "$CHK" == "" ]; then
+            ssh-keyscan $IP >> ~/.ssh/known_hosts
+            HN=$(ssh $IP hostname)
+            FQHN=$(ssh $IP hostname -f)
+            ssh-keyscan $HN >> ~/.ssh/known_hosts
+            ssh-keyscan $FQHN >> ~/.ssh/known_hosts
+            @go.log INFO "Trusting Key from $IP - $HN - $FQHN"
+        else
+            @go.log INFO "$IP is already in known hosts - Skipping"
+        fi
+    done
+
+}
+
+
+_addsshhosts "$@"
+
