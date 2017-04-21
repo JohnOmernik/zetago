@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+# mesos - Scripts to stage and use Apache Mesos on a Zeta Cluster
+#
+#
+
+sourceconf "$PREP_CONF"
+
+function _mesos() {
+
+    LOCK="0"
+
+    for i in "$@"
+    do
+    case $i in
+        -l)
+        LOCK="1"
+        ;;
+        *)
+            # unknown option
+        ;;
+    esac
+    done
+
+    initconf "$MESOS_CONF"
+
+    echo ""
+    echo "********************************"
+    echo "It is highly advised to run the Mesos Scripts on the cluster initial node specified in the prep stage"
+    echo "That should be: $INIT_NODE"
+    echo "********************************"
+    echo ""
+    echo "Commands to use with dcos:"
+    echo ""
+    echo "./zeta mesos install -n=NODE1  # Install Mesos on NODE1 given dcos.conf"
+    echo "./zeta mesos install -a        # Install Mesos on all nodes listed in mesos.conf"
+    echo ""
+    echo "./zeta mesos sshhosts          # One time script to connect to each nodes internal IP, hostname, and FQ hostname to trust the ssh host key - Not needed but helps automate"
+    echo ""
+    echo "./zeta mesos -l                # Lock or unlock dcos.conf file"
+    echo ""
+
+
+    if [ "$LOCK" == "1" ]; then
+       lockconf "$MESOS_CONF"
+    fi
+
+}
+
+_mesos "$@"
+
