@@ -19,6 +19,7 @@ cat > $BASE_CONF << EOF
 
 export PREP_CONF="./conf/prep.conf"
 export DCOS_CONF="./conf/dcos.conf"
+export MESOS_CONF="./conf/mesos.conf"
 export FS_CONF="./conf/fs.conf"
 export CLUSTER_CONF="./conf/cluster.conf"
 export CLUSTER_ZETACA_CONF="./conf/cluster_zetaca.conf"
