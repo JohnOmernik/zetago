@@ -18,7 +18,7 @@ echo ""
 echo "Prior to starting Mesos Conf, it's important that your node prep was successful. We will run ./zeta prep status now to show you the prep status."
 echo ""
 echo ""
-./zeta prep status -o
+./zeta prep status
 echo ""
 echo ""
 echo ""
