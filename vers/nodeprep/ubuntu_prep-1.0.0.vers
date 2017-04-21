@@ -18,9 +18,11 @@ echo "/bin/rm -f /etc/init.d/plymouth* > /dev/null 2>&1"  | sudo tee -a /etc/rc.
 sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys $DOCKER_GPG
 echo "$DOCKER_REPO"|sudo tee /etc/apt/sources.list.d/docker.list
 
+export DEBIAN_FRONTEND=noninteractive
+
 sudo apt-get update
 
-sudo apt-get upgrade -y -o Dpkg::Options::="--force-confold"
+sudo apt-get upgrade -y -o Dpkg::Options::="--force-confold" 
 
 sudo apt-get dist-upgrade -y
 
