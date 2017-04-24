@@ -59,7 +59,7 @@ sudo mkdir -p $ZETA_MESOS_DIR/zookeeper/conf
 sudo chown -R $IUSER:$IUSER $ZETA_MESOS_DIR/
 sudo chmod 775 $ZETA_MESOS_DIR
 sudo chmod 770 $ZETA_MESOS_DIR/zookeeper
-suod chmod 777 $ZETA_MESOS_DIR/zookeeper/log
+sudo chmod 777 $ZETA_MESOS_DIR/zookeeper/log
 sudo cp /home/$IUSER/ip-detect $ZETA_MESOS_DIR/
 sudo chmod +x $ZETA_MESOS_DIR/ip-detect
 
