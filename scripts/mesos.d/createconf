@@ -163,7 +163,7 @@ EOP
 cat > ./conf/dcos.conf << EOD
 #!/bin/bash
 # Dummy DCOS Conf
-
+sourceconf "$MESOS_CONF"
 EOD
 
 
