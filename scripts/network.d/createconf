@@ -22,7 +22,7 @@ if [ "$DCOS" != "0" ]; then
 else
     @go.log INFO "No DCOS"
     DNS_SERVERS=$(echo "$MASTER_NODES"|tr " " ",")
-    DNS_SERVERS="$DNS_SERVER,${$TDNS}"
+    DNS_SERVERS="${DNS_SERVERS},${TDNS}"
 fi
 echo "The Zeta DNS Servers are $DNS_SERVERS"
 echo "You should not need to add additional DNS Servers."
