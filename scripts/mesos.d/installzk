@@ -81,13 +81,16 @@ After=docker.service
 Restart=on-failure
 ExecStartPre=-/usr/bin/docker stop zookeeper
 ExecStartPre=-/usr/bin/docker rm -f zookeeper
-ExecStart=/usr/bin/docker run --rm -e ZOO_LOG_DIR="/log" -v $ZETA_MESOS_DIR/zookeeper/data:/data:rw -v $ZETA_MESOS_DIR/zookeeper/log:/log:rw -v $ZETA_MESOS_DIR/zookeeper/datalog:/datalog:rw -v $ZETA_MESOS_DIR/zookeeper/conf:/conf:rw --name zookeeper -p 2181:2181 -p 2888:2888 -p 3888:3888  $MESOS_ZK_IMG
+ExecStart=/usr/bin/docker run --rm -v $ZETA_MESOS_DIR/zookeeper/data:/data:rw -v $ZETA_MESOS_DIR/zookeeper/log:/log:rw -v $ZETA_MESOS_DIR/zookeeper/datalog:/datalog:rw -v $ZETA_MESOS_DIR/zookeeper/conf:/conf:rw --name zookeeper -p 2181:2181 -p 2888:2888 -p 3888:3888  $MESOS_ZK_IMG
 ExecStop=/usr/bin/docker stop -t 2 zookeeper
 
 [Install]
 WantedBy=multi-user.target
 
 EOS
+echo "Updating logging dirs"
+sed -i "s@zookeeper\.log\.dir=\.@zookeeper.log.dir=/log@" $ZETA_MESOS_DIR/zookeeper/conf/log4j.properties
+sed -i "s@zookeeper\.tracelog\.dir=\.@zookeeper.tracelog.dir=/log@" $ZETA_MESOS_DIR/zookeeper/conf/log4j.properties
 
 echo "Creating zoo.cfg"
 cat > $ZETA_MESOS_DIR/zookeeper/conf/zoo.cfg << EOC
