@@ -57,6 +57,8 @@ sudo mkdir -p $ZETA_MESOS_DIR/zookeeper/conf
 sudo chown -R $IUSER:$IUSER $ZETA_MESOS_DIR/
 sudo chmod 775 $ZETA_MESOS_DIR
 sudo chmod 770 $ZETA_MESOS_DIR/zookeeper
+sudo cp /home/$IUSER/ip-detect $ZETA_MESOS_DIR/
+chmod +x $ZETA_MESOS_DIR/ip-detect
 
 sudo docker pull $MESOS_ZK_IMG
 CID=$(sudo docker run -d $MESOS_ZK_IMG sleep 30)
@@ -113,6 +115,7 @@ EOZ
 chmod +x ./bin/zk_install.sh
     for IP in $RUN_NODES; do
         scp ./bin/zk_install.sh $IP:/home/$IUSER/
+        scp ./conf/ip-detect $IP:/home/$IUSER/
         ssh $IP "/home/$IUSER/zk_install.sh"
     done
 

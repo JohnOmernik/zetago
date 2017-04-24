@@ -135,6 +135,7 @@ done
 
 cat > $MESOS_CONF << EOP
 #!/bin/bash
+DCOS=0
 DOCKER_PROXY="$DOCKER_PROXY"
 DOCKER_NOPROXY="$DOCKER_NOPROXY"
 
@@ -158,6 +159,12 @@ IP_DETECT="$IP_DETECT"
 
 MESOS_LOCKED="1"
 EOP
+
+cat > ./conf/dcos.conf << EOD
+#!/bin/bash
+# Dummy DCOS Conf
+
+EOD
 
 
 echo ""

@@ -125,20 +125,24 @@ EOS
     EDGE_OUTPUT=$(cat $FW_CUSTOM_DIR/edge_nodes_output.fw)
     EDGE_FORWARD=$(cat $FW_CUSTOM_DIR/edge_nodes_forward.fw)
 
+if [ "$DCOS" == "0" ]; then
+USE_DCOS="0"
+else
+USE_DCOS="1"
+fi
 
 cat > $FW_SCRIPT_SRC << EOF
 #!/bin/bash
 
 # FWCHANGELOG - $CURSTAMP - $FW_NOTES
-
-IP_DETECT="/opt/mesosphere/bin/detect_ip"
+IP_DETECT="/opt/zeta/ip-detect"
 if [ -f "\$IP_DETECT" ]; then
     MYIP=\$(\$IP_DETECT)
 else
     echo "DCOS not yet installed, No Service ports being opened"
     MYIP="NOSERVICES"
 fi
-
+USE_DCOS="$USE_DCOS"
 REMOTE_ALL_SSH="$REMOTE_ALL_SSH"
 DNS_SERVERS="$DNS_SERVERS"
 NTP_SERVERS="$NTP_SERVERS"
@@ -189,10 +193,11 @@ iptables -A logaccept -j ACCEPT
 
 
 
-echo "DCOS Masquarade and mangle"
-ipset add -exist overlay \$DCOS_CIDR nomatch
-iptables -t nat -A POSTROUTING -s \$DCOS_CIDR -m set --match-set overlay dst -j MASQUERADE
-
+if [ "\$USE_DCOS" == "1" ]; then
+    echo "DCOS Masquarade and mangle"
+    ipset add -exist overlay \$DCOS_CIDR nomatch
+    iptables -t nat -A POSTROUTING -s \$DCOS_CIDR -m set --match-set overlay dst -j MASQUERADE
+fi
 echo "Docker Masquarade"
 # Docker Masquerade
 iptables -t nat -N DOCKER
@@ -210,12 +215,14 @@ iptables -A FORWARD -o \$DOCKER_INTERFACE -j DOCKER
 iptables -A FORWARD -o \$DOCKER_INTERFACE -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 iptables -A FORWARD -i \$DOCKER_INTERFACE ! -o \$DOCKER_INTERFACE -j ACCEPT
 iptables -A FORWARD -i \$DOCKER_INTERFACE -o \$DOCKER_INTERFACE -j ACCEPT
-iptables -A FORWARD -o d-dcos -j DOCKER
-iptables -A FORWARD -o d-dcos -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-iptables -A FORWARD -i d-dcos ! -o d-dcos -j ACCEPT
-iptables -A FORWARD -i d-dcos -o d-dcos -j ACCEPT
-iptables -A DOCKER-ISOLATION -i d-dcos -o \$DOCKER_INTERFACE -j DROP
-iptables -A DOCKER-ISOLATION -i \$DOCKER_INTERFACE -o d-dcos -j DROP
+if [ "\$USE_DCOS" == "1" ]; then
+    iptables -A FORWARD -o d-dcos -j DOCKER
+    iptables -A FORWARD -o d-dcos -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+    iptables -A FORWARD -i d-dcos ! -o d-dcos -j ACCEPT
+    iptables -A FORWARD -i d-dcos -o d-dcos -j ACCEPT
+    iptables -A DOCKER-ISOLATION -i d-dcos -o \$DOCKER_INTERFACE -j DROP
+    iptables -A DOCKER-ISOLATION -i \$DOCKER_INTERFACE -o d-dcos -j DROP
+fi
 iptables -A DOCKER-ISOLATION -j RETURN
 
 
@@ -230,9 +237,10 @@ if [ "\$ZETA_CIDR_NONROUTABLE" != "" ]; then
         iptables -A INPUT -s \$S -j ACCEPT
     done
 fi
-
-iptables -A INPUT -i \$DOCKER_INTERFACE -s \$SPARTAN_CIDR -j ACCEPT
-iptables -A INPUT -s \$DCOS_CIDR -j ACCEPT
+if [ "\$USE_DCOS" == "1" ]; then
+    iptables -A INPUT -i \$DOCKER_INTERFACE -s \$SPARTAN_CIDR -j ACCEPT
+    iptables -A INPUT -s \$DCOS_CIDR -j ACCEPT
+fi
 iptables -A INPUT -s \$DOCKER_CIDR -j ACCEPT
 iptables -A INPUT -s \$DNS_SERVERS -p udp --dport 53 -j ACCEPT
 iptables -A INPUT -s \$DNS_SERVERS -p tcp --dport 53 -j ACCEPT
@@ -284,9 +292,10 @@ if [ "\$ZETA_CIDR_NONROUTABLE" != "" ]; then
         iptables -A OUTPUT -d \$S -j ACCEPT
     done
 fi
-
-iptables -A OUTPUT -d \$SPARTAN_CIDR -j ACCEPT
-iptables -A OUTPUT -d \$DCOS_CIDR -j ACCEPT
+if [ "\$USE_DCOS" == "1" ]; then
+    iptables -A OUTPUT -d \$SPARTAN_CIDR -j ACCEPT
+    iptables -A OUTPUT -d \$DCOS_CIDR -j ACCEPT
+fi
 iptables -A OUTPUT -d \$DOCKER_CIDR -j ACCEPT
 iptables -A OUTPUT -d \$DNS_SERVERS -p udp --dport 53 -j ACCEPT
 iptables -A OUTPUT -d \$DNS_SERVERS -p tcp --dport 53 -j ACCEPT
