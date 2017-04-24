@@ -35,7 +35,7 @@ function _installzk() {
         RUN_NODES="$HOST"
     fi
 
-    . $ZK_VERS
+    .  ./vers/mesos/$ZK_VERS
 
     ZK_SERVERS=""
     ZK_CNT="0"
