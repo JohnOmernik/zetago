@@ -63,7 +63,7 @@ sudo chmod +x $ZETA_MESOS_DIR/ip-detect
 
 sudo docker pull $MESOS_ZK_IMG
 CID=\$(sudo docker run -d $MESOS_ZK_IMG sleep 30)
-sudo docker cp \$CID:/conf/ /opt/mesos/zookeeper/
+sudo docker cp \$CID:/conf/ $ZETA_MESOS_DIR/zookeeper/
 sudo docker stop \$CID
 sudo docker rm \$CID
 
