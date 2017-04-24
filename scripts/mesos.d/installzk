@@ -91,6 +91,8 @@ EOS
 echo "Updating logging dirs"
 sed -i "s@zookeeper\.log\.dir=\.@zookeeper.log.dir=/log@" $ZETA_MESOS_DIR/zookeeper/conf/log4j.properties
 sed -i "s@zookeeper\.tracelog\.dir=\.@zookeeper.tracelog.dir=/log@" $ZETA_MESOS_DIR/zookeeper/conf/log4j.properties
+sed -i "s/zookeeper\.root\.logger=.*/zookeeper.root.logger=ROLLINGFILE,INFO,CONSOLE/" $ZETA_MESOS_DIR/zookeeper/conf/log4j.properties
+
 
 echo "Creating zoo.cfg"
 cat > $ZETA_MESOS_DIR/zookeeper/conf/zoo.cfg << EOC
