@@ -82,7 +82,7 @@ After=docker.service
 Restart=on-failure
 ExecStartPre=-/usr/bin/docker stop zookeeper
 ExecStartPre=-/usr/bin/docker rm -f zookeeper
-ExecStart=/usr/bin/docker run --rm -e ZOO_LOG_DIR="/log" -v $ZETA_MESOS_DIR/zookeeper/data:/data:rw -v $ZETA_MESOS_DIR/zookeeper/log:/log:rw -v $ZETA_MESOS_DIR/zookeeper/datalog:/datalog:rw -v $ZETA_MESOS_DIR/zookeeper/conf:/conf:rw --name zookeeper --net=HOST $MESOS_ZK_IMG
+ExecStart=/usr/bin/docker run --rm -e ZOO_LOG_DIR="/log" -v $ZETA_MESOS_DIR/zookeeper/data:/data:rw -v $ZETA_MESOS_DIR/zookeeper/log:/log:rw -v $ZETA_MESOS_DIR/zookeeper/datalog:/datalog:rw -v $ZETA_MESOS_DIR/zookeeper/conf:/conf:rw --name zookeeper --net=host $MESOS_ZK_IMG
 ExecStop=/usr/bin/docker stop -t 2 zookeeper
 
 [Install]
