@@ -1,0 +1,2 @@
+MESOS_ZK_IMG="library/zookeeper:3.4.10"
+

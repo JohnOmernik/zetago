@@ -1,0 +1,93 @@
+#!/bin/bash
+#
+# installzk
+#
+# A Script to install the helper script to add ssh host keys to the init node
+#
+# Arguments - None
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$MESOS_CONF"
+sourceconf "$NETWORK_CONF"
+
+function _installzk() {
+
+    UNATTEND="0"
+    for i in "$@"
+       do
+        case $i in
+             -u)
+             UNATTEND="1"
+             ;;
+            "-n="*)
+            HOST="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ "$HOST" == "" ]; then
+        RUN_NODES="$MASTER_NODES"
+    else
+        RUN_NODES="$HOST"
+    fi
+
+    . $ZK_VERS
+cat > ./bin/zk_install.sh << EOZ
+#!/bin/bash
+
+sudo mkdir -p $ZETA_MESOS_DIR/zookeeper/data
+sudo mkdir -p $ZETA_MESOS_DIR/zookeeper/log
+sudo mkdir -p $ZETA_MESOS_DIR/zookeeper/conf
+sudo chown -R $IUSER:$IUSER $ZETA_MESOS_DIR/
+sudo chmod 775 $ZETA_MESOS_DIR
+sudo chmod 770 $ZETA_MESOS_DIR/zookeeper
+
+@go.log INFO "Getting Default Configuration items from Zookeper Folder"
+sudo docker pull $MESOS_ZK_IMG
+CID=$(sudo docker run -d $MESOS_ZK_IMG sleep 30)
+sudo docker cp \$CID:/conf/ /opt/mesos/zookeeper/
+sudo docker stop \$CID
+sudo docker rm \$CID
+
+@go.log INFO "Creating SystemD Service File for Zookeeper"
+cat > $ZETA_MESOS_DIR/zookeeper/mesos-zookeeper.service << EOS
+[Unit]
+Description=Zookeeper Node for Mesos on Zeta
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=on-failure
+ExecStartPre=-/usr/bin/docker stop zookeeper
+ExecStartPre=-/usr/bin/docker rm -f zookeeper
+ExecStart=/usr/bin/docker run --rm -v $ZETA_MESOS_DIR/zookeeper/data:/zeta:rw -v $ZETA_MESOS_DIR/zookeeper/log:/datalog:rw -v $ZETA_MESOS_DIR/zookeeper/conf:/conf:rw --name zookeeper -p 2181:2181 -p 2888:2888 -p 3888:3888  $MESOS_ZK_IMG
+ExecStop=/usr/bin/docker stop -t 2 zookeeper
+
+[Install]
+WantedBy=multi-user.target
+
+EOS
+
+
+
+
+
+
+
+EOZ
+
+
+    for IP in $RUN_NODES; do
+
+
+    done
+
+}
+
+
+_installzk "$@"
+

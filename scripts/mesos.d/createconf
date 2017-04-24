@@ -74,6 +74,13 @@ echo "$REMAINING_NODES"
 echo
 read -e -p "Please enter list of master node(s) using space to separate (Internal IPS): " MASTER_NODES
 echo ""
+echo "We need a place to store Mesos information locally on each node. This defaults to /opt/zeta as a base, with a subdirectory for zookeeper, mesos-master, mesos-agent, marathon, and mesos-dns"
+read -e -p "Please enter the base location for local mesos storage: " -i "/opt/zeta" ZETA_MESOS_DIR
+echo ""
+
+
+
+
 echo "Please enter a cluster name"
 echo ""
 read -e -p "Cluster name: " -i "mydcos" CLUSTERNAME
@@ -130,6 +137,10 @@ cat > $MESOS_CONF << EOP
 #!/bin/bash
 DOCKER_PROXY="$DOCKER_PROXY"
 DOCKER_NOPROXY="$DOCKER_NOPROXY"
+
+ZETA_MESOS_DIR="$ZETA_MESOS_DIR"
+
+ZK_VERS="mesos-zk-3.4.10.vers"
 
 CLUSTERBASE="$CLUSTERBASE"
 CLUSTERNAME="$CLUSTERNAME"
