@@ -21,6 +21,10 @@ echo "$DOCKER_REPO"|sudo tee /etc/apt/sources.list.d/docker.list
 
 export DEBIAN_FRONTEND=noninteractive
 
+
+unset UCF_FORCE_CONFFOLD
+export UCF_FORCE_CONFFNEW=YES
+
 sudo apt-get update
 
 sudo apt-get upgrade -y -o DPkg::options::="--force-confdef" -o Dpkg::Options::="--force-confold" 
