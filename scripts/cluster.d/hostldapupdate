@@ -167,7 +167,7 @@ tls_cacertfile /etc/ssl/certs/ca-certificates.crt
 #scope sub
 
 EON
-
+sudo chmod 640 /etc/nslcd.conf
 sudo DEBIAN_FRONTEND=noninteractive pam-auth-update
 
 sudo sed -i "s/compat/compat ldap/g" /etc/nsswitch.conf
