@@ -4,6 +4,9 @@
 # A library that is called by the install script to ensure all variables for install are loaded and validated. 
 #
 
+
+ZETARE="^[a-z0-9]+$"
+
 @go.log INFO  "Instance install of $APP_NAME requested on $CLUSTERNAME"
 
 # APP_ROLE
@@ -37,7 +40,25 @@ if [ "$APP_ID" == "" ]; then
     echo ""
     echo "The application ID must be unique within a role for a given application"
     echo ""
-    read -e -p "What is the id you wish to use for the instance of $APP_NAME? " APP_ID
+
+    read -e -p "What is the id you wish to use for the instance of $APP_NAME? (Only letters and numbers are allowed): " APP_ID
+    if [[ ! "${APP_ID}" =~ $ZETARE ]]; then
+        @go.log WARN "Only letters and numbers are allowed in the APP_ID - Please re-enter the APP_ID"
+        while [[ ! "${APP_ID}" =~ $ZETARE ]]; do
+            read -e -p "Please re-enter a valid APP_ID using only numbers and letters. To quit (and not install) please type !exit: " APP_ID
+            if [ "$APP_ID" == "!exit" ]; then
+                @go.log FATAL "User typed !exit and quit"
+            fi
+        done
+    fi
+fi
+
+
+
+    
+
+
+
 fi
 
 APP_HOME="$CLUSTERMOUNT/$APP_DIR/$APP_ROLE/$APP_NAME/$APP_ID"
