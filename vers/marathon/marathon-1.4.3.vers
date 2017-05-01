@@ -1,0 +1,12 @@
+APP_VER="1.4.3"
+
+APP_IMG_NAME="marathon"
+APP_IMG_TAG="$APP_VER"
+
+APP_URL_BASE="http://downloads.mesosphere.com/marathon/v${APP_VER}"
+APP_URL_FILE="marathon-${APP_VER}.tgz"
+APP_URL="${APP_URL_BASE}/${APP_URL_FILE}"
+
+APP_IMG="zeta/${APP_IMG_NAME}:${APP_IMG_TAG}"
+
+APP_URL_DIR="marathon-${APP_VER}"

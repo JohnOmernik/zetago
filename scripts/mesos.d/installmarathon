@@ -1,0 +1,57 @@
+#!/bin/bash
+#
+# installmarathon
+#
+# A Script to install marathon on a master node
+#
+# Arguments - None
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$MESOS_CONF"
+sourceconf "$NETWORK_CONF"
+
+function _installmarathon() {
+
+. ./vers/marathon/$MARATHON_VERS
+
+cat > ./bin/installmaratathon.sh << EOF
+#!/bin/bash
+
+mkdir -p /opt/zeta/marathon
+mkdir -p /opt/zeta/marathon/log
+
+
+TMP_BUILD="/tmp/tbuild"
+mkdir -p \$TMP_BUILD
+cd \$TMP_BUILD
+wget $APP_URL
+if [ "$?" != "0" ]; then
+    @go.log WARN "Marathon release download failed, should we try with no-check-certificate?"
+    read -e -p "Try to download marathon with --no-check-certificate" -i "Y" TRY_AGAIN
+    if [ "$TRY_AGAIN" != "Y" ]; then
+        @go.log FATAL "Could not download Marathon release"
+    fi
+    wget --no-check-certificate $APP_URL
+fi
+
+cat > ./Dockerfile << EOD
+FROM openjdk:8-jdk
+WORKDIR /
+ADD $APP_URL_FILE
+WORKDIR /$APP_URL_DIR
+CMD["/bin/sh"]
+
+EOD
+sudo docker build -t $APP_IMG .
+
+
+
+EOF
+
+
+
+
+
+}
+_installmarathon
