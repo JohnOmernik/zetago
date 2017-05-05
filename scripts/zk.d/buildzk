@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# ./zeta zk buildzk
+#
+# Builds a docker container to run zookeeper commands in Zeta
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$ZK_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+function _buildzk() {
+
+    . /zeta/brewpot/zeta/kstore/env/zeta_shared.sh
+    APP_IMG="$ZETA_DOCKER_REG_URL/zookeepercli:latest"
+
+    @go.log INFO "Attempting to pull $APP_IMG"
+    sudo docker pull $APP_IMG
+    if [ "$?" == 0 ];then
+        @go.log WARN "Zookeepercli pulled, do you want to rebuild and push hack to $ZETA_DOCKER_REG_URL?"
+        read -e -p "Rebuild zookeepercli? (Y/N): " -i "N" REBUILD
+        if [ "$REBUILD" != "Y" ]; then
+            @go.log FATAL "Not rebuilding per user"
+        fi
+    fi
+
+    CURDIR=`pwd`
+
+    TMP_BUILD="/tmp/buildzk"
+    rm -rf $TMP_BUILD
+    mkdir -p $TMP_BUILD
+    cd $TMP_BUILD
+    git clone https://github.com/outbrain/zookeepercli
+    cd zookeepercli
+    sudo docker build -t $APP_IMG .
+    if [ "$?" == 0 ]; then
+        @go.log INFO "Build of zookeeper client successful - pushing to registery and updating conf"
+        sudo docker push $APP_IMG
+        sed -i "s/export ZK_BUILT=\"N\"/export ZK_BUILT=\"Y\"/g" ${ZK_CONF}
+    else
+        @go.log FATAL "Build of zookeeper client failed"
+    fi
+    cd $CURDIR
+    rm -rf $TMP_BUILD
+}
+
+
+
+_buildzk
+

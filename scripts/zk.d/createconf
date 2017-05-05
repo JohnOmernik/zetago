@@ -1,0 +1,82 @@
+#!/bin/bash
+#
+# Create conf file for Zeta ZK installation
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+reqshared "dockerregv2"
+
+echo ""
+echo "---------------------------------------"
+echo "The Zeta ZK tools allow for easy manipulation of Zookeeper settings"
+echo ""
+echo "The main ZK Cluster is used for Mesos. This is MESOS when called, is made up of the mesos master servers"
+echo ""
+echo "Other clusters can be added to zk.conf file by specifying a variables of ZK_%REFERENCE% where %REFERENCE% is how you wish to call the cluster."
+echo "The Value of ZK_%REFERENCE% is the zookeeper servers, in the format node1:port,node2:port,node3:port to connect to"
+echo ""
+echo "If ZK_DEFAULT is specified, then it will be used if no REFERENCE is passed to the zk commands"
+echo ""
+
+@go.log INFO "Adding Mesos Master nodes with port 2181"
+
+ZK_MESOS=""
+for X in $MASTER_NODES; do
+    if [ "$ZK_MESOS" == "" ]; then
+        ZK_MESOS="${X}:2181"
+    else
+        ZK_MESOS="${ZK_MESOS},${X}:2181"
+    fi
+done
+@go.log INFO "Setting ZK_DEFAULT to be MESOS"
+echo ""
+ZK_DEFAULT="MESOS"
+if [ "$FS_PROVIDER" == "mapr" ]; then
+    ZK_FS="$ZKS"
+    read -e -p "The Current ZK_DEFAULT is MESOS, however it is recommened to use the MapR ZK since that is your FS Provider. Use MapR as your Default? (Y/N): " -i "Y" USE_MAPR
+    if [ "$USE_MAPR" == "Y" ]; then
+        echo ""
+        @go.log INFO "Using MapR as the Default ZK"
+        ZK_DEFAULT="FS"
+    fi
+fi
+
+
+cat > $ZK_CONF << EOF
+#/bin/bash
+
+# Master Nodes for Mesos
+export ZK_MESOS="$ZK_MESOS"
+
+# If the Zeta FS is using Zookeeper, specify here
+export ZK_FS=""
+
+# Example of a different cluster named OTHER1
+export ZK_OTHER1=""
+
+# Has the ZK Docker been built and added to the cluster registery yet?
+export ZK_BUILT="N"
+
+# Default ZK Cluster to use
+export ZK_DEFAULT="$ZK_DEFAULT"
+
+export ZK_LOCKED="1"
+EOF
+
+
+@go.log INFO "zk.conf written"
+
+read -e -p "zk.conf written, do you wish to build the zk container?" -i "Y" BUILD_ZK
+if [ "$BUILD_ZK" == "Y" ]; then
+    @go.log INFO "Building ZK"
+    ./zeta zk buildzk
+fi
+

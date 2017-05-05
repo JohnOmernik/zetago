@@ -1,0 +1,61 @@
+#!/bin/bash
+#
+# ./zeta zk
+#
+# Provides and easy interface to various ZK servers on the cluster
+#
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+
+function _zk() {
+   LOCK="0"
+
+    for i in "$@"
+    do
+    case $i in
+        -l)
+        LOCK="1"
+        ;;
+        *)
+            # unknown option
+        ;;
+    esac
+    done
+
+    initconf "$ZK_CONF"
+
+    echo ""
+    echo "*****************************************"
+    echo "Zookeeper Administration Scripts for Zeta"
+    echo "*****************************************"
+    echo ""
+    echo "Commands to use with zk:"
+    echo ""
+    echo "./zeta zk                               # This command"
+    echo "./zeta zk buildzk                       # Builds the Zookeeper docker file and pushes to the cluster registry"
+    echo ""
+    echo "./zeta zk -l                            # Lock or unlock zk.conf file"
+    echo ""
+
+    if [ "$LOCK" == "1" ]; then
+       lockconf "$ZK_CONF"
+    fi
+
+
+
+}
+
+
+
+_zk

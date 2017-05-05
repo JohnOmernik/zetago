@@ -27,6 +27,7 @@ export PACKAGE_CONF="./conf/package.conf"
 export NETWORK_CONF="./conf/network.conf"
 export NODE_CONF="./conf/node.conf"
 export ROLE_CONF="./conf/role.conf"
+export ZK_CONF="./conf/zk.conf"
 EOF
 fi
 . $BASE_CONF
