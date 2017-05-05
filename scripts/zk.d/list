@@ -56,7 +56,7 @@ function _listzk() {
 
     ZK_REFVAR="ZK_${ZK_REF}"
     ZK_SRV="${!ZK_REFVAR}"
-    sudo docker run --rm -it $APP_IMG --servers $ZK_SRV -c ls $ZK_PATH
+    sudo docker run --rm -it $APP_IMG "--servers $ZK_SRV -c ls $ZK_PATH"
 
 }
 
