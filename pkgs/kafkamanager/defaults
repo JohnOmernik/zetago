@@ -1,4 +1,4 @@
 #!/bin/bash
 
-DEF_APP_VERS="kafkamanager-1.3.2.1.vers"
+DEF_APP_VERS="kafkamanager-1.3.3.6.vers"
 REC_DIR="zeta"

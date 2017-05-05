@@ -40,7 +40,7 @@ $DOCKER_LINE6
 
 RUN apt-get install -y openjdk-8-jdk unzip && apt-get clean && apt-get autoremove -y
 
-RUN wget $APP_URL && tar zxf $APP_URL_FILE && cd $APP_URL_DIR ./sbt clean dist && cp ./target/universal/*.zip /app/ && cd /app && rm  -rf ./$APP_URL_DIR && export APP_ZIP="\$(ls /app/)" && unzip \$APP_ZIP && export APP_VER=\$(echo \$APP_ZIP|sed "s/\.zip//") && rm ./\$APP_ZIP && mv \$APP_VER $APP_VER_DIR
+RUN wget $APP_URL && tar zxf $APP_URL_FILE && cd $APP_URL_DIR && ./sbt clean dist && cp ./target/universal/*.zip /app/ && cd /app && rm  -rf ./$APP_URL_DIR && export APP_ZIP="\$(ls /app/)" && unzip \$APP_ZIP && export APP_VER=\$(echo \$APP_ZIP|sed "s/\.zip//") && rm ./\$APP_ZIP && mv \$APP_VER $APP_VER_DIR
 
 CMD ["/bin/bash"]
 EOF
