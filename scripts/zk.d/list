@@ -39,7 +39,7 @@ function _listzk() {
         if [ "$SILENT" == "0" ]; then
             @go.log INFO "No ZK_REF provided with -z=, using ZK_DEFAULT of $ZK_DEFAULT"
         fi
-        ZK_REF=$"ZK_DEFAULT"
+        ZK_REF="$ZK_DEFAULT"
     fi
     if [ "$ZK_PATH" == "" ]; then
         if [ "$SILENT" == "0" ]; then
