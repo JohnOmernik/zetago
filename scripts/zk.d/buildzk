@@ -44,6 +44,7 @@ function _buildzk() {
     if [ "$?" == 0 ]; then
         @go.log INFO "Build of zookeeper client successful - pushing to registery and updating conf"
         sudo docker push $APP_IMG
+        cd $CURDIR
         sed -i "s/export ZK_BUILT=\"N\"/export ZK_BUILT=\"Y\"/g" ${ZK_CONF}
     else
         @go.log FATAL "Build of zookeeper client failed"

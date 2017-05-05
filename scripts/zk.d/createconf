@@ -57,7 +57,7 @@ cat > $ZK_CONF << EOF
 export ZK_MESOS="$ZK_MESOS"
 
 # If the Zeta FS is using Zookeeper, specify here
-export ZK_FS=""
+export ZK_FS="$ZK_FS"
 
 # Example of a different cluster named OTHER1
 export ZK_OTHER1=""
@@ -74,7 +74,7 @@ EOF
 
 @go.log INFO "zk.conf written"
 
-read -e -p "zk.conf written, do you wish to build the zk container?" -i "Y" BUILD_ZK
+read -e -p "zk.conf written, do you wish to build the zk container? (Y/N): " -i "Y" BUILD_ZK
 if [ "$BUILD_ZK" == "Y" ]; then
     @go.log INFO "Building ZK"
     ./zeta zk buildzk
