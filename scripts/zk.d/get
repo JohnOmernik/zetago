@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# ./zeta zk list
+# ./zeta zk get
 #
-# Lists ZK node
+# get ZK node or value
 #
 
 sourceconf "$PREP_CONF"
@@ -17,9 +17,9 @@ sourceconf "$ZK_CONF"
 
 reqshared "dockerregv2 zetaca openldap"
 
-function _listzk() {
+function _getzk() {
     ZK_REF=""
-    ZK_PATH=""
+    ZK_NODE=""
     SILENT="0"
     JSON="0"
 
@@ -36,16 +36,16 @@ function _listzk() {
         ZK_REF="${i#*=}"
         ;;
         *)
-        ZK_PATH="$i"
+        ZK_NODE="$i"
         # unknown option
     esac
     done
-
     if [ "$JSON" == "1" ]; then
         FORM="--format=json"
     else
         FORM="--format=txt"
     fi
+
 
     if [ "$ZK_REF" == "" ]; then
         if [ "$SILENT" == "0" ]; then
@@ -53,11 +53,8 @@ function _listzk() {
         fi
         ZK_REF="$ZK_DEFAULT"
     fi
-    if [ "$ZK_PATH" == "" ]; then
-        if [ "$SILENT" == "0" ]; then
-            @go.log INFO "No ZK_PATH provided, using /"
-        fi
-        ZK_PATH="/"
+    if [ "$ZK_NODE" == "" ]; then
+        @go.log FATAL "Must pass a path/node to get ./zeta zk get /path/to/node"
     fi
     if [ "$ZK_BUILT" != "Y" ]; then
         @go.log FATAL "ZK not built - run ./zeta zk buildzk"
@@ -68,7 +65,7 @@ function _listzk() {
 
     ZK_REFVAR="ZK_${ZK_REF}"
     ZK_SRV="${!ZK_REFVAR}"
-    sudo docker run --rm -it $APP_IMG --servers $ZK_SRV $FORM -c ls $ZK_PATH
+    sudo docker run --rm -it $APP_IMG --servers $ZK_SRV $FORM -c get $ZK_NODE
 
 }
 
