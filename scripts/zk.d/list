@@ -32,7 +32,7 @@ function _listzk() {
         ZK_REF="${i#*=}"
         ;;
         *)
-        ZKPATH="$i"
+        ZK_PATH="$i"
         # unknown option
     esac
     done
