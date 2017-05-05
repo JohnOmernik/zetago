@@ -21,6 +21,7 @@ function _listzk() {
     ZK_REF=""
     ZK_PATH=""
     SILENT="0"
+
     for i in "$@"
     do
     case $i in
@@ -62,5 +63,5 @@ function _listzk() {
 
 
 
-_listzk
+_listzk "$@"
 
