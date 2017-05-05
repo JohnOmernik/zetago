@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+# ./zeta zk list
+#
+# Lists ZK node
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$CLUSTER_BASE_CONF"
+sourceconf "$ZK_CONF"
+
+reqshared "dockerregv2 zetaca openldap"
+
+function _listzk() {
+    ZK_REF=""
+    ZK_PATH=""
+    SILENT="0"
+    for i in "$@"
+    do
+    case $i in
+        "-s")
+        SILENT="1"
+        ;;
+        "-z="*)
+        ZK_REF="${i#*=}"
+        ;;
+        *)
+        ZKPATH="$i"
+        # unknown option
+    esac
+    done
+    if [ "$ZK_REF" == "" ]; then
+        if [ "$SILENT" == "0" ]; then
+            @go.log INFO "No ZK_REF provided with -z=, using ZK_DEFAULT of $ZK_DEFAULT"
+        fi
+        ZK_REF=$"ZK_DEFAULT"
+    fi
+    if [ "$ZK_PATH" == "" ]; then
+        if [ "$SILENT" == "0" ]; then
+            @go.log INFO "No ZK_PATH provided, using /"
+        fi
+        ZK_PATH="/"
+    fi
+    if [ "$ZK_BUILT" != "Y" ]; then
+        @go.log FATAL "ZK not built - run ./zeta zk buildzk"
+    fi
+
+    . /zeta/brewpot/zeta/kstore/env/zeta_shared.sh
+    APP_IMG="$ZETA_DOCKER_REG_URL/zookeepercli:latest"
+
+    ZK_REFVAR="ZK_${ZK_REF}"
+    ZK_SRV="${!ZK_REFVAR}"
+    sudo docker run --rm -it $APP_IMG --servers $ZK_SRV -c ls $ZK_PATH
+
+}
+
+
+
+_listzk
+
