@@ -19,6 +19,7 @@ reqshared "dockerregv2 zetaca openldap"
 
 function _listzk() {
     ZK_REF=""
+    ZK_SRV=""
     ZK_PATH=""
     SILENT="0"
     JSON="0"
@@ -31,6 +32,9 @@ function _listzk() {
         ;;
         "-s")
         SILENT="1"
+        ;;
+        "-c="*)
+        ZK_SRV="${i#*=}"
         ;;
         "-z="*)
         ZK_REF="${i#*=}"
@@ -66,8 +70,15 @@ function _listzk() {
     . /zeta/brewpot/zeta/kstore/env/zeta_shared.sh
     APP_IMG="$ZETA_DOCKER_REG_URL/zookeepercli:latest"
 
-    ZK_REFVAR="ZK_${ZK_REF}"
-    ZK_SRV="${!ZK_REFVAR}"
+
+    if [ "$ZK_SRV" == "" ]; then
+        ZK_REFVAR="ZK_${ZK_REF}"
+        ZK_SRV="${!ZK_REFVAR}"
+    else
+        if [ "$SILENT" == "0" ]; then
+            @go.log INFO "Using zookeeper string provided with -c"
+        fi
+    fi
     sudo docker run --rm -it $APP_IMG --servers $ZK_SRV $FORM -c ls $ZK_PATH
 
 }
