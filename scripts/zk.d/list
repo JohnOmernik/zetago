@@ -55,10 +55,8 @@ function _listzk() {
     APP_IMG="$ZETA_DOCKER_REG_URL/zookeepercli:latest"
 
     ZK_REFVAR="ZK_${ZK_REF}"
-    echo "$ZK_REFVAR"
     ZK_SRV="${!ZK_REFVAR}"
-    echo "$ZK_SRC"
-    sudo docker run --rm -it $APP_IMG "-servers $ZK_SRV -c ls $ZK_PATH"
+    sudo docker run --rm -it $APP_IMG "--servers $ZK_SRV -c ls $ZK_PATH"
 
 }
 
