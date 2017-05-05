@@ -84,7 +84,7 @@ function _deletezk() {
     fi
 
     if [ "$RECURSE" == "1" ]; then
-        CMD="rmr"
+        CMD="rmr --force"
     else
         CMD="rm"
     fi

@@ -56,6 +56,7 @@ function _zk() {
     echo "./zeta zk buildzk                       # Builds the Zookeeper docker file and pushes to the cluster registry (No options for this command)"
     echo "./zeta zk list %NODE%                   # Lists a ZK Node %NODE% (/ if nothing passed)"
     echo "./zeta zk get %NODE%                    # Gets values for a ZK Node %NODE% (%NODE% Required)"
+    echo "./zeta zk delete %NODE%                 # Deletes a node (requires -r if node has children)"
     echo ""
     echo "./zeta zk -l                            # Lock or unlock zk.conf file"
     echo ""
