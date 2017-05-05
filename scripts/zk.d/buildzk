@@ -19,7 +19,7 @@ reqshared "dockerregv2 zetaca openldap"
 
 function _buildzk() {
 
-    . /zeta/brewpot/zeta/kstore/env/zeta_shared.sh
+    . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
     APP_IMG="$ZETA_DOCKER_REG_URL/zookeepercli:latest"
 
     @go.log INFO "Attempting to pull $APP_IMG"
