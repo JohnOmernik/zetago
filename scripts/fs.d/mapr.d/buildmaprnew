@@ -1,0 +1,217 @@
+#!/bin/bash
+#
+# mapr buildmapr
+# Build the MapR Docker Image
+#
+# Arguments:
+# -u optional Assume yes and just go ahead and build
+# -v optional build the passed in vers file (located in ./vers/mapr)
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+checkapi "https://fsdocker-shared.marathon.slave.mesos:5000/v2" 3 1
+
+function _build_mapr() {
+
+    UNATTEND="0"
+    ARGVERS=""
+
+    for i in "$@"
+    do
+    case $i in
+        -u)
+        UNATTEND="1"
+        ;;
+        "-v="*)
+        ARGVERS="${i#*=}"
+        ;;
+        *)
+            # unknown option
+        ;;
+    esac
+    done
+
+    if [ "$ARGVERS" != "" ]; then
+        if [ ! -f "./vers/mapr/$ARGVERS" ]; then
+            @go.log FATAL "vers file passed to the script $ARGVERS does not exist in ./vers/mapr"
+        else
+            VERS_FILE="./vers/mapr/$ARGVERS"
+        fi
+    else
+        VERS_FILE="./vers/mapr/$MAPR_VERS"
+    fi
+
+    if [ ! -f "$VERS_FILE" ]; then
+        echo "You must pass a version file to this script so it knows what to build"
+        echo ""
+        echo "Currently Included Versions:"
+        echo ""
+        ls -ls ./*.vers
+        echo ""
+        read -e -p "Select a vers file for MapR: " VER
+        VERS_FILE="./vers/mapr/$VER"
+        if [ ! -f "$VERS_FILE" ]; then
+            @go.log FATAL "Cannot find version file - exiting"
+        fi
+    fi
+
+    . $VERS_FILE
+
+    @go.log INFO "Building from $VERS_FILE with $MAPR_VER patch $MAPR_PATCH "
+    @go.log INFO "Docker tag: $MAPR_DOCKER_TAG"
+
+
+    D_CHK=$(sudo docker images|grep zkdocker|grep $MAPR_DOCKER_TAG)
+
+    if [ "$D_CHK" == "" ]; then
+        echo "It does NOT appear that version is built at this time"
+    else
+        echo "It does appear that the image you are requesting to build already exist: This is ok"
+    fi
+
+
+    if [ "$UNATTEND" == "1" ]; then
+        BUILD="Y"
+    else
+        echo "If this information looks correct, you can now choose to build"
+        read -e -p "Proceed to build (or rebuild) zkdocker:$MAPR_DOCKER_TAG image? " -i "N" BUILD
+    fi
+
+    if [ "$BUILD" != "Y" ]; then
+        @go.log FATAL "User decided to not build"
+    fi
+
+
+
+    if [ "$MAPR_PATCH_FILE" != "" ]; then
+        DOCKER_PATCH=" && wget ${MAPR_PATCH_ROOT}${MAPR_PATCH_FILE} && dpkg -i $MAPR_PATCH_FILE && rm $MAPR_PATCH_FILE && rm -rf /opt/mapr/.patch"
+    else
+        DOCKER_PATCH=""
+    fi
+
+    FSUSER_CRED="${FSUSER}:$FSUSER_PASS"
+    IUSER_CRED="${IUSER}:$IUSER_PASS"
+
+
+    BUILD_TMP="./tmp/maprdocker"
+
+    rm -rf $BUILD_TMP
+    mkdir -p $BUILD_TMP
+
+    if [ "$DOCKER_PROXY" != "" ]; then
+        DOCKER_LINE1="ENV http_proxy=$DOCKER_PROXY"
+        DOCKER_LINE2="ENV HTTP_PROXY=$DOCKER_PROXY"
+        DOCKER_LINE3="ENV https_proxy=$DOCKER_PROXY"
+        DOCKER_LINE4="ENV HTTPS_PROXY=$DOCKER_PROXY"
+        DOCKER_LINE5="ENV NO_PROXY=$DOCKER_NOPROXY"
+        DOCKER_LINE6="ENV no_proxy=$DOCKER_NOPROXY"
+    else
+        DOCKER_LINE1=""
+        DOCKER_LINE2=""
+        DOCKER_LINE3=""
+        DOCKER_LINE4=""
+        DOCKER_LINE5=""
+        DOCKER_LINE6=""
+    fi
+
+cat > $BUILD_TMP/dockerrun.sh << EOL3
+#!/bin/bash
+#This is run if there is no disktab in /opt/mapr/conf
+
+service rpcbind start
+
+if [ ! -f "/opt/mapr/conf/mapr-clusters.conf" ]; then
+    echo "No mapr-clusters.conf found - Assuming New Install Running Config based on settings"
+    /opt/mapr/server/mruuidgen > /opt/mapr/hostid
+    cat /opt/mapr/hostid > /opt/mapr/conf/hostid.init
+    sed -i 's/AddUdevRules(list/#AddUdevRules(list/' /opt/mapr/server/disksetup
+    /opt/mapr/server/configure.sh -C \${CLDBS} -Z \${ZKS} -F /opt/mapr/conf/initial_disks.txt -N \${CLUSTERNAME} -u \${FSUSER} -g \${FSUSER} -no-autostart \${MAPR_CONF_OPTS}
+else
+    echo "mapr-clusters.conf found, running warden"
+    sed -i 's/AddUdevRules(list/#AddUdevRules(list/' /opt/mapr/server/disksetup
+    cat /opt/mapr/conf/hostid.init > /opt/mapr/hostid
+    /opt/mapr/server/configure.sh -R
+fi
+
+/opt/mapr/server/dockerwarden.sh
+
+EOL3
+
+cat > $BUILD_TMP/dockerreconf.sh << EOL7
+#!/bin/bash
+
+/opt/mapr/server/configure.sh -C \${CLDBS} -Z \${ZKS} -N \${CLUSTERNAME} -no-autostart \${MAPR_CONF_OPTS}
+
+#/opt/mapr/server/dockerrun.sh
+
+EOL7
+
+cat > $BUILD_TMP/dockerwarden.sh << EOL4
+#!/bin/bash
+service mapr-warden start
+
+tail -f /dev/null
+EOL4
+
+cat > $BUILD_TMP/Dockerfile << EOL
+FROM ubuntu:latest
+
+$DOCKER_LINE1
+$DOCKER_LINE2
+$DOCKER_LINE3
+$DOCKER_LINE4
+$DOCKER_LINE5
+$DOCKER_LINE6
+
+RUN adduser --disabled-login --gecos '' --uid=${IUSER_UID} ${IUSER}
+RUN adduser --disabled-login --gecos '' --uid=${FSUSER_UID} ${FSUSER}
+
+RUN echo "$FSUSER_CRED"|chpasswd
+RUN echo "$IUSER_CRED"|chpasswd
+
+RUN usermod -a -G root ${FSUSER} && usermod -a -G root ${IUSER} && usermod -a -G adm ${FSUSER} && usermod -a -G adm ${IUSER} && usermod -a -G disk ${FSUSER} && usermod -a -G disk ${IUSER}
+
+RUN echo "deb $MAPR_MAIN_URL binary trusty" > /etc/apt/sources.list.d/mapr.list
+
+RUN echo "deb $MAPR_ECOSYSTEM_URL binary trusty" >> /etc/apt/sources.list.d/mapr.list
+
+RUN echo "Name: activate mkhomedir" > /usr/share/pam-configs/my_mkhomedir && echo "Default: yes" >> /usr/share/pam-configs/my_mkhomedir && echo "Priority: 900" >> /usr/share/pam-configs/my_mkhomedir && echo "Session-Type: Additional" >> /usr/share/pam-configs/my_mkhomedir && echo "Session:" >> /usr/share/pam-configs/my_mkhomedir && echo "      required               pam_mkhomedir.so umask=0022 skel=/etc/skel"
+
+RUN echo "base $LDAP_BASE" > /etc/ldap.conf && echo "uri $LDAP_URL" >> /etc/ldap.conf && echo "binddn $LDAP_RO_USER" >> /etc/ldap.conf && echo "bindpw $LDAP_RO_PASS" >> /etc/ldap.conf && echo "ldap_version 3" >> /etc/ldap.conf && echo "pam_password md5" >> /etc/ldap.conf && echo "bind_policy soft" >> /etc/ldap.conf
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --allow-unauthenticated libpam-ldap nscd openjdk-8-jre wget perl netcat syslinux-utils nfs-common && rm -rf /var/lib/apt/lists/* && apt-get clean
+
+RUN DEBIAN_FRONTEND=noninteractive pam-auth-update && sed -i "s/compat/compat ldap/g" /etc/nsswitch.conf && /etc/init.d/nscd restart
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --allow-unauthenticated mapr-core mapr-core-internal mapr-hadoop-core mapr-hbase mapr-mapreduce1 mapr-mapreduce2  && rm -rf /var/lib/apt/lists/* && apt-get clean
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --allow-unauthenticated mapr-fileserver mapr-cldb mapr-webserver mapr-nfs${DOCKER_PATCH} && rm -rf /var/lib/apt/lists/* && apt-get clean
+
+ADD dockerrun.sh /opt/mapr/server/
+ADD dockerwarden.sh /opt/mapr/server/
+ADD dockerreconf.sh /opt/mapr/server/
+
+RUN chmod +x /opt/mapr/server/dockerrun.sh && chmod +x /opt/mapr/server/dockerwarden.sh && chmod +x /opt/mapr/server/dockerreconf.sh
+
+CMD ["/bin/bash"]
+
+EOL
+
+
+
+
+    cd $BUILD_TMP
+    sudo docker build -t ${FS_DOCKER_REG_URL}/maprdocker:$MAPR_DOCKER_TAG .
+    cd ~/zetago
+    sudo docker push ${FS_DOCKER_REG_URL}/maprdocker:$MAPR_DOCKER_TAG
+    rm -rf $BUILD_TMP
+    @go.log INFO "maprdocker:$MAPR_DOCKER_TAG Image Pushed and ready to go"
+}
+
+_build_mapr "$@"
