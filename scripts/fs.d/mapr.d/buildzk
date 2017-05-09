@@ -29,7 +29,7 @@ function _build_zk() {
         -u)
         UNATTEND="1"
         ;;
-        "-v=*")
+        "-v="*)
         ARGVERS="${i#*=}"
         ;;
         *)

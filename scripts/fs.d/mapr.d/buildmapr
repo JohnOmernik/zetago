@@ -28,7 +28,7 @@ function _build_mapr() {
         -u)
         UNATTEND="1"
         ;;
-        "-v=*")
+        "-v="*)
         ARGVERS="${i#*=}"
         ;;
         *)
