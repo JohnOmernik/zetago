@@ -37,6 +37,7 @@ function _build_zk() {
         ;;
     esac
     done
+    @go.log INFO "Provided ARGVERS: $ARGVERS"
 
     if [ "$ARGVERS" != "" ]; then
         if [ ! -f "./vers/mapr/$ARGVERS" ]; then
