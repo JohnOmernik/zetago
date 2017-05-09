@@ -5,8 +5,8 @@ export MAPR_PATCH="0"
 
 export MAPR_DOCKER_TAG="${MAPR_VER}-${MAPR_PATCH}"
 
-export MAPR_MAIN_URL="http://package.mapr.com/releases/v5.2.1/ubuntu/"
-export MAPR_ECOSYSTEM_URL="http://package.mapr.com/releases/MEP/MEP-3.0/ubuntu/"
+export MAPR_MAIN_URL="http://package.mapr.com/releases/v5.2.1/ubuntu/ binary trusty"
+export MAPR_ECOSYSTEM_URL="http://package.mapr.com/releases/MEP/MEP-3.0/ubuntu/ binary trusty"
 
 export MAPR_PATCH_ROOT=""
 

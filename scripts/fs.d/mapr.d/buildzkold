@@ -189,9 +189,9 @@ RUN echo "$IUSER_CRED"|chpasswd
 
 RUN usermod -a -G root ${FSUSER} && usermod -a -G root ${IUSER} && usermod -a -G adm ${FSUSER} && usermod -a -G adm ${IUSER} && usermod -a -G disk ${FSUSER} && usermod -a -G disk ${IUSER}
 
-RUN echo "deb $MAPR_MAIN_URL binary trusty" > /etc/apt/sources.list.d/mapr.list
+RUN echo "deb $MAPR_MAIN_URL mapr optional" > /etc/apt/sources.list.d/mapr.list
 
-RUN echo "deb $MAPR_ECOSYSTEM_URL binary trusty" >> /etc/apt/sources.list.d/mapr.list
+RUN echo "deb $MAPR_ECOSYSTEM_URL binary/" >> /etc/apt/sources.list.d/mapr.list
 
 RUN echo "Name: activate mkhomedir" > /usr/share/pam-configs/my_mkhomedir && echo "Default: yes" >> /usr/share/pam-configs/my_mkhomedir && echo "Priority: 900" >> /usr/share/pam-configs/my_mkhomedir && echo "Session-Type: Additional" >> /usr/share/pam-configs/my_mkhomedir && echo "Session:" >> /usr/share/pam-configs/my_mkhomedir && echo "      required               pam_mkhomedir.so umask=0022 skel=/etc/skel"
 
