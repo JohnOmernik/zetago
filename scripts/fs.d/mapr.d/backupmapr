@@ -1,0 +1,78 @@
+#!/bin/bash
+#
+# fs mapr backupmapr - tar up maprdocker folder on nodes for backup
+#
+# Arguments:
+# -u - Unattended - Will not ask "Are you sure"
+# -n="%NODES SEP" Provide specific nodes to do stuff on (combine with which services you wish to work with)
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+MEUSER=$(whoami)
+
+if [ "$MEUSER" != "${IUSER}" ]; then
+    @go.log FATAL "This script needs to be un as ${IUSER}. Current User: $MEUSER"
+fi
+
+
+function _backupmapr() {
+
+    UNATTEND="0"
+    NODE_HOSTS=""
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            "-n="*)
+            NODE_HOSTS="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+# Sanity Checks
+    if [ "$NODE_HOSTS" != "" ]; then
+        @go.log WARN "NODE_HOSTS Provided: $NODE_HOSTS"
+    else
+        @go.log WARN "Node hosts not provided, using all agents nodes"
+        NODE_HOSTS="$AGENT_NODES"
+    fi
+
+    if [ "$UNATTEND" == "1" ]; then
+        @go.log WARN "Unattended Selected - Will not prompt"
+        OPER="Y"
+    else
+        read -e -p "Proceed to back up $MAPR_INST directory on requested node (ensure MapR is stopped!) (Y/N): " -i "Y" OPER
+    fi
+    if [ "$OPER" != "Y" ]; then
+        @go.log FATAL "Exiting out of the Install due to user decision"
+    fi
+
+    BACKUP_TIME=$(date +%Y-%m-%d_%H%M%S)
+    BACKUP_FILE="mapr_backup_${BACKUP_TIME}.tgz"
+    BACKUP_PATH="/opt/mapr_backups"
+    BACKUP_FULL_PATH="${BACKUP_PATH}/${BACKUP_FILE}"
+
+    for NODE in $NODE_HOSTS; do
+        MAPRCHK=$(ssh $NODE "ls -1 $MAPR_INST")
+        if [ "$MAPRCHK" == "" ]; then
+            @go.log WARN "NODE: $NODE does not appear to have a $MAPR_INST - Skipping"
+        else
+            @go.log WARN "Backing up $MAPR_INST on $NODE to $BACKUP_FULL_PATH"
+            ssh $NODE "sudo mkdir -p $BACKUP_PATH"
+            ssh $NODE "cd /opt && sudo tar zcf $BACKUP_FULL_PATH $MAPR_INST"
+            @go.log INFO "Finished Backup on $NODE"
+        fi
+    done
+}
+
+_backupmapr "$@"
