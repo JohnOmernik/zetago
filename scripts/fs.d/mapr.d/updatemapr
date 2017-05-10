@@ -127,7 +127,7 @@ cat > $TMP_DIR/NEWNODE_$NODEHOST.json << EOF1
 $NEWAPP
 EOF1
                     @go.log WARN "Submitting New"
-                    ./zeta cluster marathon submit $TMP_DIR/NEWZK_$NODEHOST.json 1
+                    ./zeta cluster marathon submit $TMP_DIR/NEWNODE_$NODEHOST.json 1
                     rm $TMP_DIR/NEWNODE_$NODEHOST.json
                 fi
 
