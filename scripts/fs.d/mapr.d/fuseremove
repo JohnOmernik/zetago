@@ -86,7 +86,9 @@ function _fuseremove() {
 
     if [ "$INST_DIST" == "ubuntu" ]; then
         REM_CLIENT="mapr-client"
+        REM_CLIENT_PATCH="mapr-patch-client"
         REM_POSIX="mapr-posix-client-basic"
+        REM_POSIX_PATCH="mapr-patch-posix-client-basic"
         REM_LIBRDKAFKA="mapr-librdkafka"
         REM_CMD="dpkg --purge --force-all"
     elif [ "$INST_DIST" == "rh" ]; then
@@ -98,10 +100,12 @@ function _fuseremove() {
 
 
     ssh $NODE_HOST "sudo /etc/init.d/mapr-posix-client-basic stop"
+    ssh $NODE_HOST "sudo $REM_CMD $REM_POSIX_PATCH"
     ssh $NODE_HOST "sudo $REM_CMD $REM_POSIX"
     sleep 2
     ssh $NODE_HOST "sudo $REM_CMD $REM_LIBRDKAFKA"
     sleep 1
+    ssh $NODE_HOST "sudo $REM_CMD $REM_CLIENT_PATCH"
     ssh $NODE_HOST "sudo $REM_CMD $REM_CLIENT"
 
     echo ""
