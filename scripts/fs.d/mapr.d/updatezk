@@ -51,12 +51,10 @@ function _updatezk() {
         HN=$(ssh $NODE "hostname -f")
         ZK_TEST=$(echo "$ZK_STRING"|grep "$HN")
         if [ "$ZK_TEST" != "" ]; then
-            if [ "$ZK_NODES" == "1" ]; then
-                if [ "$ZK_HOSTS" == "" ]; then
-                    ZK_HOSTS="$HN"
-                else
-                    ZK_HOSTS="${ZK_HOSTS} $HN"
-                fi
+            if [ "$ZK_HOSTS" == "" ]; then
+                ZK_HOSTS="$HN"
+            else
+                ZK_HOSTS="${ZK_HOSTS} $HN"
             fi
          fi
     done
