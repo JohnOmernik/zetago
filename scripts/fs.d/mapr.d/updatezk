@@ -63,7 +63,7 @@ function _updatezk() {
     echo "ZK_HOSTS: $ZK_HOSTS"
     for NODEHOST in $ZK_HOSTS; do
         MAR_ID="shared/mapr/zks/zk${NODEHOST}"
-        CUR_IMG=$(./zeta cluster marathon getinfo $MAR_ID image)
+        CUR_IMG=$(./zeta cluster marathon getinfo $MAR_ID)
         @go.log WARN "Host: $NODEHOST - ID: $MAR_ID - Image: $CUR_IMG"
     done
 }
