@@ -92,7 +92,7 @@ function _updatemapr() {
     ALL_HOSTS="$STD_HOSTS $CLDB_HOSTS"
     echo "STD_HOSTS: $STD_HOSTS"
     echo "CLDB_HOSTS: $CLDB_HOSTS"
-    for NODEHOST in ALL_HOSTS; do
+    for NODEHOST in $ALL_HOSTS; do
 
         CLDB_CHK=$(echo $CLDB_HOSTS|grep $NODEHOST)
 
@@ -104,13 +104,15 @@ function _updatemapr() {
 
         MARATHON_URL="$MARATHON_SUBMIT"
         FULL_URL="${MARATHON_URL}/${MAR_ID}"
+        echo "$FULL_URL"
         FULLRESULT=$(curl -s -X GET $FULL_URL)
         APPDEF=$(echo $FULLRESULT|jq '.app'|sed -r "/(\"version\"|\"args\"|\"user\"|\"uris\"|\"fetch\"|\"storeUrls\"|\"executor\")/d")
         CHKSTOP=$(echo "$FULLRESULT"|grep "\"instances\":0")
         if [ "$CHKSTOP" != "" ]; then
             STOPPED="True"
             @go.log INFO "Looks good, instances = 0 so things are stopped"
-            IMG=$(echo "$FULLRESULT"|grep -P -o "fsdocker-shared[^,]+"|sed "s/\"//g")
+            IMG=$(echo "$APPDEF"|jq -r '.container.docker.image')
+            echo "$IMG"
             IMG_REG=$(echo "$IMG"|cut -d"/" -f1)
             IMG_TAG=$(echo "$IMG"|cut -d"/" -f2)
             GOAL_IMG="${IMG_REG}/${GOAL_TAG}"
@@ -120,13 +122,12 @@ function _updatemapr() {
                 if [ "$UPDATENODE" == "Y" ]; then
                     NEWAPP=$(echo "$APPDEF"|sed "s/$IMG_TAG/$GOAL_TAG/g")
                     @go.log WARN "Destroying $MAR_ID"
-#                    ./zeta cluster marathon destroy $MAR_ID 1
+                    ./zeta cluster marathon destroy $MAR_ID 1
 cat > $TMP_DIR/NEWNODE_$NODEHOST.json << EOF1
 $NEWAPP
 EOF1
                     @go.log WARN "Submitting New"
-#                    ./zeta cluster marathon submit $TMP_DIR/NEWZK_$NODEHOST.json 1
-                    cat $TMP_DIR/NEWNODE_$NODEHOST.json
+                    ./zeta cluster marathon submit $TMP_DIR/NEWZK_$NODEHOST.json 1
                     rm $TMP_DIR/NEWNODE_$NODEHOST.json
                 fi
 
