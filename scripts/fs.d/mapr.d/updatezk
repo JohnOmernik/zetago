@@ -25,21 +25,30 @@ fi
 function _updatezk() {
 
     UNATTEND="0"
+    NODES=""
     for i in "$@"
         do
         case $i in
             -u)
             UNATTEND="1"
             ;;
+            "-n="*)
+            NODE="${i#*=}"
+            ;;
             *)
             # unknown option
             ;;
         esac
     done
-    NODES="$AGENT_NODES"
+    if [ "$NODES" == "" ]; then
+        @go.log WARN "No hosts provided with -n doing all ZK nodes"
+        NODES="$AGENT_NODES"
+    else
+        @go.log WARN "Will only update $NODES if they are ZKs"
+    fi
     ZK_HOSTS=""
     for NODE in $NODES; do
-        HN=$(ssh $NODE (hostname -f")
+        HN=$(ssh $NODE "hostname -f")
         ZK_TEST=$(echo "$ZK_STRING"|grep "$HN")
         if [ "$ZK_TEST" != "" ]; then
             if [ "$ZK_NODES" == "1" ]; then
