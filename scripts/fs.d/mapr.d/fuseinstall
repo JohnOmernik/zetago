@@ -104,7 +104,7 @@ function _fuseinstall() {
     if [ "$INST_DIST" == "ubuntu" ]; then
 
 
-        if [ ! -f "${CLIENT_DIR}/$UBUNTU_MAPR_CLIENT_FILE" ] || [ ! -f "${CLIENT_DIR}/$UBUNTU_MAPR_POSIX_FILE" ] || [ ! -f "${CLIENT_DIR}/UBUNTU_MAPR_LIBRDKAFKA_FILE" ]; then
+        if [ ! -f "${CLIENT_DIR}/$UBUNTU_MAPR_CLIENT_FILE" ] || [ ! -f "${CLIENT_DIR}/$UBUNTU_MAPR_POSIX_FILE" ] || [ ! -f "${CLIENT_DIR}/$UBUNTU_MAPR_LIBRDKAFKA_FILE" ]; then
             echo "Couldn't find MapR Files"
             @go.log WARN "MapR Client Install files not found"
 
