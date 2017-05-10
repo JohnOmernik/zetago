@@ -106,7 +106,7 @@ function _updatemapr() {
         FULL_URL="${MARATHON_URL}/${MAR_ID}"
         echo "$FULL_URL"
         FULLRESULT=$(curl -s -X GET $FULL_URL)
-        APPDEF=$(echo $FULLRESULT|jq '.app'|sed -r "/(\"version\"|\"args\"|\"user\"|\"uris\"|\"fetch\"|\"storeUrls\"|\"executor\")/d")
+        APPDEF=$(echo $FULLRESULT|jq '.app'|sed -r "/(\"version\"|\"args\"|\"user\"|\"uris\"|\"fetch\"|\"storeUrls\"|\"executor\"|\"message\")/d")
         CHKSTOP=$(echo "$FULLRESULT"|grep "\"instances\":0")
         if [ "$CHKSTOP" != "" ]; then
             STOPPED="True"
