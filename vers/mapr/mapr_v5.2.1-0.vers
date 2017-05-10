@@ -18,9 +18,12 @@ export MAPR_LOOP_PATCH_FILE=""
 #Used for Fuse install
 
 export UBUNTU_MAPR_CLIENT_BASE="http://package.mapr.com/releases/v5.2.1/ubuntu/"
+export UBUNTU_MAPR_MEP_BASE="http://package.mapr.com/releases/MEP/MEP-3.0/ubuntu/"
+
 export UBUNTU_MAPR_CLIENT_FILE="mapr-client-5.2.1.42646.GA-1.amd64.deb"
 export UBUNTU_MAPR_POSIX_FILE="mapr-posix-client-basic_5.2.1.42646.GA-1_amd64.deb"
 export UBUNTU_MAPR_LOOP_FILE="mapr-loopbacknfs_5.2.1.42646.GA-1_amd64.deb"
+export UBUNTU_MAPR_LIBRDKAFKA_FILE="mapr-librdkafka_0.9.1.201703301726_all.deb"
 
 export UBUNTU_MAPR_PATCH_BASE=""
 export UBUNTU_MAPR_PATCH_CLIENT_FILE=""

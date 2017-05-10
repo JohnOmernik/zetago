@@ -102,7 +102,9 @@ function _fuseinstall() {
     mkdir -p $CLIENT_DIR
 
     if [ "$INST_DIST" == "ubuntu" ]; then
-        if [ ! -f "${CLIENT_DIR}/$UBUNTU_MAPR_CLIENT_FILE" ] || [ ! -f "${CLIENT_DIR}/$UBUNTU_MAPR_POSIX_FILE" ]; then
+
+
+        if [ ! -f "${CLIENT_DIR}/$UBUNTU_MAPR_CLIENT_FILE" ] || [ ! -f "${CLIENT_DIR}/$UBUNTU_MAPR_POSIX_FILE" ] || [ ! -f "${CLIENT_DIR}/UBUNTU_MAPR_LIBRDKAFKA_FILE" ]; then
             echo "Couldn't find MapR Files"
             @go.log WARN "MapR Client Install files not found"
 
@@ -118,6 +120,7 @@ function _fuseinstall() {
             cd $CLIENT_DIR
             wget ${UBUNTU_MAPR_CLIENT_BASE}${UBUNTU_MAPR_CLIENT_FILE}
             wget ${UBUNTU_MAPR_POSIX_BASE}${UBUNTU_MAPR_POSIX_FILE}
+            wget ${UBUNTU_MAPR_MEP_BASE}/${UBUNTU_MAPR_LIBRDKAFKA_FILE}
             if [ "$UBUNTU_MAPR_PATCH_CLIENT_FILE" != "" ]; then
                 wget ${UBUNTU_MAPR_PATCH_BASE}${UBUNTU_MAPR_PATCH_CLIENT_FILE}
                 wget ${UBUNTU_MAPR_PATCH_BASE}${UBUNTU_MAPR_PATCH_POSIX_FILE}
@@ -126,6 +129,7 @@ function _fuseinstall() {
         fi
         INST_CLIENT=$UBUNTU_MAPR_CLIENT_FILE
         INST_POSIX=$UBUNTU_MAPR_POSIX_FILE
+        INST_LIBRDKAFKA="$UBUNTU_MAPR_LIBRDKAFKA_FILE"
         INST_CMD="dpkg -i"
     elif [ "$INST_DIST" == "rh" ]; then
         @go.log FATAL "Redhat/CentOS not setup at this time"
@@ -137,6 +141,9 @@ function _fuseinstall() {
 
     scp ${CLIENT_DIR}/$INST_CLIENT $NODE_HOST:/home/${IUSER}/
     scp ${CLIENT_DIR}/$INST_POSIX $NODE_HOST:/home/${IUSER}/
+    if [ "$INST_LIBRDKAFKA" != "" ]; then
+        scp ${CLIENT_DIR}/$INST_LIBRDKAFKA $NODE_HOST:/home/${IUSER}/
+    fi
 
     if [ "$UBUNTU_MAPR_PATCH_CLIENT_FILE" != "" ]; then
         scp ${CLIENT_DIR}/${UBUNTU_MAPR_PATCH_CLIENT_FILE} $NODE_HOST:/home/${IUSER}/
@@ -188,7 +195,7 @@ EOL1
     ssh $NODE_HOST "sudo /opt/mapr/server/configure.sh -N $CLUSTERNAME -c -C $CLDBS"
     ssh $NODE_HOST "sudo mkdir -p /$CLUSTERBASE"
     ssh $NODE_HOST "sudo $INST_CMD $INST_POSIX"
-
+    ssh $NODE_HOST "sudo $INST_CMD $INST_LIBRDKAFKA"
     if [ "$UBUNTU_MAPR_PATCH_POSIX_FILE" != "" ]; then
         ssh $NODE_HOST "sudo $INST_CMD ${UBUNTU_MAPR_PATCH_POSIX_FILE}"
     fi
