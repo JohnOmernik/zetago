@@ -129,7 +129,7 @@ function _fuseinstall() {
         fi
         INST_CLIENT=$UBUNTU_MAPR_CLIENT_FILE
         INST_POSIX=$UBUNTU_MAPR_POSIX_FILE
-        INST_LIBRDKAFKA="$UBUNTU_MAPR_LIBRDKAFKA_FILE"
+        INST_LIBRDKAFKA=$UBUNTU_MAPR_LIBRDKAFKA_FILE
         INST_CMD="dpkg -i"
     elif [ "$INST_DIST" == "rh" ]; then
         @go.log FATAL "Redhat/CentOS not setup at this time"
