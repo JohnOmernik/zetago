@@ -68,7 +68,7 @@ function _updatemapr() {
     done
 
     @go.log WARN "The curren cluster MapR Version file is $MAPR_VERS"
-    read -e -p "Do you wish to change the cluster MAPR_VERS - The Updates will ensure nodes are running the cluster version. Change Vers? (Y/N): " -i "Y" CHANGE
+    read -e -p "Do you wish to change the cluster MAPR_VERS - The Updates will ensure nodes are running the cluster version. Change Vers? (Y/N): " -i "N" CHANGE
     if [ "$CHANGE" == "Y" ]; then
         echo "The current cluster versions are: "
         ls -1 ./vers/mapr
