@@ -1,0 +1,64 @@
+#!/bin/bash
+#
+# fs mapr updatezk update zookeepers to a new image
+#
+# Arguments:
+# -u - Unattended - Will not ask "Are you sure"
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+. ./vers/mapr/$MAPR_VERS
+
+MEUSER=$(whoami)
+
+if [ "$MEUSER" != "${IUSER}" ]; then
+    @go.log FATAL "This script needs to be un as ${IUSER}. Current User: $MEUSER"
+fi
+
+
+function _updatezk() {
+
+    UNATTEND="0"
+    for i in "$@"
+        do
+        case $i in
+            -u)
+            UNATTEND="1"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+    NODES="$AGENT_NODES"
+    ZK_HOSTS=""
+    for NODE in $NODES; do
+        HN=$(ssh $NODE (hostname -f")
+        ZK_TEST=$(echo "$ZK_STRING"|grep "$HN")
+        if [ "$ZK_TEST" != "" ]; then
+            if [ "$ZK_NODES" == "1" ]; then
+                if [ "$ZK_HOSTS" == "" ]; then
+                    ZK_HOSTS="$HN"
+                else
+                    ZK_HOSTS="${ZK_HOSTS} $HN"
+                fi
+            fi
+         fi
+    done
+
+
+    echo "ZK_HOSTS: $ZK_HOSTS"
+    for NODEHOST in $ZK_HOSTS; do
+        MAR_ID="shared/mapr/zks/zk${NODEHOST}"
+        CUR_IMG=$(./zeta cluster marathon getinfo $MAR_ID image)
+        @go.log WARN "Host: $NODEHOST - ID: $MAR_ID - Image: $CUR_IMG"
+    done
+}
+
+_updatezk "$@"
