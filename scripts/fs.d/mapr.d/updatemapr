@@ -146,6 +146,17 @@ EOF1
         #CUR_IMG=$(./zeta cluster marathon getinfo $MAR_ID)
     done
     rm -rf $TMP_DIR
+
+    @go.log WARN "Once the MapR update is complete, you will need to start the node"
+    @go.log WARN "If you are doing the whole cluster, go to the CLDB first, start it"
+    @go.log WARN "Then docker exec -it %CID /bin/bash on the CLDB node into the maprdocker container"
+    @go.log WARN "run /opt/mapr/server/configure.sh -R"
+    @go.log WARN "Then restart the warden by /etc/init.d/mapr-warden restart"
+    @go.log WARN "Then clean out the /opt/cores/* directory (rm /opt/cores/*)"
+    echo ""
+    @go.log WARN "After you do that on CLDB, do it on the other nodes"
+    @go.log WARN "After you do that on all nodes"
+    @go.log WARN "You want to set the cluster version on any node run (inside the docker container):  maprcli config save -values {mapr.targetversion:\"\`cat /opt/mapr/MapRBuildVersion\`\"}" 
 }
 
 _updatemapr "$@"
