@@ -20,8 +20,9 @@ function _marathon_getinfo() {
     MARID=$1
     FIELDNAME=$2
     MARATHON_URL=$3
+
     if [ "$MARATHON_URL" == "" ]; then
-        @go.log WARN "No MARATHON_URL provided using cluster default in $CLUSTER_CONF"
+    #    @go.log WARN "No MARATHON_URL provided using cluster default in $CLUSTER_CONF"
         MARATHON_URL="$MARATHON_SUBMIT"
     fi
     FULL_URL="${MARATHON_URL}/${MARID}"
