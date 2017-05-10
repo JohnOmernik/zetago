@@ -13,7 +13,6 @@ sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
-. ./vers/mapr/$MAPR_VERS
 
 MEUSER=$(whoami)
 
@@ -23,7 +22,6 @@ fi
 
 
 function _updatezk() {
-
     UNATTEND="0"
     NODES=""
     for i in "$@"
@@ -59,13 +57,74 @@ function _updatezk() {
          fi
     done
 
+    @go.log WARN "The curren cluster MapR Version file is $MAPR_VERS"
+    read -e -p "Do you wish to change the cluster MAPR_VERS - The Updates will ensure nodes are running the cluster version. Change Vers? (Y/N): " -i "Y" CHANGE
+    if [ "$CHANGE" == "Y" ]; then
+        echo "The current cluster versions are: "
+        ls -1 ./vers/mapr
+        read -e -p "Please type a the name of the file for the new MapR version: " NEW_MAPR_VERS
+        if [ ! -f "./vers/mapr/$NEW_MAPR_VERS" ]; then
+            @go.log FATAL "That cluster version could not be found - exiting"
+        fi
+        @go.log WARN "Updating mapr version file to be $NEW_MAPR_VERS from the old $MAPR_VERS"
+        sed -i "s/export MAPR_VERS=.*/export MAPR_VERS=\"$NEW_MAPR_VERS\"/g" ./conf/fs_mapr.conf
+        MAPR_VERS="$NEW_MAPR_VERS"
+    fi
+    @go.log INFO "Now sourcing current MAPR_VERS" 
+    . ./vers/mapr/$MAPR_VERS
+
+    GOAL_TAG="zkdocker:${MAPR_DOCKER_TAG}"
+
+    TMP_DIR="/tmp/tup"
+    sudo rm -rf $TMP_DIR
+    mkdir -p $TMP_DIR
 
     echo "ZK_HOSTS: $ZK_HOSTS"
     for NODEHOST in $ZK_HOSTS; do
         MAR_ID="shared/mapr/zks/zk${NODEHOST}"
-        CUR_IMG=$(./zeta cluster marathon getinfo $MAR_ID)
-        @go.log WARN "Host: $NODEHOST - ID: $MAR_ID - Image: $CUR_IMG"
+        MARATHON_URL="$MARATHON_SUBMIT"
+        FULL_URL="${MARATHON_URL}/${MAR_ID}"
+        FULLRESULT=$(curl -s -X GET $FULL_URL)
+        APPDEF=$(echo $FULLRESULT|jq '.app'|sed -r "/(\"version\"|\"args\"|\"user\"|\"uris\"|\"fetch\"|\"storeUrls\"|\"executor\")/d")
+
+        CHKSTOP=$(echo "$FULLRESULT"|grep "\"instances\":0")
+        if [ "$CHKSTOP" != "" ]; then
+            STOPPED="True"
+            @go.log INFO "Looks good, instances = 0 so things are stopped"
+            IMG=$(echo "$FULLRESULT"|grep -P -o "fsdocker-shared[^,]+"|sed "s/\"//g")
+            IMG_REG=$(echo "$IMG"|cut -d"/" -f1)
+            IMG_TAG=$(echo "$IMG"|cut -d"/" -f2)
+            GOAL_IMG="${IMG_REG}/${GOAL_TAG}"
+            if [ "$IMG_TAG" != "$GOAL_TAG" ]; then
+                @go.log WARN "IMAGE Tag of $IMG_TAG does not match vers goal tag of $GOAL_TAG - Updating"
+                read -e -p "Should we update this? " -i "N" UPDATEZK
+                if [ "$UPDATEZK" == "Y" ]; then
+                    NEWAPP=$(echo "$APPDEF"|sed "s/$IMG_TAG/$GOAL_TAG/g")
+                    @go.log WARN "Destroying $MAR_ID"
+                    ./zeta cluster marathon destroy $MAR_ID 1
+cat > $TMP_DIR/NEWZK_$NODEHOST.json << EOF1
+$NEWAPP
+EOF1
+                    @go.log WARN "Submitting New"
+                    ./zeta cluster marathon submit $TMP_DIR/NEWZK_$NODEHOST.json 1
+                    rm $TMP_DIR/NEWZK_$NODEHOST.json
+                fi
+
+            else
+                @go.log INFO "IMAGE Tag of $IMG_TAG already mataches vers goal tag of $GOAL_TAG - Not Updating"
+            fi
+            @go.log WARN "Host: $NODEHOST - ID: $MAR_ID - Image: $IMG - Stopped: $STOPPED"
+
+        else
+            STOPPED="False"
+            @go.log WARN "We can't go on, we couldn't find instances:0"
+        fi
+
+        #curl -s -X GET $FULL_URL/tasks
+
+        #CUR_IMG=$(./zeta cluster marathon getinfo $MAR_ID)
     done
+    rm -rf $TMP_DIR
 }
 
 _updatezk "$@"
