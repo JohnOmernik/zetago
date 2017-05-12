@@ -71,8 +71,8 @@ sudo docker stop \$CID
 sudo docker rm \$CID
 sudo chown -R ${IUSER}:${IUSER} $ZETA_MESOS_DIR/zookeeper
 
-echo "Creating mesos-zookeeper.service"
-cat > $ZETA_MESOS_DIR/zookeeper/mesos-zookeeper.service << EOS
+echo "Creating zkdocker.service"
+cat > $ZETA_MESOS_DIR/zookeeper/zkdocker.service << EOS
 [Unit]
 Description=Zookeeper Node for Mesos on Zeta
 Requires=docker.service
@@ -124,10 +124,10 @@ MYID=\$(cat $ZETA_MESOS_DIR/zookeeper/conf/zoo.cfg|grep "\$MYIP"|cut -d"=" -f1|c
 echo "\$MYID" > $ZETA_MESOS_DIR/zookeeper/data/myid
 
 echo "Adding systemd service"
-sudo cp $ZETA_MESOS_DIR/zookeeper/mesos-zookeeper.service /etc/systemd/system/
+sudo cp $ZETA_MESOS_DIR/zookeeper/zkdocker.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl start mesos-zookeeper.service
-sudo systemctl enable mesos-zookeeper.service
+sudo systemctl start zkdocker.service
+sudo systemctl enable zkdocker.service
 EOZ
 
     chmod +x ./bin/zk_install.sh

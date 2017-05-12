@@ -1,0 +1,230 @@
+#!/bin/bash
+
+ZETA_OPT="/opt/zeta"
+MESOS_OPT="${ZETA_OP}/mesos"
+MESOS_VER="1.2.0"
+MESOS_BASEOS="ubuntu:xenial"
+MESOS_MASTER_LOG="/var/log/mesos/master"
+MESOS_MASTER_TMP="/var/log/mesos/master/tmp"
+MESOS_AGENT_LOG="/var/log/mesos/agent"
+MESOS_AGENT_TMP="/var/log/mesos/agent/tmp"
+MESOS_TMP_APPNAME="tmp/mesos:${MESOS_VER}"
+MESOS_BASE_APPNAME="zeta/mesos:${MESOS_VER}"
+MESOS_MASTER_APPNAME="zeta/mesos-master:${MESOS_VER}"
+MESOS_AGENT_APPNAME="zeta/mesos-agent:${MESOS_VER}"
+MESOS_FL="mesos-${MESOS_VER}.tar.gz"
+MESOS_DL_URL="https://archive.apache.org/dist/mesos/${MESOS_VER}/${MESOS_FL}"
+MESOS_DL_MD5="3585de784da66bb4c6df04a1e6bcb439"
+
+# TODO: Zk SystemD Race Condition
+# TODO: Better logic for hostname IP with multiple NICs
+# TODO: Zeta ZK string from nodeprep/conf? 
+# TODO: Framework Auth
+# TODO: ACLs
+# TODO: HTTPS/SSL
+# TODO: Docker client in Mesos slave docker image has to == server.
+
+bld_archive() {
+	sudo docker build --no-cache --rm -t $2 .
+	cp Dockerfile $1.Dockerfile
+}
+
+mk_mesos_artifact() {
+	TMP_DIR=$(mktemp -d)
+	cd ${TMP_DIR}
+
+	# Artifact Builder Image
+	# Build the mesos artifacts
+	cat > ./Dockerfile << EOL
+FROM ${MESOS_BASEOS}
+MAINTAINER <Naveen Manivannan> naveen.manivannan@gmail.com
+
+WORKDIR /tmp
+RUN apt-get -qqy update && apt-get -qqy upgrade
+RUN apt-get -qqy install clang apt-transport-https ca-certificates wget tar openjdk-8-jdk \\
+	build-essential python-dev python-virtualenv libcurl4-nss-dev libsasl2-dev \\
+	libsasl2-modules maven libapr1-dev libsvn-dev zlib1g-dev libevent-dev libssl-dev
+RUN wget --quiet ${MESOS_DL_URL}; echo "${MESOS_DL_MD5}  ${MESOS_FL}" | md5sum -c -
+RUN tar -xzf ${MESOS_FL} && cd mesos-${MESOS_VER} && mkdir build && cd build && \\
+	CC=clang CXX=clang++ CMAKE_C_COMPILER=clang CMAKE_CXX_COMPILER=clang++ \\
+	../configure --disable-java --disable-python --enable-libevent --enable-ssl \\
+	--prefix=/opt/zeta/mesos && make V=0 && mkdir -p /opt/zeta/mesos && make install
+RUN tar -czvf /tmp/mesos_bin.tar.gz /opt/zeta/mesos
+EOL
+	bld_archive "artifact_builder" ${MESOS_TMP_APPNAME}
+
+	# Extract the artifact by making a temp container and drop the container + image
+    CID=$(sudo docker create ${MESOS_TMP_APPNAME})
+    sudo docker cp ${CID}:/tmp/mesos_bin.tar.gz mesos_bin.tar.gz
+    sudo docker rm -v ${CID}
+	sudo docker rmi -f ${MESOS_TMP_APPNAME}
+}
+
+mk_master_mesos() {
+	cat > ./Dockerfile << EOL
+FROM ${MESOS_BASE_APPNAME}	
+ENTRYPOINT ["mesos-master"]
+EOL
+	bld_archive 'mesos_master' ${MESOS_MASTER_APPNAME}
+}
+
+mk_agent_mesos() {
+	cat > ./Dockerfile << EOL
+FROM ${MESOS_BASE_APPNAME}	
+ENTRYPOINT ["mesos-agent"]
+EOL
+	bld_archive 'mesos_agent' ${MESOS_AGENT_APPNAME}
+}
+
+mk_base_mesos() {
+	# Make Base Mesos (so we have a smaller Docker image)
+	cat > ./Dockerfile << EOL
+FROM ${MESOS_BASEOS}
+MAINTAINER <Naveen Manivannan> naveen.manivannan@gmail.com
+
+WORKDIR /tmp
+RUN apt-get -qqy update && apt-get -qqy install apt-transport-https libsvn-dev libcurl4-nss-dev libevent-dev && \\
+	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D && \\
+	echo deb https://apt.dockerproject.org/repo ubuntu-xenial main > /etc/apt/sources.list.d/docker.list && \\
+	apt-get -qqyupdate && \\
+	apt-get -qqy install docker-engine && rm -rf /var/lib/apt/lists/*
+ADD mesos_bin.tar.gz / 
+
+ENV PATH="/opt/zeta/mesos/bin:/opt/zeta/mesos/sbin:\${PATH}"
+ENV LD_LIBRARY_PATH="/opt/zeta/mesos/lib:\${LD_LIBRARY_PATH}"
+RUN ldconfig
+EOL
+
+	bld_archive 'mesos_base' ${MESOS_BASE_APPNAME}
+	mk_master_mesos
+	mk_agent_mesos
+    mk_masterlauncher
+    mk_agentlauncher
+}
+
+
+mk_masterlauncher() {
+	# Make Launcher Scripts
+	cat > mesos_master_init.sh << EOL
+#!/bin/bash
+
+if [ ! -d ${MESOS_MASTER_LOG} ]; then
+	sudo mkdir -p ${MESOS_MASTER_LOG}
+fi
+
+if [ ! -d ${MESOS_MASTER_TMP} ]; then
+	sudo mkdir -p ${MESOS_MASTER_TMP}
+fi
+
+sudo docker rm -f masterprod
+sudo rm -rf ${MESOS_MASTER_LOG}/* && sleep 1
+
+sudo docker run --rm --net=host \\
+--name masterprod \\
+-e MESOS_PORT=5050 \\
+-e MESOS_ZK=zk://10.10.10.2:2181/mesos \\
+-e MESOS_QUORUM=2 \\
+-e MESOS_IP=$(hostname -i) \\
+-e MESOS_HOSTNAME=$(hostname -i) \\
+-e IP=$(hostname -i) \\
+-e MESOS_REGISTRY=replicated_log \\
+-e MESOS_LOG_DIR=/var/log/mesos \\
+-e MESOS_WORK_DIR=/var/tmp/mesos \\
+-v ${MESOS_MASTER_LOG}:/var/log/mesos:rw \\
+-v ${MESOS_MASTER_TMP}:/var/tmp/mesos:rw \\
+-t ${MESOS_MASTER_APPNAME} --quorum=2 --ip=$(hostname -i) --hostname=$(hostname -i) --cluster=cloudbeast
+EOL
+}
+
+mk_agentlauncher() {
+	# Make Launcher Scripts
+	cat > mesos_agenudo _init.sh << EOL
+#!/bin/bash
+
+if [ ! -d ${MESOS_AGENT_LOG} ]; then
+	sudo mkdir -p ${MESOS_AGENT_LOG}
+fi
+
+if [ ! -d ${MESOS_AGENT_TMP} ]; then
+	sudo mkdir -p ${MESOS_AGENT_TMP}
+fi
+
+sudo docker rm -f agentprod
+sudo rm -rf ${MESOS_AGENT_LOG}/* && sleep 1
+
+sudo /usr/bin/docker run --rm --name agentprod \\
+--net=host --privileged \\
+-e MESOS_PORT=5051 \\
+-e MESOS_MASTER=zk://10.10.10.2:2181/mesos \\
+-e MESOS_CONTAINERIZERS=docker \\
+-e MESOS_LOG_DIR=/var/log/mesos \\
+-e MESOS_WORK_DIR=/var/tmp/mesos \\
+-e MESOS_LAUNCHER=posix \\
+-e MESOS_IP=$(hostname -i) \\
+-e IP=$(hostname -i) \\
+-e GLOG_v=1 \\
+-v "${MESOS_AGENT_LOG}:/var/log/mesos" \\
+-v "${MESOS_AGENT_TMP}:/var/tmp/mesos" \\
+-v /var/run/docker.sock:/var/run/docker.sock \\
+-v /cgroup:/cgroup \\
+-v /sys:/sys:ro \\
+-v /var/lib/mesos:/var/lib/mesos  \\
+-v /var/run/docker.sock:/var/run/docker.sock \\
+-v /var/lib/docker:/var/lib/docker \\
+-v /cgroup:/cgroup \\
+-v /dev:/dev \\
+-t ${MESOS_AGENT_APPNAME} --ip=$(hostname -i) --containerizers=docker \\
+--no-systemd_enable_support
+EOL
+}
+
+mk_agentsystemd() {
+    cat > mesos-agent.service << EOL
+[Unit]
+Description=Mesos Agent
+Requires=docker.service
+After=docker.service 
+
+[Service]
+Restart=on-failure
+ExecStartPre=-sudo rm -rf ${MESOS_AGENT_LOG}/*:
+ExecStartPre=-/usr/bin/docker rm -f agentprod
+ExecStart=/opt/zeta/mesos/init/agent.sh
+ExecStop=/usr/bin/docker stop agentprod && /usr/bin/docker rm -f agentprod
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+    sudo systemctl daemon-reload
+    sudo cp mesos-agent.sudo drvice /etc/systemd/system/.
+    sudo systemctl enable mesos-agent.service
+}
+
+mk_mastersystemd() {
+cat > mesos-master.service << EOL
+[Unit]
+Description=Mesos Master
+Requires=docker.service zkdocker.service
+After=docker.service zkdocker.service
+
+[Service]
+Restart=on-failure
+ExecStartPre=-sudo rm -rf ${MESOS_MASTER_LOG}/*:
+ExecStartPre=-/usr/bin/docker rm -f masterprod
+ExecStart=/opt/zeta/mesos/init/master.sh
+ExecStop=/usr/bin/docker stop masterprod && /usr/bin/docker rm -f masterprod
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+    sudo systemctl daemon-reload
+    sudo cp mesos-master.service /etc/systemd/system/.
+    sudo systemctl enable mesos-master.service
+
+}
+
+
+mk_mesos_artifact
+mk_base_mesos

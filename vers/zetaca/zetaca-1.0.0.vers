@@ -1,8 +1,7 @@
 #!/bin/bash
 
-export APP_VER="1.0.0"
-export APP_IMG="zeta/zetaca:${APP_VER}"
-export APP_SOURCE_GIT="https://github.com/JohnOmernik/ca_rest"
-
-
+set -a
+APP_VER="1.0.0"
+APP_IMG="zeta/zetaca:${APP_VER}"
+APP_SOURCE_GIT="https://github.com/JohnOmernik/ca_rest"
 

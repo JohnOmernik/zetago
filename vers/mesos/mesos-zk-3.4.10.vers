@@ -1,2 +1,5 @@
-MESOS_ZK_IMG="library/zookeeper:3.4.10"
+#!/bin/bash
 
+set -a 
+MESOS_ZK_VER="3.4.10"
+MESOS_ZK_IMG="library/zookeeper:${MESOS_ZK_VER}"
