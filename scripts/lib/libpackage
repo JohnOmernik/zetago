@@ -351,14 +351,15 @@ function reqdockerimg() {
 
 
     for IMG in $REQ_IMGS; do
-        ICHK=$(sudo docker images|grep "${IMG}")
+        IMGTAG=$(echo "$IMG"|cut -d":" -f1)
+        ICHK=$(sudo docker images|grep "${IMGTAG}")
         if [ "$ICHK" == "" ]; then
             @go.log WARN "Required Image $IMG not found on host - Should we attempt to pull the image?"
             read -e -p "Pull Image (Answering no here will allow you to build)? (Y/N): " -i "Y" PULLDCK
             TST=0
             if [ "$PULLDCK" == "Y" ]; then
                 CCHK=$(echo "${IMG}"|grep ":")
-                if [ "$CHK" == "" ]; then
+                if [ "$CCHK" == "" ]; then
                     PULLIMG="${IMG}:latest"
                 else
                     PULLIMG="$IMG"
