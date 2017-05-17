@@ -1,0 +1,83 @@
+#!/bin/bash
+#
+# fs mapr maprcli run a maprcli conmand on the cluster
+#
+# Arguments:
+# -U          User to run the command as (Run as  root by default in the container)
+# -n="%NODE"  Node to run the command on (Runs on the node that zetago is on by default)
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+MEUSER=$(whoami)
+
+if [ "$MEUSER" != "${IUSER}" ]; then
+    @go.log FATAL "This script needs to be un as ${IUSER}. Current User: $MEUSER"
+fi
+
+function _maprclihelp(){
+
+    echo "This command runs maprcli commands on the MapR Cluster"
+    echo "Any commands you enter will be passed to the maprcli command inside a container running MapR"
+    echo ""
+    echo "Arguments:"
+    echo "-U=\"%USER%\"                - Run the command as user %USER% - without this, the command runs as root"
+    echo "-n=\"%NODE%\"                - Run the command on the %NODE% - Without this it attempts to run on the current host"
+    echo ""
+    echo "Examples:"
+    echo "./zeta fs mapr maprcli volume list -json   # List volums in mapr, output in json form, run on the current node as root"
+    echo ""
+
+
+}
+
+function _maprcli() {
+
+    CLIUSER=""
+    NODE=""
+    CLICMD=""
+    for i in "$@"
+        do
+        case $i in
+            "-U="*)
+            CLIUSER="${i#*=}"
+            ;;
+            "-n="*)
+            NODE="${i#*=}"
+            ;;
+            *)
+            CLICMD="$i"
+            ;;
+        esac
+    done
+# Sanity Checks
+    if [ "$CLICMD" == "" ]; then
+        _maprclihelp
+        @go.log FATAL "No command specified"
+    fi
+
+    if [ "$NODE" == "" ]; then
+        NODE=$(hostname)
+    fi
+
+    if [ "$CLIUSER" == "" ]; then
+        MYCMD="maprcli $CLICMD"
+    else
+        MYCMD="su -c \"maprcli $CLICMD\" $CLIUSER"
+    fi
+
+    CID=$(ssh $NODE "sudo docker ps |grep maprdocker|cut -d\" \" -f1")
+    if [ "$CID" == "" ]; then
+        @go.log FATAL "maprdocker image not found running on $NODE - Can not run command"
+    fi
+    ssh $NODE "sudo docker exec -it $CID $MYCMD"
+
+
+}
+
+_maprcli "$@"
