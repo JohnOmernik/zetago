@@ -63,11 +63,14 @@ function _maprcli() {
 
     if [ "$NODE" == "" ]; then
         NODE=$(hostname)
+    else
+        CLICMD=$(echo "$CLICMD"|sed -r "s/-n=[^ ]+ ?//g")
     fi
 
     if [ "$CLIUSER" == "" ]; then
         MYCMD="maprcli $CLICMD"
     else
+        CLICMD=$(echo "$CLICMD"|sed -r "s/-U=[^ ]+ ?//g")
         MYCMD="su -c \"maprcli $CLICMD\" $CLIUSER"
     fi
 
