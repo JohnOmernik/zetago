@@ -51,7 +51,7 @@ function _maprcli() {
             NODE="${i#*=}"
             ;;
             *)
-            CLICMD="$i"
+            CLICMD="$@"
             ;;
         esac
     done
@@ -75,7 +75,7 @@ function _maprcli() {
     if [ "$CID" == "" ]; then
         @go.log FATAL "maprdocker image not found running on $NODE - Can not run command"
     fi
-    ssh $NODE "sudo docker exec -it $CID $MYCMD"
+    ssh $NODE "sudo docker exec -i $CID $MYCMD"
 
 
 }
