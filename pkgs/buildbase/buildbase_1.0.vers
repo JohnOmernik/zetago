@@ -11,7 +11,7 @@ cat > ./Dockerfile << EOL
 
 FROM ${ZETA_DOCKER_REG_URL}/zetabase
 
-RUN apt-get update && apt-get install -y git nano cpio net-tools rpm2cpio unzip python-pip && pip install requests && apt-get clean && apt-get autoremove -y
+RUN apt-get update && apt-get install -y ar git nano cpio net-tools rpm2cpio unzip python-pip && pip install requests && apt-get clean && apt-get autoremove -y
 
 RUN mkdir -p /app
 WORKDIR /app
