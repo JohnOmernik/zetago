@@ -1,0 +1,40 @@
+#!/bin/bash
+
+set -e
+APP_VER="4.3.1"
+APP_IMG_TAG="${APP_VER}"
+APP_BASE_IMG="ubuntu:xenial"
+
+# Build both Python2 + Python3 images
+# Each ver. >=2GB thus would be bloat for both in  1
+APP_IMG_NAME1="anaconda"
+APP_IMG_NAME2="anaconda3"
+APP_IMG1="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
+APP_IMG2="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME2}:${APP_IMG_TAG}"
+APP_URL1="https://repo.continuum.io/archive/Anaconda2-${APP_VER}-Linux-x86_64.sh"
+APP_URL2="https://repo.continuum.io/archive/Anaconda3-${APP_VER}-Linux-x86_64.sh"
+APP_URL1_SHA256="e9b8f2645df6b1527ba56d61343162e0794acc3ee8dde2a6bba353719e2d878d"
+APP_URL2_SHA256="4447b93d2c779201e5fb50cfc45de0ec96c3804e7ad0fe201ab6b99f73e90302"
+
+if [[ $1 -eq 1 || $1 -eq 2 ]]; then
+	DL_URL=$(echo -e "APP_URL$1" |  tr -d '[:space:]')
+	DL_SHA256=$(echo -e "APP_URL${1}_SHA256" |  tr -d '[:space:]')
+else
+    echo "Bad Params"
+    exit 1
+fi
+
+cat > ./Dockerfile << EOL
+FROM ${APP_BASE_IMG}
+MAINTAINER Naveen Manivannan <naveen.manivannan@gmail.com>
+
+WORKDIR /tmp
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/opt/conda/bin:\$PATH
+
+RUN apt-get update -qqy --fix-missing && apt-get install -qqy wget bzip2 ca-certificates \
+    libglib2.0-0 libxext6 libsm6 libxrender1 git mercurial subversion && \
+    echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
+    wget --quiet ${!DL_URL} -O /tmp/anaconda.sh && \
+    echo "${!DL_SHA256} anaconda.sh" | sha256sum -c && \
+    /bin/bash /tmp/anaconda.sh -b -p /opt/conda && rm /tmp/anaconda.sh && rm -rf /var/lib/apt/lists/*
+EOL
