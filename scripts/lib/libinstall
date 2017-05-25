@@ -98,7 +98,7 @@ else
         fi
         echo ""
         echo "Please specify the Marathon ID used. This should start with the role, so say your role is prod, it would start: prod/myapp/myappinstanceid  for nesting"
-        read -e -p "New Marathon APP_ID: " -i $"APP_MAR_ID" APP_MAR_ID
+        read -e -p "New Marathon APP_ID: " -i "$APP_MAR_ID" APP_MAR_ID
         echo ""
         echo "The new Values are:"
         echo "APP_HOME: $APP_HOME"
