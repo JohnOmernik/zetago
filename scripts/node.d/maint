@@ -86,6 +86,12 @@ function _maint(){
         echo ""
     fi
 
+    if [ "$RESERVE" == "0" ] || [ "$UNRESERVE" == "0" ]; then
+        echo "Showing the running tasks on node"
+        echo ""
+        ./zeta node run -n="$HOST" "sudo docker ps"
+    fi
+
 }
 
 
