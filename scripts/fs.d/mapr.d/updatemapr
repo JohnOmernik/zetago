@@ -31,7 +31,7 @@ function _updatemapr() {
             UNATTEND="1"
             ;;
             "-n="*)
-            NODE="${i#*=}"
+            NODES="${i#*=}"
             ;;
             *)
             # unknown option
