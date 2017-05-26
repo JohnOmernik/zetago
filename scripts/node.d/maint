@@ -1,0 +1,104 @@
+#!/bin/bash
+
+#
+# Use a maint role to slowly drain a node for maintenance
+#
+
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+sourceconf "$NODE_CONF"
+
+
+function _maint(){
+    UNRESERVE="0"
+    RESERVE="0"
+    HOST=""
+
+
+    for i in "$@"
+        do
+        case $i in
+            "-u")
+            UNRESERVE="1"
+            ;;
+            "-r")
+            RESERVE="1"
+            ;;
+            *)
+            HOST=${i}
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ "$HOST" == "" ]; then
+        echo "Must provide a host"
+        exit 1
+    fi
+
+    CUR_STATUS=$(curl -s http://leader.mesos:5050/slaves)
+
+    TOT_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$HOST" '.[]|.[]|select(.hostname==$hn)|.resources.cpus')
+    USED_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$HOST" '.[]|.[]|select(.hostname==$hn)|.used_resources.cpus')
+    RES_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$HOST" '.[]|.[]|select(.hostname==$hn)|.reserved_resources.maint.cpus')
+    SLAVE_ID=$(echo "$CUR_STATUS" | jq -r --arg hn "$HOST" '.[]|.[]|select(.hostname==$hn)|.id')
+    FREE_CPU=$(echo "$TOT_CPU - $USED_CPU - $RES_CPU"|bc)
+
+
+    echo "$HOST - $SLAVE_ID"
+    echo "Total CPU: $TOT_CPU"
+    echo "Used CPU: $USED_CPU"
+    echo "Reserved for Maintenance: $RES_CPU"
+    echo ""
+    echo "Available CPU: $FREE_CPU"
+    echo ""
+
+    if [ "$UNRESERVE" == "1" ] && [ "$RESERVE" == "1" ]; then
+        echo "You can't really reserve AND unreserve at the same time... might I suggest some anger management training?"
+        exit 0
+    fi
+
+    if [ "$URESERVE" == "1" ]; then
+        echo "As stated, the current CPU scheduled for reserve is $RES_CPU"
+        read -e -p "How many CPUs would you like to unreserve on $HOST?: " -i "$RES_CPU" GOCPU
+        RES="[{\"name\": \"cpus\",\"type\": \"SCALAR\", \"scalar\": { \"value\": $GOCPU },\"role\": \"maint\",\"reservation\": {\"principal\": \"maint\"}}]"
+        echo ""
+        echo "Sending Unreserve for $GOCPU to $HOST"
+        echo ""
+        curl -i -d slaveId=$SLAVE_ID -d resources="$RES" -X POST http://leader.mesos:5050/master/unreserve
+        echo ""
+        echo ""
+    fi
+    if [ "$RESERVE" == "1" ]; then
+        echo "As stated the current CPU Available to reserve for maintenance is $FREE_CPU"
+        read -e -p "Host many CPUs would you like to reserve for maintenance on $HOST?: " -i "$FREE_CPU" GOCPU
+        RES="[{\"name\": \"cpus\",\"type\": \"SCALAR\", \"scalar\": { \"value\": $GOCPU },\"role\": \"maint\",\"reservation\": {\"principal\": \"maint\"}}]"
+        echo ""
+        echo "Sending Reserve for $GOCPU to $HOST"
+        echo ""
+        curl -i -d slaveId=$SLAVE_ID -d resources="$RES" -X POST http://leader.mesos:5050/master/reserve
+        echo ""
+        echo ""
+    fi
+
+}
+
+
+_maint "$@"
+
+
+
+
+
+
+
+
+
+
+
+
