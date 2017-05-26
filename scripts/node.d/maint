@@ -63,7 +63,7 @@ function _maint(){
         exit 0
     fi
 
-    if [ "$URESERVE" == "1" ]; then
+    if [ "$UNRESERVE" == "1" ]; then
         echo "As stated, the current CPU scheduled for reserve is $RES_CPU"
         read -e -p "How many CPUs would you like to unreserve on $HOST?: " -i "$RES_CPU" GOCPU
         RES="[{\"name\": \"cpus\",\"type\": \"SCALAR\", \"scalar\": { \"value\": $GOCPU },\"role\": \"maint\",\"reservation\": {\"principal\": \"maint\"}}]"
