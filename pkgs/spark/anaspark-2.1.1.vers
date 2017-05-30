@@ -1,0 +1,41 @@
+#!/bin/bash
+
+SPARK_VER='2.1.1'
+APP_URL_FILE="spark-${SPARK_VER}.bin-without-hadoop.tgz"
+APP_URL_BASE="http://apache.claz.org/spark/spark-${SPARK_VER}/"
+APP_TGZ="$APP_URL_FILE"
+APP_VER_DIR=$(echo "$APP_TGZ"|sed "s/\.tgz//g")
+APP_URL="${APP_URL_BASE}${APP_URL_FILE}"
+APP_VER="spark-${SPARK_VER}"
+APP_IMG_TAG="${SPARK_VER}"
+APP_IMG_NAME="anaspark"
+REQ_APP_IMG_NAME="anaconda"
+
+APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
+if [ "$BUILD" == "Y" ]; then
+
+cat > ./requirements.txt << EOL
+kafka-python
+lz4tools
+memory-profiler
+pandas
+pyarrow
+requests
+xxhash
+EOL
+
+cat > ./Dockerfile << EOL
+FROM ${ZETA_DOCKER_REG_URL}/${REQ_APP_IMG_NAME}
+WORKDIR /tmp
+
+RUN DEBIAN_FRONTEND=noninteractive \
+    apt-get update -qqy --fix-missing && \
+    apt-get install -qqy gcc libnss3 git curl && \
+    apt-get clean && apt-get autoremove -qqy && \
+    rm -rf /var/lib/apt/lists/*
+
+ADD requirements.txt requirements.txt
+RUN pip install -r requirements.txt 
+EOL
+
+fi

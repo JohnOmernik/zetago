@@ -172,7 +172,7 @@ EOL4
 
 
 cat > $BUILD_TMP/Dockerfile << EOL
-FROM ubuntu:latest
+FROM ubuntu:xenial
 
 $DOCKER_LINE1
 $DOCKER_LINE2

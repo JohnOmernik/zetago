@@ -3,7 +3,7 @@
 set -e
 APP_VER="4.3.1"
 APP_IMG_TAG="${APP_VER}"
-APP_BASE_IMG="ubuntu:xenial"
+APP_BASE_IMG="zetabase"
 
 # Build both Python2 + Python3 images
 # Each ver. >=2GB thus would be bloat for both in  1

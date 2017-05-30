@@ -8,7 +8,7 @@ APP_IMG="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME}:${APP_IMG_TAG}"
 if [ "$BUILD" == "Y" ]; then
 
 cat > ./Dockerfile << EOL
-FROM ubuntu:latest
+FROM ubuntu:xenial
 
 $DOCKER_LINE
 

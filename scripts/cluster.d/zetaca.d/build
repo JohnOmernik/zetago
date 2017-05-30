@@ -49,7 +49,7 @@ function _zetaca_build () {
             DOCKER_LINE6=""
         fi
 cat > ./Dockerfile << EOS
-FROM ubuntu:latest
+FROM ubuntu:xenial
 
 RUN adduser --disabled-login --gecos '' --uid=2500 ${IUSER}
 
