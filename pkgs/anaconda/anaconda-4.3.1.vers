@@ -17,7 +17,7 @@ APP_URL2="https://repo.continuum.io/archive/Anaconda3-${APP_VER}-Linux-x86_64.sh
 APP_URL1_SHA256="e9b8f2645df6b1527ba56d61343162e0794acc3ee8dde2a6bba353719e2d878d"
 APP_URL2_SHA256="4447b93d2c779201e5fb50cfc45de0ec96c3804e7ad0fe201ab6b99f73e90302"
 
-
+if [ "$BUILD" == "Y" ]; then
 
 cat > ./Dockerfile << EOL
 FROM ${REQ_APP_IMG_NAME}
@@ -37,7 +37,7 @@ sudo docker build --rm -t ${APP_IMG1} .
 sudo docker push ${APP_IMG1}
 rm ./Dockerfile
 
-cat > ./Dockerfile << EOL
+cat > ./Dockerfile << EOF
 FROM ${REQ_APP_IMG_NAME}
 MAINTAINER Naveen Manivannan <naveen.manivannan@gmail.com>
 
@@ -50,7 +50,9 @@ RUN apt-get update -qqy --fix-missing && apt-get install -qqy wget bzip2 ca-cert
     wget --quiet $APP_URL2 -O /tmp/anaconda.sh && \
     echo "${APP_URL2_SHA256} anaconda.sh" | sha256sum -c && \
     /bin/bash /tmp/anaconda.sh -b -p /opt/conda && rm /tmp/anaconda.sh && rm -rf /var/lib/apt/lists/*
-EOL
+EOF
+
 sudo docker build --rm -t ${APP_IMG2} .
 sudo docker push ${APP_IMG2}
 rm ./Dockerfile
+fi 
