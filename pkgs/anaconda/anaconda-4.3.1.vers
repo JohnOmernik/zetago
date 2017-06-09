@@ -23,7 +23,7 @@ echo "Vers Sourced: BUILD: $BUILD"
 if [ "$BUILD" == "Y" ]; then
 
 cat > ./Dockerfile << EOL
-FROM ${REQ_APP_IMG_NAME}
+FROM ${ZETA_DOCKER_REG_URL}/${REQ_APP_IMG_NAME}
 MAINTAINER Naveen Manivannan <naveen.manivannan@gmail.com>
 
 WORKDIR /tmp
@@ -41,7 +41,7 @@ sudo docker push ${APP_IMG1}
 rm ./Dockerfile
 
 cat > ./Dockerfile << EOF
-FROM ${REQ_APP_IMG_NAME}
+FROM ${ZETA_DOCKER_REG_URL}/${REQ_APP_IMG_NAME}
 MAINTAINER Naveen Manivannan <naveen.manivannan@gmail.com>
 
 WORKDIR /tmp
