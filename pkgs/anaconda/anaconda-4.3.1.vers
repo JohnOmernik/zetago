@@ -3,12 +3,12 @@
 set -e
 APP_VER="4.3.1"
 APP_IMG_TAG="${APP_VER}"
-APP_BASE_IMG="zetabase"
-
+APP_IMG_NAME="anaconda"
 REQ_APP_IMG_NAME="zetabase"
+
 # Build both Python2 + Python3 images
 # Each ver. >=2GB thus would be bloat for both in  1
-APP_IMG_NAME1="anaconda"
+APP_IMG_NAME1="anaconda2"
 APP_IMG_NAME2="anaconda3"
 APP_IMG1="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME1}:${APP_IMG_TAG}"
 APP_IMG2="${ZETA_DOCKER_REG_URL}/${APP_IMG_NAME2}:${APP_IMG_TAG}"
