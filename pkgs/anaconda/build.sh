@@ -12,9 +12,6 @@ if [ "$BUILD" == "Y" ]; then
     # Since BUILD is now "Y" The vers file actually makes the dockerfile
     . ${MYDIR}/${APP_PKG_BASE}/${APP_VERS_FILE}
 
-    sudo docker build -t $APP_IMG .
-    sudo docker push $APP_IMG
-
     cd $MYDIR
     rm -rf $BUILD_TMP
     echo ""

@@ -19,20 +19,23 @@ APP_URL2_SHA256="4447b93d2c779201e5fb50cfc45de0ec96c3804e7ad0fe201ab6b99f73e9030
 
 
 
-BUILDS="1 2"
+cat > ./Dockerfile << EOL
+FROM ${REQ_APP_IMG_NAME}
+MAINTAINER Naveen Manivannan <naveen.manivannan@gmail.com>
 
-for X in $BUILDS; do 
-    if [[ $X -eq 1 || $X -eq 2 ]]; then
-	    DL_URL=$(echo -e "APP_URL$X" |  tr -d '[:space:]')
-	    DL_SHA256=$(echo -e "APP_URL${X}_SHA256" |  tr -d '[:space:]')
-        APP_IMG=$(echo -e "APP_IMG${X}" | tr -d '[:space:]')
-    else
-        echo "Bad Params"
-        exit 1
-    fi
+WORKDIR /tmp
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/opt/conda/bin:\$PATH
 
-
-
+RUN apt-get update -qqy --fix-missing && apt-get install -qqy wget bzip2 ca-certificates \
+    libglib2.0-0 libxext6 libsm6 libxrender1 git mercurial subversion && \
+    echo 'export PATH=/opt/conda/bin:\$PATH' > /etc/profile.d/conda.sh && \
+    wget --quiet $APP_URL1 -O /tmp/anaconda.sh && \
+    echo "${APP_URL1_SHA256} anaconda.sh" | sha256sum -c && \
+    /bin/bash /tmp/anaconda.sh -b -p /opt/conda && rm /tmp/anaconda.sh && rm -rf /var/lib/apt/lists/*
+EOL
+sudo docker build --rm -t ${APP_IMG1} .
+sudo docker push ${APP_IMG1}
+rm ./Dockerfile
 
 cat > ./Dockerfile << EOL
 FROM ${REQ_APP_IMG_NAME}
@@ -43,12 +46,11 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/opt/conda/bin:\$PATH
 
 RUN apt-get update -qqy --fix-missing && apt-get install -qqy wget bzip2 ca-certificates \
     libglib2.0-0 libxext6 libsm6 libxrender1 git mercurial subversion && \
-    echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
-    wget --quiet ${!DL_URL} -O /tmp/anaconda.sh && \
-    echo "${!DL_SHA256} anaconda.sh" | sha256sum -c && \
+    echo 'export PATH=/opt/conda/bin:\$PATH' > /etc/profile.d/conda.sh && \
+    wget --quiet $APP_URL2 -O /tmp/anaconda.sh && \
+    echo "${APP_URL2_SHA256} anaconda.sh" | sha256sum -c && \
     /bin/bash /tmp/anaconda.sh -b -p /opt/conda && rm /tmp/anaconda.sh && rm -rf /var/lib/apt/lists/*
 EOL
-    sudo docker build --rm -t ${!APP_IMG} .
-    sudo docker push ${!APP_IMG}
-    rm ./Dockerfile
-done
+sudo docker build --rm -t ${APP_IMG2} .
+sudo docker push ${APP_IMG2}
+rm ./Dockerfile
