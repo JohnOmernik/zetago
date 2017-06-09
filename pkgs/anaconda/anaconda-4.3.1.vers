@@ -1,6 +1,5 @@
 #!/bin/bash
 
-set -e
 APP_VER="4.3.1"
 APP_IMG_TAG="${APP_VER}"
 APP_IMG_NAME="anaconda"
@@ -16,6 +15,10 @@ APP_URL1="https://repo.continuum.io/archive/Anaconda2-${APP_VER}-Linux-x86_64.sh
 APP_URL2="https://repo.continuum.io/archive/Anaconda3-${APP_VER}-Linux-x86_64.sh"
 APP_URL1_SHA256="e9b8f2645df6b1527ba56d61343162e0794acc3ee8dde2a6bba353719e2d878d"
 APP_URL2_SHA256="4447b93d2c779201e5fb50cfc45de0ec96c3804e7ad0fe201ab6b99f73e90302"
+
+echo "Vers Sourced: BUILD: $BUILD"
+
+
 
 if [ "$BUILD" == "Y" ]; then
 
