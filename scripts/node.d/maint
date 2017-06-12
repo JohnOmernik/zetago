@@ -70,11 +70,12 @@ function _maint(){
     SLAVE_ID=$(echo "$CUR_STATUS" | jq -r --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.id')
     FREE_CPU=$(echo "$TOT_CPU - $USED_CPU - $RES_CPU"|bc)
 
-
+    echo ""
+    echo ""
     echo "$NODE - $SLAVE_ID"
     echo "Total CPU: $TOT_CPU"
     echo "Used CPU: $USED_CPU"
-    echo "Reserved for $ROLE with principal $PRICIPAL: $RES_CPU"
+    echo "Reserved for $ROLE with principal $PRINCIPAL: $RES_CPU"
     echo ""
     echo "Available CPU: $FREE_CPU"
     echo ""
@@ -110,7 +111,7 @@ function _maint(){
     if [ "$RESERVE" == "0" ] || [ "$UNRESERVE" == "0" ]; then
         echo "Showing the running tasks on node"
         echo ""
-        ./zeta node run -n="$NODE" "sudo docker ps"
+        ./zeta node run -n="$NODE" "sudo docker ps" 2> /dev/null
     fi
 
 }
