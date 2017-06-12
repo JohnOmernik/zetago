@@ -49,6 +49,7 @@ function _maint(){
     if [ "$CHK" == "" ]; then
         @go.log WARN "$NODE does not appear to be a valid hostname, it must appear in this list"
         echo "$AVAIL_HOSTS"
+        exit 1
     fi 
 
 
