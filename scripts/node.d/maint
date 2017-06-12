@@ -17,7 +17,7 @@ sourceconf "$NODE_CONF"
 function _maint(){
     UNRESERVE="0"
     RESERVE="0"
-    HOST=""
+    NODE=""
 
 
     for i in "$@"
@@ -30,23 +30,32 @@ function _maint(){
             RESERVE="1"
             ;;
             *)
-            HOST=${i}
+            NODE=${i}
             # unknown option
             ;;
         esac
     done
 
-    if [ "$HOST" == "" ]; then
-        echo "Must provide a host"
+    if [ "$NODE" == "" ]; then
+        echo "Must provide a host at command line"
+        echo "Reserve (Start draining) Example: ./zeta node maint -r myhost"
+        echo "Unreserve Example: ./zeta node maint -u myhost"
         exit 1
     fi
 
     CUR_STATUS=$(curl -s http://leader.mesos:5050/slaves)
+    AVAIL_HOSTS=$(echo "$CUR_STATUS" | jq -r  '.slaves|.[].hostname')
+    CHK=$(echo "$AVAIL_HOSTS"|grep "$NODE")
+    if [ "$CHK" == "" ]; then
+        @go.log WARN "$NODE does not appear to be a valid hostname, it must appear in this list"
+        echo "$AVAIL_HOSTS"
+    fi 
 
-    TOT_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$HOST" '.[]|.[]|select(.hostname==$hn)|.resources.cpus')
-    USED_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$HOST" '.[]|.[]|select(.hostname==$hn)|.used_resources.cpus')
-    RES_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$HOST" '.[]|.[]|select(.hostname==$hn)|.reserved_resources.maint.cpus')
-    SLAVE_ID=$(echo "$CUR_STATUS" | jq -r --arg hn "$HOST" '.[]|.[]|select(.hostname==$hn)|.id')
+
+    TOT_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.resources.cpus')
+    USED_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.used_resources.cpus')
+    RES_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.reserved_resources.maint.cpus')
+    SLAVE_ID=$(echo "$CUR_STATUS" | jq -r --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.id')
     FREE_CPU=$(echo "$TOT_CPU - $USED_CPU - $RES_CPU"|bc)
 
 
@@ -65,10 +74,10 @@ function _maint(){
 
     if [ "$UNRESERVE" == "1" ]; then
         echo "As stated, the current CPU scheduled for reserve is $RES_CPU"
-        read -e -p "How many CPUs would you like to unreserve on $HOST?: " -i "$RES_CPU" GOCPU
+        read -e -p "How many CPUs would you like to unreserve on $NODE?: " -i "$RES_CPU" GOCPU
         RES="[{\"name\": \"cpus\",\"type\": \"SCALAR\", \"scalar\": { \"value\": $GOCPU },\"role\": \"maint\",\"reservation\": {\"principal\": \"maint\"}}]"
         echo ""
-        echo "Sending Unreserve for $GOCPU to $HOST"
+        echo "Sending Unreserve for $GOCPU to $NODE"
         echo ""
         curl -i -d slaveId=$SLAVE_ID -d resources="$RES" -X POST http://leader.mesos:5050/master/unreserve
         echo ""
@@ -76,10 +85,10 @@ function _maint(){
     fi
     if [ "$RESERVE" == "1" ]; then
         echo "As stated the current CPU Available to reserve for maintenance is $FREE_CPU"
-        read -e -p "Host many CPUs would you like to reserve for maintenance on $HOST?: " -i "$FREE_CPU" GOCPU
+        read -e -p "Host many CPUs would you like to reserve for maintenance on $NODE?: " -i "$FREE_CPU" GOCPU
         RES="[{\"name\": \"cpus\",\"type\": \"SCALAR\", \"scalar\": { \"value\": $GOCPU },\"role\": \"maint\",\"reservation\": {\"principal\": \"maint\"}}]"
         echo ""
-        echo "Sending Reserve for $GOCPU to $HOST"
+        echo "Sending Reserve for $GOCPU to $NODE"
         echo ""
         curl -i -d slaveId=$SLAVE_ID -d resources="$RES" -X POST http://leader.mesos:5050/master/reserve
         echo ""
@@ -89,7 +98,7 @@ function _maint(){
     if [ "$RESERVE" == "0" ] || [ "$UNRESERVE" == "0" ]; then
         echo "Showing the running tasks on node"
         echo ""
-        ./zeta node run -n="$HOST" "sudo docker ps"
+        ./zeta node run -n="$NODE" "sudo docker ps"
     fi
 
 }
