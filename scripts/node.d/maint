@@ -74,7 +74,7 @@ function _maint(){
     echo "$NODE - $SLAVE_ID"
     echo "Total CPU: $TOT_CPU"
     echo "Used CPU: $USED_CPU"
-    echo "Reserved for Maintenance: $RES_CPU"
+    echo "Reserved for $ROLE with principal $PRICIPAL: $RES_CPU"
     echo ""
     echo "Available CPU: $FREE_CPU"
     echo ""
@@ -89,7 +89,7 @@ function _maint(){
         read -e -p "How many CPUs would you like to unreserve on $NODE?: " -i "$RES_CPU" GOCPU
         RES="[{\"name\": \"cpus\",\"type\": \"SCALAR\", \"scalar\": { \"value\": $GOCPU },\"role\": \"$ROLE\",\"reservation\": {\"principal\": \"$PRINCIPAL\"}}]"
         echo ""
-        echo "Sending Unreserve for $GOCPU to $NODE"
+        echo "Sending Unreserve for $GOCPU to $NODE - Role: $ROLE - Principal: $PRINCIPAL"
         echo ""
         curl -i -d slaveId=$SLAVE_ID -d resources="$RES" -X POST http://leader.mesos:5050/master/unreserve
         echo ""
@@ -100,7 +100,7 @@ function _maint(){
         read -e -p "Host many CPUs would you like to reserve for maintenance on $NODE?: " -i "$FREE_CPU" GOCPU
         RES="[{\"name\": \"cpus\",\"type\": \"SCALAR\", \"scalar\": { \"value\": $GOCPU },\"role\": \"$ROLE\",\"reservation\": {\"principal\": \"$PRINCIPAL\"}}]"
         echo ""
-        echo "Sending Reserve for $GOCPU to $NODE"
+        echo "Sending Reserve for $GOCPU to $NODE - Role: $ROLE - Principal: $PRINCIPAL"
         echo ""
         curl -i -d slaveId=$SLAVE_ID -d resources="$RES" -X POST http://leader.mesos:5050/master/reserve
         echo ""
