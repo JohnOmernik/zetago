@@ -66,7 +66,7 @@ function _maint(){
 
     TOT_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.resources.cpus')
     USED_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.used_resources.cpus')
-    RES_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" ".[]|.[]|select(.hostname==\$hn)|.reserved_resources.${ROLE}.cpus")
+    RES_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" ".[]|.[]|select(.hostname==\$hn)|.reserved_resources.\"${ROLE}\".cpus")
     SLAVE_ID=$(echo "$CUR_STATUS" | jq -r --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.id')
     FREE_CPU=$(echo "$TOT_CPU - $USED_CPU - $RES_CPU"|bc)
 
