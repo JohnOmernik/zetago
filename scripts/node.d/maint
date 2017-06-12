@@ -71,7 +71,7 @@ function _maint(){
     FREE_CPU=$(echo "$TOT_CPU - $USED_CPU - $RES_CPU"|bc)
 
 
-    echo "$HOST - $SLAVE_ID"
+    echo "$NODE - $SLAVE_ID"
     echo "Total CPU: $TOT_CPU"
     echo "Used CPU: $USED_CPU"
     echo "Reserved for Maintenance: $RES_CPU"
