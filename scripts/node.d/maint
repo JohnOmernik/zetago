@@ -92,6 +92,10 @@ function _maint(){
         echo ""
         echo "Sending Unreserve for $GOCPU to $NODE - Role: $ROLE - Principal: $PRINCIPAL"
         echo ""
+        echo "$RES"
+        echo ""
+        echo "Command: curl -i -d slaveId=$SLAVE_ID -d resources=\"$RES\" -X POST http://leader.mesos:5050/master/unreserve"
+        echo ""
         curl -i -d slaveId=$SLAVE_ID -d resources="$RES" -X POST http://leader.mesos:5050/master/unreserve
         echo ""
         echo ""
@@ -102,6 +106,11 @@ function _maint(){
         RES="[{\"name\": \"cpus\",\"type\": \"SCALAR\", \"scalar\": { \"value\": $GOCPU },\"role\": \"$ROLE\",\"reservation\": {\"principal\": \"$PRINCIPAL\"}}]"
         echo ""
         echo "Sending Reserve for $GOCPU to $NODE - Role: $ROLE - Principal: $PRINCIPAL"
+        echo ""
+        echo ""
+        echo "$RES"
+        echo ""
+        echo "Command: curl -i -d slaveId=$SLAVE_ID -d resources=\"$RES\" -X POST http://leader.mesos:5050/master/reserve"
         echo ""
         curl -i -d slaveId=$SLAVE_ID -d resources="$RES" -X POST http://leader.mesos:5050/master/reserve
         echo ""
