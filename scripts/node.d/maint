@@ -18,6 +18,8 @@ function _maint(){
     UNRESERVE="0"
     RESERVE="0"
     NODE=""
+    PRINCIPAL="maint"
+    ROLE="maint"
 
 
     for i in "$@"
@@ -28,6 +30,12 @@ function _maint(){
             ;;
             "-r")
             RESERVE="1"
+            ;;
+            "-P="*)
+            PRINCIPAL="${i#*=}"
+            ;;
+            "-R="*)
+            ROLE="${i#*=}"
             ;;
             *)
             NODE=${i}
@@ -40,6 +48,9 @@ function _maint(){
         echo "Must provide a host at command line"
         echo "Reserve (Start draining) Example: ./zeta node maint -r myhost"
         echo "Unreserve Example: ./zeta node maint -u myhost"
+
+        echo "By Default we work with the role maint with a principal of maint"
+        echo "The role can be overridden with -R and the principal with -P"
         exit 1
     fi
 
@@ -55,7 +66,7 @@ function _maint(){
 
     TOT_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.resources.cpus')
     USED_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.used_resources.cpus')
-    RES_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.reserved_resources.maint.cpus')
+    RES_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.reserved_resources.${ROLE}.cpus')
     SLAVE_ID=$(echo "$CUR_STATUS" | jq -r --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.id')
     FREE_CPU=$(echo "$TOT_CPU - $USED_CPU - $RES_CPU"|bc)
 
@@ -76,7 +87,7 @@ function _maint(){
     if [ "$UNRESERVE" == "1" ]; then
         echo "As stated, the current CPU scheduled for reserve is $RES_CPU"
         read -e -p "How many CPUs would you like to unreserve on $NODE?: " -i "$RES_CPU" GOCPU
-        RES="[{\"name\": \"cpus\",\"type\": \"SCALAR\", \"scalar\": { \"value\": $GOCPU },\"role\": \"maint\",\"reservation\": {\"principal\": \"maint\"}}]"
+        RES="[{\"name\": \"cpus\",\"type\": \"SCALAR\", \"scalar\": { \"value\": $GOCPU },\"role\": \"$ROLE\",\"reservation\": {\"principal\": \"$PRINCIPAL\"}}]"
         echo ""
         echo "Sending Unreserve for $GOCPU to $NODE"
         echo ""
@@ -87,7 +98,7 @@ function _maint(){
     if [ "$RESERVE" == "1" ]; then
         echo "As stated the current CPU Available to reserve for maintenance is $FREE_CPU"
         read -e -p "Host many CPUs would you like to reserve for maintenance on $NODE?: " -i "$FREE_CPU" GOCPU
-        RES="[{\"name\": \"cpus\",\"type\": \"SCALAR\", \"scalar\": { \"value\": $GOCPU },\"role\": \"maint\",\"reservation\": {\"principal\": \"maint\"}}]"
+        RES="[{\"name\": \"cpus\",\"type\": \"SCALAR\", \"scalar\": { \"value\": $GOCPU },\"role\": \"$ROLE\",\"reservation\": {\"principal\": \"$PRINCIPAL\"}}]"
         echo ""
         echo "Sending Reserve for $GOCPU to $NODE"
         echo ""
