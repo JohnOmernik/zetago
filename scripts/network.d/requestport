@@ -1,0 +1,61 @@
+#!/bin/bash
+#
+# Request a Port from the Port list for use in an application
+#
+# Can provide defaults for the get port string -e will specify EDGE vs CLUSTER (no -e)
+# -c="Comments"
+# -p="Suggested Port"
+# -t="Suggested Protocol"
+# -r="Application Role"
+# -i="Application ID"
+ 
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+
+function _requestport() {
+
+    PORT_TYPE="CLUSTER"
+    SUG_PORT="0"
+    APP_ID=""
+    APP_ROLE=""
+    SUG_PROTOCOL="tcp"
+    PORT_COMMENTS="Provide Port"
+
+    for i in "$@"
+        do
+        case $i in
+            "-e")
+            PORT_TYPE="EDGE"
+            ;;
+            "-c="*)
+            PORT_COMMENTS="${i#*=}"
+            ;;
+            "-i="*)
+            APP_ID="${i#*=}"
+            ;;
+            "-p="*)
+            SUG_PORT="${i#*=}"
+            ;;
+            "-t="*)
+            SUG_PROTOCOL="${i#*=}"
+            ;;
+            "-r="*)
+            APP_ROLE="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+
+    PORTSTR="${PORT_TYPE}:${SUG_PROTOCOL}:${SUG_PORT}:${APP_ROLE}:${APP_ID}:${PORT_COMMENTS}"
+    getport "OUTPORTSTR" "$PORT_COMMENTS" "$SERVICES_CONF" "$PORTSTR"
+
+    echo "PORTRESULT#$OUTPORTSTR"
+
+}
+
+
+_requestport "$@"

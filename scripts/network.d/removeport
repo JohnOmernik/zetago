@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# Remove a port from the services.conf
+#
+# -i Remove all ports for a specific id (Needs -r too)
+# -r Removes all ports in a role and id (Needs -i too)
+# -p only remove a specific port (defaults to TCP)
+# -t remove UDP port instead
+# -u Don't ask just remove
+ 
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+
+function _removeport() {
+    UNATTEND="0"
+
+    APP_ID=""
+    APP_ROLE=""
+    PORT=""
+    PROTOCOL="tcp"
+
+    for i in "$@"
+        do
+        case $i in
+            "-i="*)
+            APP_ID="${i#*=}"
+            ;;
+            "-p="*)
+            PORT="${i#*=}"
+            ;;
+            "-t")
+            PROTOCOL="udp"
+            ;;
+            "-r="*)
+            APP_ROLE="${i#*=}"
+            ;;
+            "-u")
+            UNATTEND="1"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+
+    if [ "$PORT" != "" ]; then
+        if [ "$APP_ID" != "" ]; then
+            @go.log FATAL "Both a Port and an APP_ID provided, will not do anything"
+        fi
+        MSG="Are you sure you wish to remove port ${PROTOCOL}/${PORT}? (Y/N): "
+    else
+        if [ "$APP_ID" != "" ]; then
+            if [ "$APP_ROLE" == "" ]; then
+                @go.log FATAL "Cannot remove ports for an APP_ID without specifying APP_ROLE"
+            else
+                MSG="Are you sure you wish to remove all ports in role $APP_ROLE app_id $APP_ID? (Y/N): "
+            fi
+        else
+            @go.log FATAL "Both App id and Port not specified - exiting"
+        fi
+    fi
+
+    if [ "$UNATTEND" == "1" ]; then
+        RUNME="Y"
+    else
+        read -e -p "$MSG" -i "N" RUNME
+    fi
+
+    if [ "$RUNME" != "Y" ]; then
+        @go.log FATAL "Canceled by user"
+    fi
+
+    if [ "$APP_ID" != "" ]; then
+        APP_STR="${APP_ROLE}:${APP_ID}"
+        @go.log WARN "Removing ports associated with $APP_STR"
+    else
+        APP_STR="${PROTOCOL}:${PORT}"
+        @go.log WARN  "Removing Port: $APP_STR"
+    fi
+
+    sed -i "/${APP_STR}/d" ${SERVICES_CONF}
+}
+
+
+_removeport "$@"
