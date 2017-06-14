@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SPARK_VER='2.1.1'
-APP_URL_FILE="spark-${SPARK_VER}.bin-without-hadoop.tgz"
+APP_URL_FILE="spark-${SPARK_VER}-bin-without-hadoop.tgz"
 APP_URL_BASE="http://apache.claz.org/spark/spark-${SPARK_VER}/"
 APP_TGZ="$APP_URL_FILE"
 APP_VER_DIR=$(echo "$APP_TGZ"|sed "s/\.tgz//g")
