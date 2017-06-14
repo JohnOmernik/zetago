@@ -251,7 +251,7 @@ cat > $APP_MAR_SHUF_FILE << EOQ
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "${APP_IMG}",
+      "image": "${ZETA_DOCKER_REG_URL}/buildbase:latest",
       "network": "HOST"
     },
   "volumes": [
@@ -298,7 +298,7 @@ cat > $APP_MAR_HIST_FILE << EOM
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "${APP_IMG}",
+      "image": "${ZETA_DOCKER_REG_URL}/buildbase",
       "network": "BRIDGE",
       "portMappings": [
         $APP_HIST_PORT_JSON
