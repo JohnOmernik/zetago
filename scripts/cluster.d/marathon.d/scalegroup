@@ -34,8 +34,7 @@ function _marathon_scale() {
         @go.log WARN "No MARATHON_URL provided using cluster default in $CLUSTER_CONF"
         MARATHON_HOST="$MARATHON_HOST"
     fi
-    MARATHON_URL="http://${MARATHON_HOST}/v2/apps"
-
+    MARATHON_URL="http://${MARATHON_HOST}/v2/groups"
 
     MARATHON_DEP="http://$MARATHON_HOST/v2/deployments"
     OUT=$(curl -s -H "Content-type: application/json" -X PUT ${MARATHON_URL}/${MARID} -d'{"instances":'"${NUM_INST}"'}')
