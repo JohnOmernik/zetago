@@ -33,7 +33,7 @@ function _marathon_delete() {
     fi
 
     MARATHON_DEP="http://$MARATHON_HOST/v2/deployments"
-
+    echo "Destroying group ${MARATHON_URL}/$MARID"
     OUT=$(curl -s -X DELETE ${MARATHON_URL}/${MARID} -H "Content-type: application/json")
 
     DEP_ID=$(echo $OUT|grep -P -o "deploymentId\":\"[^\"]+\""|cut -f2 -d":"|sed "s/\"//g")
