@@ -29,7 +29,7 @@ function _marathon_delete() {
 
     if [ "$MARATHON_URL" == "" ]; then
         @go.log WARN "No MARATHON_URL provided using cluster default in $CLUSTER_CONF"
-        MARATHON_URL="http://$MARATHON_HOST/v2/apps"
+        MARATHON_URL="http://$MARATHON_HOST/v2/groups"
     fi
 
     MARATHON_DEP="http://$MARATHON_HOST/v2/deployments"
