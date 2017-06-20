@@ -160,7 +160,7 @@ if [ "\$ME" == "root" ]; then
     chmod -R 775 \$TMP_LOC
 fi
 
-if [ "$ZETA_SPARK_SVC" == "shuffle" ] || [ "$ZETA_SPARK_SVC" == "history" ]; then
+if [ "\$ZETA_SPARK_SVC" == "shuffle" ] || [ "\$ZETA_SPARK_SVC" == "history" ]; then
     echo "Running History or Shuffle - Linking /tmp/spark to cluster local space"
     ln -s \$TMP_LOC /tmp/spark
 else
