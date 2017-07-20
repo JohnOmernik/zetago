@@ -32,7 +32,7 @@ function _print_user_help() {
     echo " -a  # Add user"
     echo " -d  # Delete user (not yet implemented)"
     echo " -q  # Query user (not yet implemented)"
-    echo " -p  # Reset password (Not yet implemented)"
+    echo " -p  # Reset password"
     echo ""
     echo "_______________"
     echo "Add user Required Options (-a)"
@@ -183,7 +183,7 @@ function _user() {
     fi
 
     if [ "$ACTION_ADD" == "1" ]; then
-        if [ "$PASS_LINK" != "" ]; then
+        if [ "$PASS_LINK" == "" ]; then
             getpass "$USER_NAME" USER_PASS
             hashpass "$USER_PASS" USER_HASH
         else
@@ -240,7 +240,11 @@ function _user() {
          _print_user_help
         @go.log FATAL "$ACTION_SRC Query not yet implemented"
     elif [ "$ACTION_RESETPASS" == "1" ]; then
-        if [ "$PASS_LINK" != "" ]; then
+        if [ "$USER_ROLE" == "" ]; then
+            @go.log WARN "No User Role Provided: Defaults to shared role"
+            USER_ROLE="shared"
+        fi
+        if [ "$PASS_LINK" == "" ]; then
             getpass "$USER_NAME" USER_PASS
             hashpass "$USER_PASS" USER_HASH
         else
