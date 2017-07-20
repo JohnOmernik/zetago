@@ -186,18 +186,15 @@ function hashpass() {
     eval $RESULT="'$THASH'"
 }
 
-function setpass() {
+function setuserpass() {
     ROLE=$1
     UNAME=$2
     PASSHASH=$3
 
-
-
     LDIF_DATA="dn: cn=$UNAME,ou=users,ou=zeta$ROLE,$LDAP_BASE"$'\n'
     LDIF_DATA="${LDIF_DATA}changetype: modify"$'\n'
     LDIF_DATA="${LDIF_DATA}replace: userPassword"$'\n'
-    LDIF_DATA="${LDIF_DATA}userPassword: $PASSHASS"$'\n'
-
+    LDIF_DATA="${LDIF_DATA}userPassword: $PASSHASH"$'\n'
 
     runldapcommand "$LDIF_DATA" "MODIFY"
 }
