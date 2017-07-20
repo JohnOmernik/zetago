@@ -191,10 +191,14 @@ function setpass() {
     UNAME=$2
     PASSHASH=$3
 
+
+
     LDIF_DATA="dn: cn=$UNAME,ou=users,ou=zeta$ROLE,$LDAP_BASE"$'\n'
     LDIF_DATA="${LDIF_DATA}changetype: modify"$'\n'
     LDIF_DATA="${LDIF_DATA}replace: userPassword"$'\n'
     LDIF_DATA="${LDIF_DATA}userPassword: $PASSHASS"$'\n'
+
+    echo "$LDIF_DATA"
 
     runldapcommand "$LDIF_DATA" "MODIFY"
 }

@@ -250,7 +250,7 @@ function _user() {
         else
             USER_HASH="{SASL}${PASS_LINK}"
         fi
-         echo "You wish to change the password on the following user:"
+        echo "You wish to change the password on the following user:"
         echo ""
         echo "User: $USER_NAME"
         echo "Role: $USER_ROLE"
