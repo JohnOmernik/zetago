@@ -198,7 +198,6 @@ function setpass() {
     LDIF_DATA="${LDIF_DATA}replace: userPassword"$'\n'
     LDIF_DATA="${LDIF_DATA}userPassword: $PASSHASS"$'\n'
 
-    echo "$LDIF_DATA"
 
     runldapcommand "$LDIF_DATA" "MODIFY"
 }
