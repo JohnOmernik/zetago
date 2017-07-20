@@ -51,7 +51,7 @@ function _print_user_help() {
     echo " -n=\"username\"         # username to reset password for"
     echo ""
     echo "Reset Psasword Optional Options (-p)"
-    echo " -r=\"role\"             # Role that username is in (defaults to trying shared)
+    echo " -r=\"role\"             # Role that username is in (defaults to trying shared)"
     echo " -ad=\"user@domain.com\" # Sets password to proxy link to specified account (ensure proxy passthrough is working) (Defaults to prompting for password)"
     echo " -u                      # Unattended - Only works if setting to proxy passthrough, otherwise will prompt for password"
     echo ""
