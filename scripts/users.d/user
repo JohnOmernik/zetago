@@ -108,11 +108,11 @@ function _user() {
 
     if [ "$ACTION_ADD" == "1" ]; then
         if [ "$ACTION_DEL" == "1" ] || [ "$ACTION_QUERY" == "1" ] || [ "$ACTION_RESETPASS" == "1" ]; then
-            _print_user_help()
+            _print_user_help
             @go.log FATAL "Requested $ACTION_SRC Add (-a) specified with either $ACTION_SRC Delete (-d),  $ACTION_SRC Query (-q), or $ACTION_SRC Reset Password  (-p) - Exiting"
         fi
         if [ "$USER_NAME" == "" ]; then
-            _print_user_help()
+            _print_user_help
             @go.log FATAL "To add a user you must provide a user name with -n"
         fi
         if [ "$USER_ROLE" == "" ]; then
@@ -128,7 +128,7 @@ function _user() {
                     mkdir -p ./conf/zetasync
                     cp $OLDLOC $UIDLOC
                 else
-                     _print_user_help()
+                     _print_user_help
                     @go.log FATAL "Cannot find zetauid.list in ./conf/zetasync or in /zeta/kstore/zetasync - Exiting"
                 fi
             fi
@@ -136,7 +136,7 @@ function _user() {
             START_UID=$(cat $UIDLOC|grep $USER_ROLE|cut -d":" -f2)
 
             if [ "$START_UID" == "" ]; then
-                 _print_user_help()
+                 _print_user_help
                 @go.log FATAL "The starting UID for role $USER_ROLE was not found, are you sure this role is installed?"
             fi
             VALID_UID="$START_UID"
@@ -164,21 +164,21 @@ function _user() {
 
     elif [ "$ACTION_DEL" == "1" ]; then
         if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_QUERY" == "1" ] || [ "$ACTION_RESETPASS" == "1" ]; then
-             _print_user_help()
+             _print_user_help
             @go.log FATAL "Requested $ACTION_SRC Delete (-d) specified with either $ACTION_SRC Add (-a), $ACTION_SRC Query (-q), or $ACTION_SRC Reset Password  (-p) - Exiting"
         fi
     elif [ "$ACTION_QUERY" == "1" ]; then
         if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_DEL" == "1" ] || [ "$ACTION_RESETPASS" == "1" ]; then
-             _print_user_help()
+             _print_user_help
             @go.log FATAL "Requested $ACTION_SRC Query (-q) specified with either $ACTION_SRC Add (-a) , $ACTION_SRC Delete (-d), or $ACTION_SRC Reset Password  (-p) - Exiting"
         fi
     elif [ "$ACTION_RESETPASS" == "1" ]; then
         if [ "$ACTION_ADD" == "1" ] || [ "$ACTION_DEL" == "1" ] || [ "$ACTION_QUERY" == "1" ]; then
-             _print_user_help()
+             _print_user_help
             @go.log FATAL "Requested $ACTION_SRC Reset Password (-p) specified with either $ACTION_SRC Add (-a) , $ACTION_SRC Delete (-d), or $ACTION_SRC Query (-q) - Exiting"
         fi
     else
-         _print_user_help()
+         _print_user_help
         @go.log FATAL "./zeta users user invoked without specifying either Add, Delete, Query, or Reset Password - Exiting"
     fi
 
@@ -206,7 +206,7 @@ function _user() {
         if [ "$UNATTEND" != "1" ]; then
             read -e -p "Is this correct? " -i "N" CHK
             if [ "$CHK" != "Y" ]; then
-                 _print_user_help()
+                 _print_user_help
                 @go.log FATAL "User did not confirm user creation"
             fi
         fi
@@ -259,7 +259,7 @@ function _user() {
         if [ "$UNATTEND" != "1" ]; then
             read -e -p "Is this correct? " -i "N" CHK
             if [ "$CHK" != "Y" ]; then
-                 _print_user_help()
+                 _print_user_help
                 @go.log FATAL "User did not confirm password change"
             fi
         fi
