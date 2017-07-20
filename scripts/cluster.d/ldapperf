@@ -45,6 +45,9 @@ function _openldapperf() {
             "-x="*)
             INDEX_NAME="${i#*=}"
             ;;
+            "-d="*)
+            DB_TYPE="${i#*=}"
+            ;;
             "-t="*)
             INDEX_TYPE="${i#*=}"
             ;;
@@ -83,7 +86,13 @@ function _openldapperf() {
             @go.log FATAL "To update cache sizes, you must specify a value (only number) with -s= - Example: -s=500000"
         fi
     fi
-
+    if [ "$DB_TYPE" == "" ]; then
+        @go.log WARN "DB Type not specified with -d, defaulting to hdb (you should consider upgrading to mdb"
+        DB_TYPE="hdb"
+    fi
+    if [ "$DB_TYPE" != "hdb" ] && [ "$DB_TYPE" != "mdb" ]; then
+        @go.log FATAL "DB Type (-d) must be either mdb or hdb, or not specified (defaulting to hdb) you specified: $DB_TYPE - Exiting"
+    fi
     echo ""
     echo "****************************************"
     echo "This attempts to enable caches and indexes to make openldap faster with Zeta"
@@ -108,27 +117,27 @@ function _openldapperf() {
         if [ -f "$LDAP_INDEX_FILE" ]; then
             @go.log WARN "Indexes already added to this install - skipping"
         else
-            addindexcache "gidNumber" "eq"
-            addindexcache "uidNumber" "eq"
-            addindexcache "cn" "eq"
-            addindexcache "memberUid" "eq"
-            addindexcache "member" "eq"
+            addindexcache "gidNumber" "eq" "$DB_TYPE"
+            addindexcache "uidNumber" "eq" "$DB_TYPE"
+            addindexcache "cn" "eq" "$DB_TYPE"
+            addindexcache "memberUid" "eq" "$DB_TYPE"
+            addindexcache "member" "eq" "$DB_TYPE"
             touch $LDAP_INDEX_FILE
         fi
 
         if [ -f "$LDAP_CACHE_FILE" ]; then
             @go.log WARN "Caches already added to this install - skipping"
         else
-            addindexcache "UPDATECACHE" "1000000"
+            addindexcache "UPDATECACHE" "1000000" "$DB_TYPE"
             touch $LDAP_CACHE_FILE
         fi
 
     elif [ "$ACTION_INDEX" == "1" ]; then
         @go.log WARN "Attempting to add index: $INDEX_NAME of type $INDEX_TYPE"
-        addindexcache "$INDEX_NAME" "$INDEX_TYPE"
+        addindexcache "$INDEX_NAME" "$INDEX_TYPE" "$DB_TYPE"
     elif [ "$ACTION_CACHE" == "1" ]; then
         @go.log WARN "Attempting to update Cache size to : $CACHE_SIZE"
-        addindexcache "UPDATECACHE" "$CACHE_SIZE"
+        addindexcache "UPDATECACHE" "$CACHE_SIZE" "$DB_TYPE"
     else
         @go.log FATAL "No command specified to ldap perf scripts"
     fi
