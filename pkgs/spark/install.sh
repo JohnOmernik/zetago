@@ -163,10 +163,11 @@ fi
 if [ "\$ZETA_SPARK_SVC" == "shuffle" ] || [ "\$ZETA_SPARK_SVC" == "history" ]; then
     echo "Running History or Shuffle - Linking /tmp/spark to cluster local space"
     ln -s \$TMP_LOC /tmp/spark
-else
-    echo "Not running history or shuffle, using container local space"
-    mkdir /tmp/spark
     chmod 777 /tmp/spark
+else
+    echo "Not running history or shuffle, using container local space but still linking to the nodes local space"
+    ln -s \$TMP_LOC /tmp/spark
+#    chmod 777 /tmp/spark
 fi
 
 export HADOOP_CONF_DIR=\${HADOOP_HOME}/etc/hadoop
