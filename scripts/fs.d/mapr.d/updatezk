@@ -91,7 +91,8 @@ function _updatezk() {
         if [ "$CHKSTOP" != "" ]; then
             STOPPED="True"
             @go.log INFO "Looks good, instances = 0 so things are stopped"
-            IMG=$(echo "$FULLRESULT"|grep -P -o "fsdocker-shared[^,]+"|sed "s/\"//g")
+            IMG=$(echo "$APPDEF"|jq -r '.container.docker.image')
+            echo "$IMG"
             IMG_REG=$(echo "$IMG"|cut -d"/" -f1)
             IMG_TAG=$(echo "$IMG"|cut -d"/" -f2)
             GOAL_IMG="${IMG_REG}/${GOAL_TAG}"
