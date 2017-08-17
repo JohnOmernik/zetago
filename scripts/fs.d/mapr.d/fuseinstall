@@ -121,6 +121,7 @@ function _fuseinstall() {
             wget ${UBUNTU_MAPR_CLIENT_BASE}${UBUNTU_MAPR_CLIENT_FILE}
             wget ${UBUNTU_MAPR_POSIX_BASE}${UBUNTU_MAPR_POSIX_FILE}
             wget ${UBUNTU_MAPR_MEP_BASE}/${UBUNTU_MAPR_LIBRDKAFKA_FILE}
+            wget ${UBUNTU_MAPR_MEP_BASE}/${UBUNTU_MAPR_KAFKA_FILE}
             if [ "$UBUNTU_MAPR_PATCH_CLIENT_FILE" != "" ]; then
                 wget ${UBUNTU_MAPR_PATCH_BASE}${UBUNTU_MAPR_PATCH_CLIENT_FILE}
                 wget ${UBUNTU_MAPR_PATCH_BASE}${UBUNTU_MAPR_PATCH_POSIX_FILE}
@@ -130,6 +131,7 @@ function _fuseinstall() {
         INST_CLIENT=$UBUNTU_MAPR_CLIENT_FILE
         INST_POSIX=$UBUNTU_MAPR_POSIX_FILE
         INST_LIBRDKAFKA=$UBUNTU_MAPR_LIBRDKAFKA_FILE
+        INST_KAFKA=$UBUNTU_MAPR_KAFKA_FILE
         INST_CMD="dpkg -i"
     elif [ "$INST_DIST" == "rh" ]; then
         @go.log FATAL "Redhat/CentOS not setup at this time"
@@ -143,6 +145,9 @@ function _fuseinstall() {
     scp ${CLIENT_DIR}/$INST_POSIX $NODE_HOST:/home/${IUSER}/
     if [ "$INST_LIBRDKAFKA" != "" ]; then
         scp ${CLIENT_DIR}/$INST_LIBRDKAFKA $NODE_HOST:/home/${IUSER}/
+    fi
+    if [ "$INST_KAFKA" != "" ]; then
+        scp ${CLIENT_DIR}/$INST_KAFKA $NODE_HOST:/home/${IUSER}/
     fi
 
     if [ "$UBUNTU_MAPR_PATCH_CLIENT_FILE" != "" ]; then
@@ -196,6 +201,7 @@ EOL1
     ssh $NODE_HOST "sudo mkdir -p /$CLUSTERBASE"
     ssh $NODE_HOST "sudo $INST_CMD $INST_POSIX"
     ssh $NODE_HOST "sudo $INST_CMD $INST_LIBRDKAFKA"
+    ssh $NODE_HOST "sudo $INST_CMD $INST_KAFKA"
     if [ "$UBUNTU_MAPR_PATCH_POSIX_FILE" != "" ]; then
         ssh $NODE_HOST "sudo $INST_CMD ${UBUNTU_MAPR_PATCH_POSIX_FILE}"
     fi

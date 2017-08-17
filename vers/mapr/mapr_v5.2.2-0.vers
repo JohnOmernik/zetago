@@ -25,6 +25,7 @@ export UBUNTU_MAPR_CLIENT_FILE="mapr-client-5.2.2.44680.GA-1.amd64.deb"
 export UBUNTU_MAPR_POSIX_FILE="mapr-posix-client-basic_5.2.2.44680.GA-1_amd64.deb"
 export UBUNTU_MAPR_LOOP_FILE="mapr-loopbacknfs_5.2.2.44680.GA-1_amd64.deb"
 export UBUNTU_MAPR_LIBRDKAFKA_FILE="mapr-librdkafka_0.9.1.201703301726_all.deb"
+export UBUNTU_MAPR_KAFKA_FILE="mapr-kafka_0.9.0.201707250127_all.deb"
 
 export UBUNTU_MAPR_PATCH_BASE=""
 export UBUNTU_MAPR_PATCH_CLIENT_FILE=""

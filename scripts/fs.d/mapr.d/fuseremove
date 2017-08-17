@@ -90,10 +90,12 @@ function _fuseremove() {
         REM_POSIX="mapr-posix-client-basic"
         REM_POSIX_PATCH="mapr-patch-posix-client-basic"
         REM_LIBRDKAFKA="mapr-librdkafka"
+        REM_KAFKA="mapr-kafka"
         REM_CMD="dpkg --purge --force-all"
     elif [ "$INST_DIST" == "rh" ]; then
         REM_CLIENT=""
         REM_LIBRDKAFKA=""
+        REM_KAFKA=""
         REM_POSIX=""
         REM_CMD=""
     fi
@@ -104,6 +106,8 @@ function _fuseremove() {
     ssh $NODE_HOST "sudo $REM_CMD $REM_POSIX"
     sleep 2
     ssh $NODE_HOST "sudo $REM_CMD $REM_LIBRDKAFKA"
+    sleep 1
+    ssh $NODE_HOST "sudo $REM_CMD $REM_KAFKA"
     sleep 1
     ssh $NODE_HOST "sudo $REM_CMD $REM_CLIENT_PATCH"
     ssh $NODE_HOST "sudo $REM_CMD $REM_CLIENT"
