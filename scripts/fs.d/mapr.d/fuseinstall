@@ -200,8 +200,11 @@ EOL1
     ssh $NODE_HOST "sudo /opt/mapr/server/configure.sh -N $CLUSTERNAME -c -C $CLDBS"
     ssh $NODE_HOST "sudo mkdir -p /$CLUSTERBASE"
     ssh $NODE_HOST "sudo $INST_CMD $INST_POSIX"
+    sleep 2
     ssh $NODE_HOST "sudo $INST_CMD $INST_LIBRDKAFKA"
+    sleep 2
     ssh $NODE_HOST "sudo $INST_CMD $INST_KAFKA"
+    sleep 2
     if [ "$UBUNTU_MAPR_PATCH_POSIX_FILE" != "" ]; then
         ssh $NODE_HOST "sudo $INST_CMD ${UBUNTU_MAPR_PATCH_POSIX_FILE}"
     fi
