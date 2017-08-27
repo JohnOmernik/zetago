@@ -120,6 +120,30 @@ function _build_mapr() {
         DOCKER_LINE6=""
     fi
 
+
+
+cat > $BUILD_TMP/update_jpam.sh << EOJ2
+#!/bin/bash
+
+rm -rf /opt/mapr/adminuiapp/webapp/WEB-INF/jpamlogin.conf
+
+cat > /opt/mapr/adminuiapp/webapp/WEB-INF/jpamlogin.conf << EOY
+jpamLogin {
+  net.sf.jpam.jaas.JpamLoginModule Sufficient
+      serviceName="sudo"
+      debug=true;
+  net.sf.jpam.jaas.JpamLoginModule Sufficient
+      serviceName="sshd"
+      debug=true;
+  net.sf.jpam.jaas.JpamLoginModule Sufficient
+      serviceName="mapr-admin"
+      debug=true;
+};
+EOY
+
+EOJ2
+chmod +x $BUILD_TMP/update_jpam.sh
+
 cat > $BUILD_TMP/dockerrun.sh << EOL3
 #!/bin/bash
 #This is run if there is no disktab in /opt/mapr/conf
@@ -205,8 +229,11 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --al
 ADD dockerrun.sh /opt/mapr/server/
 ADD dockerwarden.sh /opt/mapr/server/
 ADD dockerreconf.sh /opt/mapr/server/
+ADD update_jpam.sh /opt/mapr/server/
 
-RUN chmod +x /opt/mapr/server/dockerrun.sh && chmod +x /opt/mapr/server/dockerwarden.sh && chmod +x /opt/mapr/server/dockerreconf.sh
+RUN chmod +x /opt/mapr/server/dockerrun.sh && chmod +x /opt/mapr/server/dockerwarden.sh && chmod +x /opt/mapr/server/dockerreconf.sh && chmod +x /opt/mapr/server/update_jpam.sh
+
+RUN /opt/mapr/server/update_jpam.sh
 
 CMD ["/bin/bash"]
 
