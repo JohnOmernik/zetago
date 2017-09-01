@@ -20,11 +20,18 @@ function _maint(){
     NODE=""
     PRINCIPAL="maint"
     ROLE="maint"
-
+    STATUS="0"
+    FULL_STATUS="0"
 
     for i in "$@"
         do
         case $i in
+            "-s")
+            STATUS="1"
+            ;;
+            "-f")
+            FULL_STATUS="1"
+            ;;
             "-u")
             UNRESERVE="1"
             ;;
@@ -61,27 +68,36 @@ function _maint(){
         @go.log WARN "$NODE does not appear to be a valid hostname, it must appear in this list"
         echo "$AVAIL_HOSTS"
         exit 1
-    fi 
+    fi
 
-
-    TOT_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.resources.cpus')
-    USED_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.used_resources.cpus')
-    RES_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" ".[]|.[]|select(.hostname==\$hn)|.reserved_resources.\"${ROLE}\".cpus")
-    SLAVE_ID=$(echo "$CUR_STATUS" | jq -r --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.id')
+    TOT_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.resources.cpus'|cut -d$'\n' -f1)
+    USED_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.used_resources.cpus'|cut -d$'\n' -f1)
+    RES_CPU=$(echo "$CUR_STATUS" | jq --arg hn "$NODE" ".[]|.[]|select(.hostname==\$hn)|.reserved_resources.\"${ROLE}\".cpus"|cut -d$'\n' -f1)
+    SLAVE_ID=$(echo "$CUR_STATUS" | jq -r --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)|.id'|cut -d$'\n' -f1)
     FREE_CPU=$(echo "$TOT_CPU - $USED_CPU - $RES_CPU"|bc)
+    if [ "$RES_CPU" == "null" ]; then
+        RES_CPU="0"
+    fi
 
-    echo ""
     echo ""
     echo "$NODE - $SLAVE_ID"
+    echo ""
     echo "Total CPU: $TOT_CPU"
     echo "Used CPU: $USED_CPU"
     echo "Reserved for $ROLE with principal $PRINCIPAL: $RES_CPU"
-    echo ""
     echo "Available CPU: $FREE_CPU"
-    echo ""
 
     if [ "$UNRESERVE" == "1" ] && [ "$RESERVE" == "1" ]; then
         echo "You can't really reserve AND unreserve at the same time... might I suggest some anger management training?"
+        exit 0
+    fi
+    if [ "$FULL_STATUS" == "1" ]; then
+        echo "Full status here:"
+        echo "$CUR_STATUS"| jq --arg hn "$NODE" '.[]|.[]|select(.hostname==$hn)'
+    fi
+
+    if [ "$STATUS" == "1" ]; then
+        echo "Status Printed for node $NODE  No changes made!"
         exit 0
     fi
 
