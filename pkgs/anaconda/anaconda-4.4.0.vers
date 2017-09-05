@@ -73,7 +73,7 @@ requests
 xxhash
 EOC
 
-cat ./Dockerfile << EOS
+cat >./Dockerfile << EOS
 FROM ${APP_IMG1}
 WORKDIR /tmp
 
@@ -85,6 +85,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
 
 ADD requirements.txt requirements.txt
 RUN pip install -r requirements.txt
+CMD ["/bin/bash"]
 EOS
 
     sudo docker build --rm -t $CURIMG .
@@ -103,7 +104,7 @@ requests
 xxhash
 EOB
 
-cat ./Dockerfile << EOW
+cat > ./Dockerfile << EOW
 FROM ${APP_IMG2}
 WORKDIR /tmp
 
@@ -115,6 +116,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
 
 ADD requirements.txt requirements.txt
 RUN pip install -r requirements.txt
+CMD ["/bin/bash"]
 EOW
 
     sudo docker build --rm -t $CURIMG .
