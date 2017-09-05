@@ -29,7 +29,7 @@ MAINTAINER Naveen Manivannan <naveen.manivannan@gmail.com>
 WORKDIR /tmp
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/opt/conda/bin:\$PATH
 
-RUN apt-get update -qqy --fix-missing && apt-get install -qqy wget bzip2 ca-certificates \
+RUN apt-get update -qqy --fix-missing && apt-get install -qqy wget bzip2 nano vim ca-certificates \
     libglib2.0-0 libxext6 libsm6 libxrender1 git mercurial subversion && \
     echo 'export PATH=/opt/conda/bin:\$PATH' > /etc/profile.d/conda.sh && \
     wget --quiet $APP_URL1 -O /tmp/anaconda.sh && \
@@ -47,7 +47,7 @@ MAINTAINER Naveen Manivannan <naveen.manivannan@gmail.com>
 WORKDIR /tmp
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/opt/conda/bin:\$PATH
 
-RUN apt-get update -qqy --fix-missing && apt-get install -qqy wget bzip2 ca-certificates \
+RUN apt-get update -qqy --fix-missing && apt-get install -qqy wget nano vim bzip2 ca-certificates \
     libglib2.0-0 libxext6 libsm6 libxrender1 git mercurial subversion && \
     echo 'export PATH=/opt/conda/bin:\$PATH' > /etc/profile.d/conda.sh && \
     wget --quiet $APP_URL2 -O /tmp/anaconda.sh && \
