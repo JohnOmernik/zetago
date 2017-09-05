@@ -58,4 +58,69 @@ EOF
 sudo docker build --rm -t ${APP_IMG2} .
 sudo docker push ${APP_IMG2}
 rm ./Dockerfile
+
+if [ "$BUILD_SPARK" == "Y" ]; then
+    echo "Building Spark based anaconda images as well"
+    CURIMG="${ZETA_DOCKER_REG_URL}/anaspark2:$APP_VER"
+    echo "Building $CURIMG"
+cat > ./requirements.txt << EOC
+kafka-python
+lz4tools
+memory-profiler
+pandas
+pyarrow
+requests
+xxhash
+EOC
+
+cat ./Dockerfile << EOS
+FROM ${APP_IMG1}
+WORKDIR /tmp
+
+RUN DEBIAN_FRONTEND=noninteractive \
+    apt-get update -qqy --fix-missing && \
+    apt-get install -qqy gcc libnss3 git curl && \
+    apt-get clean && apt-get autoremove -qqy && \
+    rm -rf /var/lib/apt/lists/*
+
+ADD requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+EOS
+
+    sudo docker build --rm -t $CURIMG .
+    sudo docker push $CURIMG
+    rm ./Dockerfile
+echo "Next"
+    CURIMG="${ZETA_DOCKER_REG_URL}/anaspark3:$APP_VER"
+    echo "Building $CURIMG"
+cat > ./requirements.txt << EOB
+kafka-python
+lz4tools
+memory-profiler
+pandas
+pyarrow
+requests
+xxhash
+EOB
+
+cat ./Dockerfile << EOW
+FROM ${APP_IMG2}
+WORKDIR /tmp
+
+RUN DEBIAN_FRONTEND=noninteractive \
+    apt-get update -qqy --fix-missing && \
+    apt-get install -qqy gcc libnss3 git curl && \
+    apt-get clean && apt-get autoremove -qqy && \
+    rm -rf /var/lib/apt/lists/*
+
+ADD requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+EOW
+
+    sudo docker build --rm -t $CURIMG .
+    sudo docker push $CURIMG
+    rm ./Dockerfile
+
+
+fi
 fi 
