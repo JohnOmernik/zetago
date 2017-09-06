@@ -117,6 +117,7 @@ EOS
             fi
         fi
     done
+    REM_IPS=$(echo -n "$REM_IPS"|tr -d '\n'|tr ',' '\n'|sort|uniq|tr '\n' ','|sed -r "s/,$//g")
 
     ALL_INPUT=$(cat $FW_CUSTOM_DIR/all_nodes_input.fw)
     ALL_OUTPUT=$(cat $FW_CUSTOM_DIR/all_nodes_output.fw)
