@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Determines prep status of a given node or all nodes via -a
+# Determines prep status of a given node or all nodes via
 #
 # Arguments:
 # -n="%NODE% Get status of a specific node
@@ -9,16 +9,34 @@
 
 sourceconf "$PREP_CONF"
 
+function _displayhelp(){
+    echo "prep status - Provide a node prep status report by default it returns status on all nodes in prep.conf "
+    echo "===================================================================================================="
+    echo ""
+    echo "Arguments:"
+    echo "-h               - Display this help"
+    echo "-n=%NODE%        - Display status on the node %NODE%"
+    echo "-o               - Set SSH commands to NOT verify host (useful for initial clusters)"
+    echo ""
+    echo "Usage:"
+    echo "./zeta prep status                    # Display prep status for all nodes in prep.conf"
+    echo "./zeta prep status -n=\"192.168.0.1\" # Display prep status for the node 192.168.0.1"
+    echo ""
+}
+
 function _prep_status() {
 
     ALL="1"
     VERIFYHOST="1"
-
+    DISPLAYHELP="0"
     for i in "$@"
         do
         case $i in
             "-o")
             VERIFYHOST="0"
+            ;;
+            -h)
+            DISPLAYHELP="1"
             ;;
             "-n="*)
             HOST="${i#*=}"
@@ -28,6 +46,12 @@ function _prep_status() {
             ;;
         esac
     done
+    if [ "$DISPLAYHELP" == "1" ]; then
+        _displayhelp
+        exit 0
+    fi
+
+
     if [ "$HOST" != "" ]; then
         ALL="0"
     fi

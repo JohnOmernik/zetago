@@ -14,11 +14,29 @@
 #
 sourceconf "$PREP_CONF"
 
+
+
+function _displayhelp(){
+    echo "prep install - Run the user and system install prep scripts on nodes for Zeta"
+    echo "===================================================================================================="
+    echo ""
+    echo "Arguments:"
+    echo "-u               - Unattended install - use default vers file of 1.0.0. if no vers passed to script (no user intervention)"
+    echo "-a               - All nodes - Run all nodes listed in prep.conf"
+    echo "-h               - Display this help"
+    echo "-n=%NODE%        - Run on the node %NODE%"
+    echo ""
+    echo "Usage:"
+    echo "./zeta prep install -a -u # Run install for user and system prep on all nodes without prompting for user intervention"
+    echo "./zeta prep install -n=\"192.168.0.1\" # Run the user and system install scripts on node 192.168.0.1"
+    echo ""
+}
+
 function _prepinstall() {
 
     ALL="0"
     UNATTEND="0"
-
+    DISPLAYHELP="0"
     for i in "$@"
     do
     case $i in
@@ -28,6 +46,9 @@ function _prepinstall() {
         -u)
         UNATTEND="1"
         ;;
+        -h)
+        DISPLAYHELP="1"
+        ;;
         "-n="*)
         HOST="${i#*=}"
         ;;
@@ -35,6 +56,12 @@ function _prepinstall() {
         ;;
     esac
     done
+
+    if [ "$DISPLAYHELP" == "1" ]; then
+        _displayhelp
+        exit 0
+    fi
+
 
     if [ "$ALL" == "1" ]; then
         RUN_NODES="$NODES"

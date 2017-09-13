@@ -2,6 +2,7 @@
 #
 # This script walks the user through a series of questions in order to create a prep_conf.conf
 #
+# No arguments are called here
 
 echo ""
 echo "-----------------------------------"

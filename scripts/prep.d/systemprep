@@ -9,17 +9,33 @@
 
 sourceconf "$PREP_CONF"
 
-
+function _displayhelp(){
+    echo "prep systemprep - Update system packages on Zeta nodes"
+    echo "===================================================================================================="
+    echo ""
+    echo "Arguments:"
+    echo "-u               - Unattended install"
+    echo "-h               - Display this help"
+    echo "-n=%NODE%        - Run on the node %NODE%"
+    echo ""
+    echo "Usage:"
+    echo "./zeta prep systemprep -n=\"192.168.0.1\" # Run the systemprep on node 192.168.0.1"
+    echo ""
+}
 
 
 function _systemprep() {
 
     UNATTEND="0"
+    DISPLAYHELP="0"
     for i in "$@"
         do
         case $i in
             -u)
             UNATTEND="1"
+            ;;
+            -h)
+            DISPLAYHELP="1"
             ;;
             "-n="*)
             HOST="${i#*=}"
@@ -29,7 +45,10 @@ function _systemprep() {
             ;;
         esac
     done
-
+    if [ "$DISPLAYHELP" == "1" ]; then
+        _displayhelp
+        exit 0
+    fi
     SCRIPTS="./bin/ubuntu_prep.sh ./bin/centos_prep1.sh ./bin/centos_prep2.sh"
 
     FOUND="1"

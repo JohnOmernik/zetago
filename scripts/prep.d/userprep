@@ -5,34 +5,54 @@
 
 sourceconf "$PREP_CONF"
 
-SCRIPTSRC="./conf/userupdate.sh"
-if [ ! -f "$SCRIPTSRC" ]; then
-   @go.log INFO "User prep scripts not found, creating in .conf for security"
-   ./zeta prep createuserprep
-fi
 
-if [ ! -f "$OUT_KEY" ]; then
-    @go.log INFO "Prep conf exists, however, keys have not been generated, doing so now"
-    ./zeta prep genkey
-fi
+function _displayhelp(){
+    echo "prep userprep - Creates base users for Zeta install on nodes"
+    echo "===================================================================================================="
+    echo ""
+    echo "Arguments:"
+    echo "-h               - Display this help"
+    echo "-n=%NODE%        - Run on the node %NODE%"
+    echo ""
+    echo "Usage:"
+    echo "./zeta prep userprep -n=\"192.168.0.1\" # Run the systemprep on node 192.168.0.1"
+    echo ""
+}
 
-PUB_KEY=$(cat $OUT_KEY_PUB)
 
 function _userprep() {
-
+    DISPLAYHELP="0"
     for i in "$@"
         do
         case $i in
             "-n="*)
             HOST="${i#*=}"
             ;;
+            -h)
+            DISPLAYHELP="1"
+            ;;
             *)
             # unknown option
             ;;
         esac
     done
+    if [ "$DISPLAYHELP" == "1" ]; then
+        _displayhelp
+        exit 0
+    fi
 
+    SCRIPTSRC="./conf/userupdate.sh"
+    if [ ! -f "$SCRIPTSRC" ]; then
+        @go.log INFO "User prep scripts not found, creating in .conf for security"
+        ./zeta prep createuserprep
+    fi
 
+    if [ ! -f "$OUT_KEY" ]; then
+        @go.log INFO "Prep conf exists, however, keys have not been generated, doing so now"
+        ./zeta prep genkey
+    fi
+
+    PUB_KEY=$(cat $OUT_KEY_PUB)
     if [ "$HOST" == "" ]; then
         @go.log FATAL "Host must not be blank, please specify with -n=%HOSTNAME%"
     fi

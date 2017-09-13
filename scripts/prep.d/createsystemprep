@@ -8,15 +8,28 @@
 #
 #
 
+function _displayhelp(){
+    echo "createsystemprep - Creates scripts needed to update and upgrade nodes to prepe for DCOS/Zeta Install"
+    echo "===================================================================================================="
+    echo ""
+    echo "-u               - Unattended install - use default vers file of 1.0.0. if no vers passed to script (no user intervention)"
+    echo "-v=%VERSFILE%    - Specify a certain version file for use in the prep"
+    echo ""
+}
+
 
 function createscripts() {
 
     UNATTEND="0"
+    DISPLAYHELP="0"
     for i in "$@"
         do
         case $i in
             -u)
             UNATTEND="1"
+            ;;
+            -h)
+            DISPLAYHELP="1"
             ;;
             "-v="*)
             VERS_VER="${i#*=}"
@@ -26,6 +39,11 @@ function createscripts() {
             ;;
         esac
     done
+
+    if [ "$DISPLAYHELP" == "1" ]; then
+        _displayhelp
+        exit 0
+    fi
 
     if [ "$VERS_VER" == "" ]; then
         if [ "$UNATTEND" == "0" ]; then
