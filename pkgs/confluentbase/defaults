@@ -1,4 +1,0 @@
-#!/bin/bash
-
-DEF_APP_VERS="confluent_3.1.1-2.11.vers"
-

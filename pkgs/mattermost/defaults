@@ -1,4 +1,0 @@
-#!/bin/bash
-
-DEF_APP_VERS="mattermost-3.1.0.vers"
-REC_DIR="zeta"

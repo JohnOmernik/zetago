@@ -1,4 +1,0 @@
-#!/bin/bash
-
-DEF_APP_VERS="mongo-3.4.vers"
-REC_DIR="zeta"

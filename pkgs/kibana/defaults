@@ -1,4 +1,0 @@
-#!/bin/bash
-
-DEF_APP_VERS="kibana-4.6.4.vers"
-REC_DIR="zeta"

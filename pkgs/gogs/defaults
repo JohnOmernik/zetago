@@ -1,4 +1,0 @@
-#!/bin/bash
-
-DEF_APP_VERS="gogs-0.9.115.vers"
-REC_DIR="zeta"

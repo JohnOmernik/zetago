@@ -1,4 +1,0 @@
-#!/bin/bash
-
-DEF_APP_VERS="mariadb-5.5.vers"
-REC_DIR="zeta"

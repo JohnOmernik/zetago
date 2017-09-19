@@ -1,4 +1,0 @@
-#!/bin/bash
-
-DEF_APP_VERS="drill-1.10.0-mapr.vers"
-REC_DIR="zeta"

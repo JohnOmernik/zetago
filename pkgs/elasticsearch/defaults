@@ -1,4 +1,0 @@
-#!/bin/bash
-
-DEF_APP_VERS="elasticsearch-2.4.4.vers"
-REC_DIR="zeta"
