@@ -15,14 +15,30 @@ sourceconf "$CLUSTER_BASE_CONF"
 reqshared "dockerregv2 zetaca openldap"
 
 # Main packages that ship with zetago
-CORE_PKG_LOC="./pkgs"
+CORE_PKG_LOC="../zetapkgs"
 
 # Core base install
 SHARED_LOC="$CLUSTERMOUNT/zeta/shared"
 
 # Additional Package Repo locations (This can be multiple directories separated by commas)
-ADD_PKG_LOC=""
+ADD_PKG_LOC="../zetaextra"
 
+CUR=$(pwd)
+
+read -e -p "Should we clone zetapkgs into the default location (../) (Y/N)" -i "Y" CLONEPKG
+if [ "$CLONEPKG" == "Y" ]; then
+    cd ..
+    echo "Cloning zetapkgs into ../ "
+    git clone https://github.com/johnomernik/zetapkgs
+    cd $CUR
+fi
+read -e -p "Should we clone zetaextra into the default location (../) (Y/N)" -i "Y" CLONEEXTRA
+if [ "$CLONEEXTRA" == "Y" ]; then
+    cd ..
+    echo "Cloning zetapextra into ../ "
+    git clone https://github.com/johnomernik/zetaextra
+    cd $CUR
+fi
 
 echo ""
 echo "Core Package Location: $CORE_PKG_LOC"
