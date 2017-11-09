@@ -77,18 +77,18 @@ function _userprep() {
     ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${INIT_USER}@${HOST} "touch $REM_SCRIPT && chmod 700 $REM_SCRIPT"
     scp -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${SCRIPTSRC} ${INIT_USER}@${HOST}:$REM_SCRIPT
     echo "Running Script"
-    ssh -o StrictHostKeyChecking=no -t -i ${INIT_KEY_LOC} ${INIT_USER}@$HOST "chmod 700 $REM_SCRIPT && sudo $REM_SCRIPT"
+    ssh -o StrictHostKeyChecking=no -t -i ${INIT_KEY_LOC} ${INIT_USER}@$HOST "chmod 700 $REM_SCRIPT && $PRIV_CMD $REM_SCRIPT"
     echo "Removing Script"
-    ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${INIT_USER}@$HOST "sudo rm $REM_SCRIPT"
+    ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${INIT_USER}@$HOST "$PRIV_CMD rm $REM_SCRIPT"
     echo "Updating Public Key for ${IUSER} user"
-    ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${INIT_USER}@$HOST "sudo mkdir -p /home/${IUSER}/.ssh && echo \"$PUB_KEY\"|sudo tee -a /home/${IUSER}/.ssh/authorized_keys && sudo chown -R ${IUSER}:${IUSER} /home/${IUSER}/.ssh && sudo chmod 700 /home/${IUSER}/.ssh && sudo chmod 600 /home/${IUSER}/.ssh/authorized_keys"
+    ssh -o StrictHostKeyChecking=no -i ${INIT_KEY_LOC} ${INIT_USER}@$HOST "$PRIV_CMD mkdir -p /home/${IUSER}/.ssh && echo \"$PUB_KEY\"|$PRIV_CMD tee -a /home/${IUSER}/.ssh/authorized_keys && $PRIV_CMD chown -R ${IUSER}:${IUSER} /home/${IUSER}/.ssh && $PRIV_CMD chmod 700 /home/${IUSER}/.ssh && $PRIV_CMD chmod 600 /home/${IUSER}/.ssh/authorized_keys"
 
 
     if [ "$HOST" == "$INIT_NODE" ]; then
         @go.log INFO "$HOST is the INIT_NODE for the cluster updating this node to have the private keys, as well as this repo under ${IUSER}"
         echo "Trying to install git on initial host via apt-get install git - This may fail that's ok"
-        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} ${IUSER}@${HOST} "sudo apt-get update && sudo apt-get install -y git"
-        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} ${IUSER}@${HOST} "sudo yum install -y --assumeyes git"
+        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} ${IUSER}@${HOST} "$PRIV_CMD apt-get update && $PRIV_CMD apt-get install -y git"
+        ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} ${IUSER}@${HOST} "$PRIV_CMD yum install -y --assumeyes git"
         echo ""
         echo "Pulling this repo to the init node under /home/${IUSER}/zetago"
         ssh -o StrictHostKeyChecking=no -i ${OUT_KEY} ${IUSER}@${HOST} "git clone https://github.com/JohnOmernik/zetago.git && mkdir -p ./zetago/conf && chmod 700 ./zetago/conf"

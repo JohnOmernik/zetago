@@ -18,8 +18,31 @@ AUTH_LIB="lib${LDAP_PROVIDER}"
 # Load the Auth lib for this cluster
 . "$_GO_USE_MODULES" $AUTH_LIB
 
-function _openldapperf() {
 
+function _displayhelp(){
+    echo "cluster ldapperf - Updates OpenLdap settings for more performance"
+    echo "===================================================================================================="
+    echo ""
+    echo "Arguments:"
+    echo "-a               - Run both Cache and Index optimizations"
+    echo "-i               - Run only index optimizations - Specify Index with -x and index type with -t"
+    echo "-x=\"idx\"       - Specify field to add index for"
+    echo "-t=\"idxtype\"   - Specify Index Type for -x"
+    echo "-c               - Run only cache optimizations"
+    echo "-s=\"500000\"    - Specify the cache size to use"
+    echo "-u               - Run without prompting"
+    echo "-h               - Display this help"
+    echo ""
+    echo "Usage:"
+    echo "./zeta cluster ldapperf -a"
+    echo ""
+}
+
+
+
+
+function _openldapperf() {
+    DISPLAYHELP="0"
     . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
 
     CURUSER=$(whoami)
@@ -42,6 +65,9 @@ function _openldapperf() {
             -u)
             UNATTEND="1"
             ;;
+            -h)
+            DISPLAYHELP="1"
+            ;;
             "-x="*)
             INDEX_NAME="${i#*=}"
             ;;
@@ -59,7 +85,10 @@ function _openldapperf() {
             ;;
         esac
     done
-
+    if [ "$DISPLAYHELP" == "1" ]; then
+        _displayhelp
+        exit 0
+    fi
 
     if [ "$ACTION_ALL" == "1" ]; then
         if [ "$ACTION_INDEX" == "1" ] || [ "$ACTION_CACHE" == "1" ]; then

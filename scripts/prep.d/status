@@ -95,12 +95,12 @@ cat > $PREP_SCRIPT << EOF
 HNAME=\$(hostname)
 KERNEL=\$(uname -a|cut -d" " -f3)
 UP="true"
-SUDO_CHK=\$(sudo whoami)
+PRIV_CHK=\$($PRIV_CMD whoami)
 SYS_TYPE=\$(/home/${IUSER}/system_type.sh)
-DCK_VERS=\$(sudo docker info 2> /dev/null|grep "Server Version")
+DCK_VERS=\$($PRIV_CMD docker info 2> /dev/null|grep "Server Version")
 EXT_IP=\$1
 
-printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "\$EXT_IP" "\$HNAME" "\$UP" "\$SUDO_CHK" "\$KERNEL" "\$SYS_TYPE" "\$DCK_VERS"
+printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "\$EXT_IP" "\$HNAME" "\$UP" "\$PRIV_CHK" "\$KERNEL" "\$SYS_TYPE" "\$DCK_VERS"
 
 EOF
     chmod +x $PREP_SCRIPT
@@ -108,7 +108,7 @@ EOF
 
 
 
-    printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "Ext IP" "Hostname" "Host Up" "Sudo Check" "Kernel" "System Type" "Docker Version"
+    printf "%-30s %-30s %-30s %-30s %-30s %-30s %-30s\n" "Ext IP" "Hostname" "Host Up" "Priv Check" "Kernel" "System Type" "Docker Version"
     echo "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
     for HOST in $MYHOSTS; do
 

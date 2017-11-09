@@ -13,12 +13,31 @@ sourceconf "$CLUSTER_BASE_CONF"
 
 reqshared "dockerregv2 zetaca openldap"
 
+
+function _displayhelp(){
+    echo "cluster allldaphostse - Run LDAP Install on all hosts listed in conf"
+    echo "===================================================================================================="
+    echo ""
+    echo "Arguments:"
+    echo "-h               - Display this help"
+    echo "-u               - Unattended (Don't Prompt)"
+    echo ""
+    echo "Usage:"
+    echo "./zeta cluster allldaphosts"
+    echo ""
+}
+
+
 function _updateallldaphosts() {
 
-
+  UNATTEND="0"
+  DISPLAYHELP="0"
   for i in "$@"
         do
         case $i in
+            -h)
+            DISPLAYHELP="1"
+            ;;
             -u)
             UNATTEND="1"
             ;;
@@ -27,7 +46,10 @@ function _updateallldaphosts() {
             ;;
         esac
     done
-
+    if [ "$DISPLAYHELP" == "1" ]; then
+        _displayhelp
+        exit 0
+    fi
     if [ "$UNATTEND" != "1" ]; then
 
         echo "Zeta nodes in conf file:"

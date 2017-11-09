@@ -67,6 +67,16 @@ echo "Basically provide a space separated list, and the first interface in that 
 echo ""
 read -e -p "Interface to check list: " -i "eth0 em1 eno1 enp2s0 enp3s0 ens192" INTERFACE_LIST
 
+echo ""
+echo "-----------------------------------"
+echo "Privileged actions typically require sudo.  In a default install we need the $IUSER account to have sudo on all nodes"
+echo "This is not always possible in various environments, so we provide an option to replace sudo with a privileged command of your choice"
+echo "This maybe something like pbrun, instead of running sudo %cmd it would run pbrun %cmd"
+echo "This is where you can choose the privilege escalation method"
+echo ""
+read -e -p "Privilege Escalation command: " -i "sudo" PRIV_CMD
+
+
 touch $PREP_CONF
 chmod 640 $PREP_CONF
 
@@ -83,6 +93,8 @@ INIT_KEY_LOC="$INIT_KEY_LOC"
 # The Main user for Zeta  (zetaadm by default)
 IUSER="$IUSER"
 FSUSER="$FSUSER"
+# The Privilege Escalation command
+PRIV_CMD="$PRIV_CMD"
 # The following Variables determine whether to generate a key for IUSER, what that key will be called, and what the public key will be called
 GEN_KEY="$GEN_KEY"
 OUT_KEY="$OUT_KEY"

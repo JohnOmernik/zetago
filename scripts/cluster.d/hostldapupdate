@@ -3,7 +3,7 @@
 # Update a host to use LDAP Settings from Cluster
 #
 # Arguments:
-# -h=%HOSTLISTSEPBYCOMMAS% example: -h=node1,node2,node3
+# -n=%HOSTLISTSEPBYCOMMAS% example: -n=node1,node2,node3
 # -u - Unattended installation (don't ask questions just install on the nodes provided)
 #
 sourceconf "$PREP_CONF"
@@ -14,6 +14,25 @@ sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 sourceconf "$CLUSTER_BASE_CONF"
+
+function _displayhelp(){
+    echo "cluster hostldapupdate - Update ldap settings on list of hosts"
+    echo "===================================================================================================="
+    echo ""
+    echo "Arguments:"
+    echo "-n=\"node1,node2\"  - Comma sep list of hosts to run ldap settings on "
+    echo "-h                  - Display this help"
+    echo "-u                  - Unattended Install (Don't prompt)"
+    echo ""
+    echo "Usage:"
+    echo "./zeta cluster hostldapupdate -n=\"node1,node2\""
+    echo ""
+}
+
+
+
+
+
 function _hostldapupdate() {
 
     CURUSER=$(whoami)
@@ -23,7 +42,7 @@ function _hostldapupdate() {
         echo "Must use ${IUSER}: User: $CURUSER"
     fi
 
-
+    DISPLAYHELP="0"
     UNATTEND="0"
     NODE_HOST=""
 
@@ -33,7 +52,10 @@ function _hostldapupdate() {
             -u)
             UNATTEND="1"
             ;;
-            "-h="*)
+            -h)
+            DISPLAYHELP="1"
+            ;;
+            "-n="*)
             CHOSTS="${i#*=}"
             ;;
             *)
@@ -41,7 +63,10 @@ function _hostldapupdate() {
             ;;
         esac
     done
-
+    if [ "$DISPLAYHELP" == "1" ]; then
+        _displayhelp
+        exit 0
+    fi
     HOSTS=$(echo "$CHOSTS"|tr "," " ")
 
     if [ "$HOSTS" == "" ]; then

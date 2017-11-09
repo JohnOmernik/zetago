@@ -21,11 +21,20 @@ fi
 touch $SCRIPTSRC
 chmod 700 $SCRIPTSRC
 
+
+if [ "$PRIV_CMD" == "sudo" ]; then
+    ADDSUDO="sudo sed -i \"s/Defaults    requiretty//g\" /etc/sudoers"$'\n'
+    ADDSUDO="${ADDSUDO}sudo sed -i \"s/Defaults   \\!visiblepw//g\" /etc/sudoers"$'\n'
+else
+    ADDSUDO="echo \"PRIV_CMD is not sudo - not adding to sudoers\""
+fi
+
+
+
 cat > $SCRIPTSRC << EOF
 #!/bin/bash
 
-sudo sed -i "s/Defaults    requiretty//g" /etc/sudoers
-sudo sed -i "s/Defaults   \!visiblepw//g" /etc/sudoers
+$ADDSUDO
 
 FSUSERPASS="$FSUSER_PASS"
 IUSERPASS="$IUSER_PASS"
@@ -67,11 +76,11 @@ fi
 Z=\$(sudo grep ${IUSER} /etc/sudoers)
 M=\$(sudo grep ${FSUSER} /etc/sudoers)
 
-if [ "\$Z" == "" ]; then
+if [ "\$Z" == "" ] && [ "$PRIV_CMD" == "sudo" ]; then
     echo "Adding ${IUSER} to sudoers"
     echo "${IUSER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 fi
-if [ "\$M" == "" ]; then
+if [ "\$M" == "" ] && [ "$PRIV_CMD" == "sudo" ]; then
     echo "Adding $FSUSER to sudoers"
     echo "$FSUSER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 fi

@@ -17,14 +17,33 @@ reqshared "dockerregv2 zetaca openldap"
 FS_LIB="lib${FS_PROVIDER}"
 . "$_GO_USE_MODULES" $FS_LIB
 
+function _displayhelp(){
+    echo "cluster addzetarole - Creates a new role in Zeta Architecture"
+    echo "===================================================================================================="
+    echo ""
+    echo "Arguments:"
+    echo "-r=\"%ROLENAME%\"  - Add the role %ROLENAME%"
+    echo "-h                 - Display this help"
+    echo "-u                 - Unattended"
+    echo ""
+    echo "Usage:"
+    echo "./zeta cluster addzetarole -r=\"prod\""
+    echo ""
+}
+
+
 function _addzetarole() {
     . $CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh
-
+    DISPLAYHELP="0"
+    UNATTEND="0"
     for i in "$@"
         do
         case $i in
             -u)
             UNATTEND="1"
+            ;;
+            -h)
+            DISPLAYHELP="1"
             ;;
             "-r="*)
             ROLE="${i#*=}"
@@ -34,7 +53,10 @@ function _addzetarole() {
             ;;
         esac
     done
-
+    if [ "$DISPLAYHELP" == "1" ]; then
+        _displayhelp
+        exit 0
+    fi
     if [ "$ROLE" == "" ]; then
         @go.log FATAL "Must pass a role to add with -r="
     fi

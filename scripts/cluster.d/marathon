@@ -10,8 +10,15 @@ function _marathon() {
 
     echo "Commands to use with cluster marathon:"
     echo ""
-    echo "./zeta cluster marathon submit - Submit a marathon file (first argument) to marathon url (second argument)"
+    echo "./zeta cluster marathon submit - Submit a marathon file"
+    echo "./zeta cluster marathon destroy - Destroy a Marathon Application"
+    echo "./zeta cluster marathon destroygroup - Destroy a  Marathon Group (and all Apps within)"
+    echo "./zeta cluster marathon scale - Change the number of instances of an Application"
+    echo "./zeta cluster marathon getinfo - Get information about an Application (Beta)"
     echo ""
 }
 
+
+
+destroy  destroygroup  getinfo  scale  submit
 _marathon "$@"
