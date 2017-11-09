@@ -252,7 +252,7 @@ function _stopmapr() {
     if [ "$FUSE_NODES" == "1" ]; then
         @go.log WARN "Stopping all FUSE clients in $FUSE_HOSTS - Note if there are active containers using FUSE it will fail and cause unpredictable results"
         for HOST in $FUSE_HOSTS; do
-            ./zeta node run -n="$HOST" "sudo ${FS_PROVIDER_FUSE_SVC} stop"
+            ./zeta node run -n="$HOST" "$PRIV_CMD ${FS_PROVIDER_FUSE_SVC} stop"
         done
         echo ""
         if [ "$WAIT" == "1" ]; then

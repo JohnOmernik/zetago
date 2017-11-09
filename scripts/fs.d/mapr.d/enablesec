@@ -101,22 +101,22 @@ function _enablesec() {
     ENV4="-e FSUSER='$FSUSER'"
     ENV5="-e MAPR_CONF_OPTS='$MAPR_CONF_OPTS -secure -genkeys'"
     CMD="/opt/mapr/server/dockerreconf.sh"
-    GEN_KEYS_CMD="sudo docker run -t $ENV1 $ENV2 $ENV3 $ENV4 $ENV5 $VOL1 $VOL2 $VOL3 $VOL4 $NET $PRIV $IMG $CMD"
+    GEN_KEYS_CMD="$PRIV_CMD docker run -t $ENV1 $ENV2 $ENV3 $ENV4 $ENV5 $VOL1 $VOL2 $VOL3 $VOL4 $NET $PRIV $IMG $CMD"
     ENV5="-e MAPR_CONF_OPTS='-secure'"
-    RECONF_CMD="sudo docker run -t $ENV1 $ENV2 $ENV3 $ENV4 $ENV5 $VOL1 $VOL2 $VOL3 $VOL4 $NET $PRIV $IMG $CMD"
+    RECONF_CMD="$PRIV_CMD docker run -t $ENV1 $ENV2 $ENV3 $ENV4 $ENV5 $VOL1 $VOL2 $VOL3 $VOL4 $NET $PRIV $IMG $CMD"
     ./zeta node run -n="$FIRST_CLDB" "$GEN_KEYS_CMD"
 
     R_LOC="/home/$IUSER/secmapr"
     R_SRC="/opt/maprdocker/conf"
-    ./zeta node run -n="$FIRST_CLDB" "mkdir -p $R_LOC && sudo cp ${R_SRC}/cldb.key ${R_LOC}/ && sudo cp ${R_SRC}/maprserverticket ${R_LOC}/ && sudo cp ${R_SRC}/ssl_keystore ${R_LOC}/ && sudo cp ${R_SRC}/ssl_truststore ${R_LOC}/"
-    ./zeta node run -n="$FIRST_CLDB" "sudo chown -R ${IUSER}:${IUSER} $R_LOC && tar zcf ./secmapr.tgz ./secmapr && rm -rf $R_LOC"
+    ./zeta node run -n="$FIRST_CLDB" "mkdir -p $R_LOC && $PRIV_CMD cp ${R_SRC}/cldb.key ${R_LOC}/ && $PRIV_CMD cp ${R_SRC}/maprserverticket ${R_LOC}/ && $PRIV_CMD cp ${R_SRC}/ssl_keystore ${R_LOC}/ && $PRIV_CMD cp ${R_SRC}/ssl_truststore ${R_LOC}/"
+    ./zeta node run -n="$FIRST_CLDB" "$PRIV_CMD chown -R ${IUSER}:${IUSER} $R_LOC && tar zcf ./secmapr.tgz ./secmapr && rm -rf $R_LOC"
     scp $IUSER@$FIRST_CLDB:/home/$IUSER/secmapr.tgz ./conf
     ./zeta node run -n="$FIRST_CLDB" "rm /home/$IUSER/secmapr.tgz"
     cd ./conf
     tar zxf secmapr.tgz
 #    rm mapr_secure.tgz
-    sudo chown $IUSER:$IUSER ./secmapr
-    sudo chmod 770 ./secmapr
+    $PRIV_CMD chown $IUSER:$IUSER ./secmapr
+    $PRIV_CMD chmod 770 ./secmapr
     cd ..
     @go.log INFO "Adding -secure to MAPR_CONF_OPTS"
     if [ "$MAPR_CONF_OPTS" == "" ]; then
@@ -136,11 +136,11 @@ function _enablesec() {
             scp ./conf/secmapr/maprserverticket ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
             scp ./conf/secmapr/ssl_keystore ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
             scp ./conf/secmapr/ssl_truststore ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
-            ssh ${IUSER}@${NODE_HOST} "sudo mv /home/${IUSER}/maprsec/* ${MAPR_INST}/conf/ && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_keystore && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_truststore && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/maprserverticket"
-            ssh ${IUSER}@${NODE_HOST} "sudo chmod 600 ${MAPR_INST}/conf/maprserverticket && sudo chmod 600 ${MAPR_INST}/conf/ssl_keystore && sudo chmod 664 ${MAPR_INST}/conf/ssl_truststore"
+            ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD mv /home/${IUSER}/maprsec/* ${MAPR_INST}/conf/ && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_keystore && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_truststore && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/maprserverticket"
+            ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD chmod 600 ${MAPR_INST}/conf/maprserverticket && $PRIV_CMD chmod 600 ${MAPR_INST}/conf/ssl_keystore && $PRIV_CMD chmod 664 ${MAPR_INST}/conf/ssl_truststore"
             if [ "$CCHK" != "" ]; then
                 scp ./conf/secmapr/cldb.key ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
-                ssh ${IUSER}@${NODE_HOST} "sudo mv /home/${IUSER}/maprsec/cldb.key ${MAPR_INST}/conf/ && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/cldb.key && sudo chmod 600 ${MAPR_INST}/conf/cldb.key"
+                ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD mv /home/${IUSER}/maprsec/cldb.key ${MAPR_INST}/conf/ && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/cldb.key && $PRIV_CMD chmod 600 ${MAPR_INST}/conf/cldb.key"
             fi
             ssh ${IUSER}@${NODE_HOST} "rm -rf /home/${IUSER}/maprsec"
 
@@ -154,10 +154,10 @@ function _enablesec() {
     ZKNODES=$(echo "$ZK_STRING"|tr "," " ")
     for Z in $ZKNODES; do
         ZK=$(echo "$Z"|cut -d":" -f2)
-        ssh ${IUSER}@$ZK "sudo sed -i -e 's/authMech=.*$/authMech=MAPR-SECURITY/g' $MAPR_INST/zookeeper/conf/zoo.cfg"
+        ssh ${IUSER}@$ZK "$PRIV_CMD sed -i -e 's/authMech=.*$/authMech=MAPR-SECURITY/g' $MAPR_INST/zookeeper/conf/zoo.cfg"
         ssh ${IUSER}@${ZK} "mkdir -p /home/$IUSER/maprsec && chmod 770 /home/$IUSER/maprsec"
         scp ./conf/secmapr/cldb.key ${IUSER}@${ZK}:/home/${IUSER}/maprsec/
-        ssh ${IUSER}@${ZK} "sudo mv /home/${IUSER}/maprsec/cldb.key ${MAPR_INST}/conf/ && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/cldb.key && sudo chmod 600 ${MAPR_INST}/conf/cldb.key"
+        ssh ${IUSER}@${ZK} "$PRIV_CMD mv /home/${IUSER}/maprsec/cldb.key ${MAPR_INST}/conf/ && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/cldb.key && $PRIV_CMD chmod 600 ${MAPR_INST}/conf/cldb.key"
         ssh ${IUSER}@${ZK} "rm -rf /home/${IUSER}/maprsec"
     done
 

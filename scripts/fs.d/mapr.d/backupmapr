@@ -68,8 +68,8 @@ function _backupmapr() {
             @go.log WARN "NODE: $NODE does not appear to have a $MAPR_INST - Skipping"
         else
             @go.log WARN "Backing up $MAPR_INST on $NODE to $BACKUP_FULL_PATH"
-            ssh $NODE "sudo mkdir -p $BACKUP_PATH"
-            ssh $NODE "cd /opt && sudo tar zcf $BACKUP_FULL_PATH $MAPR_INST"
+            ssh $NODE "$PRIV_CMD mkdir -p $BACKUP_PATH"
+            ssh $NODE "cd /opt && $PRIV_CMD tar zcf $BACKUP_FULL_PATH $MAPR_INST"
             @go.log INFO "Finished Backup on $NODE"
         fi
     done

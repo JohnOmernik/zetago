@@ -101,16 +101,16 @@ function _fuseremove() {
     fi
 
 
-    ssh $NODE_HOST "sudo /etc/init.d/mapr-posix-client-basic stop"
-    ssh $NODE_HOST "sudo $REM_CMD $REM_POSIX_PATCH"
-    ssh $NODE_HOST "sudo $REM_CMD $REM_POSIX"
+    ssh $NODE_HOST "$PRIV_CMD /etc/init.d/mapr-posix-client-basic stop"
+    ssh $NODE_HOST "$PRIV_CMD $REM_CMD $REM_POSIX_PATCH"
+    ssh $NODE_HOST "$PRIV_CMD $REM_CMD $REM_POSIX"
     sleep 2
-    ssh $NODE_HOST "sudo $REM_CMD $REM_LIBRDKAFKA"
+    ssh $NODE_HOST "$PRIV_CMD $REM_CMD $REM_LIBRDKAFKA"
     sleep 1
-    ssh $NODE_HOST "sudo $REM_CMD $REM_KAFKA"
+    ssh $NODE_HOST "$PRIV_CMD $REM_CMD $REM_KAFKA"
     sleep 1
-    ssh $NODE_HOST "sudo $REM_CMD $REM_CLIENT_PATCH"
-    ssh $NODE_HOST "sudo $REM_CMD $REM_CLIENT"
+    ssh $NODE_HOST "$PRIV_CMD $REM_CMD $REM_CLIENT_PATCH"
+    ssh $NODE_HOST "$PRIV_CMD $REM_CMD $REM_CLIENT"
 
     echo ""
     @go.log INFO "FUSE client removed from $NODE_HOST"

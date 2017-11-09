@@ -74,11 +74,11 @@ function _maprcli() {
         MYCMD="su -c \"maprcli $CLICMD\" $CLIUSER"
     fi
 
-    CID=$(ssh $NODE "sudo docker ps |grep maprdocker|cut -d\" \" -f1")
+    CID=$(ssh $NODE "$PRIV_CMD docker ps |grep maprdocker|cut -d\" \" -f1")
     if [ "$CID" == "" ]; then
         @go.log FATAL "maprdocker image not found running on $NODE - Can not run command"
     fi
-    ssh $NODE "sudo docker exec -i $CID $MYCMD"
+    ssh $NODE "$PRIV_CMD docker exec -i $CID $MYCMD"
 
 
 }

@@ -37,20 +37,20 @@ if [ -d "$DOCKER_IMAGE_LOC" ]; then
 fi
 
 @go.log INFO "Creating Image Location"
-sudo mkdir -p ${DOCKER_IMAGE_LOC}
+$PRIV_CMD mkdir -p ${DOCKER_IMAGE_LOC}
 APP_IMG="zeta/registry:2"
 
 @go.log INFO "Pulling Docker Registry Image and renaming $APP_IMG"
-sudo docker pull registry:2
-sudo docker tag registry:2 $APP_IMG
+$PRIV_CMD docker pull registry:2
+$PRIV_CMD docker tag registry:2 $APP_IMG
 
 @go.log INFO "Creating Certs for fsdocker"
 APP_NAME="fsdocker"
 APP_CERT_LOC="${FSDOCKER_ROOT}/dockercerts"
 
-sudo mkdir -p ${APP_CERT_LOC}
-sudo chown ${IUSER}:root ${APP_CERT_LOC}
-sudo chmod 770 ${APP_CERT_LOC}
+$PRIV_CMD mkdir -p ${APP_CERT_LOC}
+$PRIV_CMD chown ${IUSER}:root ${APP_CERT_LOC}
+$PRIV_CMD chmod 770 ${APP_CERT_LOC}
 CN_GUESS="fsdocker-shared.marathon.slave.mesos"
 . /home/${IUSER}/zetaca/zetaca_env.sh
 . /home/${IUSER}/zetaca/gen_server_cert.sh

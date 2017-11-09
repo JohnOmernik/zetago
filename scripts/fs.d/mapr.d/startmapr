@@ -311,7 +311,7 @@ function _startmapr() {
     if [ "$FUSE_NODES" == "1" ]; then
         @go.log WARN "Starting all FUSE clients in $FUSE_HOSTS"
         for HOST in $FUSE_HOSTS; do
-            ./zeta node run -n="$HOST" "sudo ${FS_PROVIDER_FUSE_SVC} start"
+            ./zeta node run -n="$HOST" "$PRIV_CMD ${FS_PROVIDER_FUSE_SVC} start"
         done
         echo ""
     fi

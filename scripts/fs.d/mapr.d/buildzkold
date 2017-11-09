@@ -69,7 +69,7 @@ function _build_zk() {
     @go.log INFO "Docker tag: $MAPR_DOCKER_TAG"
 
 
-    D_CHK=$(sudo docker images|grep zkdocker|grep $MAPR_DOCKER_TAG)
+    D_CHK=$($PRIV_CMD docker images|grep zkdocker|grep $MAPR_DOCKER_TAG)
 
     if [ "$D_CHK" == "" ]; then
         echo "It does NOT appear that version is built at this time"
@@ -216,9 +216,9 @@ CMD ["/bin/bash"]
 
 EOL
     cd $BUILD_TMP
-    sudo docker build -t ${FS_DOCKER_REG_URL}/zkdocker:$MAPR_DOCKER_TAG .
+    $PRIV_CMD docker build -t ${FS_DOCKER_REG_URL}/zkdocker:$MAPR_DOCKER_TAG .
     cd $MYDIR
-    sudo docker push ${FS_DOCKER_REG_URL}/zkdocker:$MAPR_DOCKER_TAG
+    $PRIV_CMD docker push ${FS_DOCKER_REG_URL}/zkdocker:$MAPR_DOCKER_TAG
     rm -rf $BUILD_TMP
     @go.log INFO "Image Pushed and ready to go"
 }

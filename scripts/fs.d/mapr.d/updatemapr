@@ -86,7 +86,7 @@ function _updatemapr() {
     GOAL_TAG="maprdocker:${MAPR_DOCKER_TAG}"
 
     TMP_DIR="/tmp/tup"
-    sudo rm -rf $TMP_DIR
+    $PRIV_CMD rm -rf $TMP_DIR
     mkdir -p $TMP_DIR
 
     ALL_HOSTS="$STD_HOSTS $CLDB_HOSTS"

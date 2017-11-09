@@ -94,7 +94,7 @@ function _fuseinstall() {
     JV=$(ssh $NODE_HOST "grep JAVA_HOME /etc/environment")
     if [ "$JV" == "" ]; then
         @go.log INFO "JAVA_HOME not found in /etc/environment on $NODE_HOST - Setting to /opt/mesosphere/active/java/usr/java"
-        ssh $NODE_HOST "echo \"JAVA_HOME=/opt/mesosphere/active/java/usr/java\"|sudo tee -a /etc/environment"
+        ssh $NODE_HOST "echo \"JAVA_HOME=/opt/mesosphere/active/java/usr/java\"|$PRIV_CMD tee -a /etc/environment"
     fi
 
     CLIENT_DIR="./bin/client_install"
@@ -155,9 +155,9 @@ function _fuseinstall() {
         scp ${CLIENT_DIR}/${UBUNTU_MAPR_PATCH_POSIX_FILE} $NODE_HOST:/home/${IUSER}/
     fi
 
-    ssh $NODE_HOST "sudo $INST_CMD $INST_CLIENT"
+    ssh $NODE_HOST "$PRIV_CMD $INST_CMD $INST_CLIENT"
     if [ "$UBUNTU_MAPR_PATCH_CLIENT_FILE" != "" ]; then
-        ssh $NODE_HOST "sudo $INST_CMD ${UBUNTU_MAPR_PATCH_CLIENT_FILE}"
+        ssh $NODE_HOST "$PRIV_CMD $INST_CMD ${UBUNTU_MAPR_PATCH_CLIENT_FILE}"
     fi
 tee /tmp/fs_core.xml << EOL1
 <?xml version="1.0" encoding="UTF-8"?>
@@ -191,31 +191,31 @@ EOL1
 
     CORE_DST="/opt/mapr/hadoop/hadoop-2.7.0/etc/hadoop/core-site.xml"
 
-    ssh $NODE_HOST "sudo mv /home/${IUSER}/fs_core.xml $CORE_DST && sudo chown mapr:root $CORE_DST && sudo chmod 644 $CORE_DST"
+    ssh $NODE_HOST "$PRIV_CMD mv /home/${IUSER}/fs_core.xml $CORE_DST && $PRIV_CMD chown mapr:root $CORE_DST && $PRIV_CMD chmod 644 $CORE_DST"
 
 
     NSUB="export MAPR_SUBNETS=$SUBNETS"
-    ssh $NODE_HOST "sudo sed -i -r \"s@#export MAPR_SUBNETS=.*@${NSUB}@g\" /opt/mapr/conf/env.sh"
-    ssh $NODE_HOST "echo \"$NODE_HOST-fuse\"|sudo tee /opt/mapr/hostname"
-    ssh $NODE_HOST "sudo /opt/mapr/server/configure.sh -N $CLUSTERNAME -c -C $CLDBS"
-    ssh $NODE_HOST "sudo mkdir -p /$CLUSTERBASE"
-    ssh $NODE_HOST "sudo $INST_CMD $INST_POSIX"
+    ssh $NODE_HOST "$PRIV_CMD sed -i -r \"s@#export MAPR_SUBNETS=.*@${NSUB}@g\" /opt/mapr/conf/env.sh"
+    ssh $NODE_HOST "echo \"$NODE_HOST-fuse\"|$PRIV_CMD tee /opt/mapr/hostname"
+    ssh $NODE_HOST "$PRIV_CMD /opt/mapr/server/configure.sh -N $CLUSTERNAME -c -C $CLDBS"
+    ssh $NODE_HOST "$PRIV_CMD mkdir -p /$CLUSTERBASE"
+    ssh $NODE_HOST "$PRIV_CMD $INST_CMD $INST_POSIX"
     sleep 2
-    ssh $NODE_HOST "sudo $INST_CMD $INST_LIBRDKAFKA"
+    ssh $NODE_HOST "$PRIV_CMD $INST_CMD $INST_LIBRDKAFKA"
     sleep 2
-    ssh $NODE_HOST "sudo $INST_CMD $INST_KAFKA"
+    ssh $NODE_HOST "$PRIV_CMD $INST_CMD $INST_KAFKA"
     sleep 2
     if [ "$UBUNTU_MAPR_PATCH_POSIX_FILE" != "" ]; then
-        ssh $NODE_HOST "sudo $INST_CMD ${UBUNTU_MAPR_PATCH_POSIX_FILE}"
+        ssh $NODE_HOST "$PRIV_CMD $INST_CMD ${UBUNTU_MAPR_PATCH_POSIX_FILE}"
     fi
 
 
 
-    ssh $NODE_HOST "echo \". /opt/mapr/conf/env.sh\"|sudo tee -a /opt/mapr/initscripts/mapr-posix-client-basic"
+    ssh $NODE_HOST "echo \". /opt/mapr/conf/env.sh\"|$PRIV_CMD tee -a /opt/mapr/initscripts/mapr-posix-client-basic"
 
-    ssh $NODE_HOST "sudo sed -i '/# Look for installed JDK/ i . \${BASEMAPR}/conf/env.sh' /opt/mapr/initscripts/mapr-fuse"
-    ssh $NODE_HOST "sudo sed -i 's@fuse\.mount\.point=/mapr@fuse.mount.point=/$CLUSTERBASE@g' /opt/mapr/conf/fuse.conf"
-    ssh $NODE_HOST "sudo /etc/init.d/mapr-posix-client-basic start"
+    ssh $NODE_HOST "$PRIV_CMD sed -i '/# Look for installed JDK/ i . \${BASEMAPR}/conf/env.sh' /opt/mapr/initscripts/mapr-fuse"
+    ssh $NODE_HOST "$PRIV_CMD sed -i 's@fuse\.mount\.point=/mapr@fuse.mount.point=/$CLUSTERBASE@g' /opt/mapr/conf/fuse.conf"
+    ssh $NODE_HOST "$PRIV_CMD /etc/init.d/mapr-posix-client-basic start"
     echo "NFS Mount: "
     ssh $NODE_HOST "ls -ls $CLUSTERMOUNT"
 

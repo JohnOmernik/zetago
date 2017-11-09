@@ -73,17 +73,17 @@ function _installmaprnode(){
         if [ ! -d "$MAPR_DEFAULTS" ]; then
             mkdir -p $MAPR_DEFAULTS
         else
-            sudo chown -R ${IUSER}:${IUSER} $MAPR_DEFAULTS
+            $PRIV_CMD chown -R ${IUSER}:${IUSER} $MAPR_DEFAULTS
         fi
-        sudo rm -rf ${MAPR_DEFAULTS}/conf
-        sudo rm -rf ${MAPR_DEFAULTS}/roles
+        $PRIV_CMD rm -rf ${MAPR_DEFAULTS}/conf
+        $PRIV_CMD rm -rf ${MAPR_DEFAULTS}/roles
 
 
-        CID=$(sudo docker run -d ${FS_DOCKER_REG_URL}/maprdocker:$MAPR_DOCKER_TAG sleep 15)
+        CID=$($PRIV_CMD docker run -d ${FS_DOCKER_REG_URL}/maprdocker:$MAPR_DOCKER_TAG sleep 15)
 
-        sudo docker cp ${CID}:/opt/mapr/conf ${MAPR_DEFAULTS}
-        sudo docker cp ${CID}:/opt/mapr/roles ${MAPR_DEFAULTS}
-        sudo chown -R ${IUSER}:${IUSER} $MAPR_DEFAULTS
+        $PRIV_CMD docker cp ${CID}:/opt/mapr/conf ${MAPR_DEFAULTS}
+        $PRIV_CMD docker cp ${CID}:/opt/mapr/roles ${MAPR_DEFAULTS}
+        $PRIV_CMD chown -R ${IUSER}:${IUSER} $MAPR_DEFAULTS
 
         cd $MAPR_DEFAULTS
         cd conf
@@ -96,7 +96,7 @@ function _installmaprnode(){
     fi
 
 
-    NODE_TEST=$(ssh $NODE_HOST "sudo cat ${MAPR_INST}/conf/mapr-clusters.conf 2> /dev/null")
+    NODE_TEST=$(ssh $NODE_HOST "$PRIV_CMD cat ${MAPR_INST}/conf/mapr-clusters.conf 2> /dev/null")
 
     if [ "$NODE_TEST" == "" ]; then
         @go.log INFO "Clean install - proceeding"
@@ -108,7 +108,7 @@ function _installmaprnode(){
         read -p "Overwrite? " -e -i "N" OW
         if [ "$OW" == "Y" ]; then
             @go.log WARN "Removing already found mapr-clusters.conf on $NODE_HOST"
-            ssh NODE_HOST "sudo rm -rf ${MAPR_INST}/conf/*"
+            ssh NODE_HOST "$PRIV_CMD rm -rf ${MAPR_INST}/conf/*"
         else
             @go.log FATAL "mapr-clusters.conf found on $NODE_HOST and users decided against deletion"
         fi
@@ -177,24 +177,24 @@ function _installmaprnode(){
 
     echo ""
     echo "Creating Directories"
-    ssh $NODE_HOST "sudo mkdir -p ${MAPR_INST}/conf && sudo mkdir -p ${MAPR_INST}/logs && sudo mkdir -p ${MAPR_INST}/roles"
+    ssh $NODE_HOST "$PRIV_CMD mkdir -p ${MAPR_INST}/conf && $PRIV_CMD mkdir -p ${MAPR_INST}/logs && $PRIV_CMD mkdir -p ${MAPR_INST}/roles"
 
     echo ""
     echo "Unpacking Defaults"
 
-    ssh $NODE_HOST "sudo mv /home/${IUSER}/conf_default.tgz ${MAPR_INST}/conf/ && sudo tar zxf ${MAPR_INST}/conf/conf_default.tgz -C ${MAPR_INST}/conf && sudo rm ${MAPR_INST}/conf/conf_default.tgz"
+    ssh $NODE_HOST "$PRIV_CMD mv /home/${IUSER}/conf_default.tgz ${MAPR_INST}/conf/ && $PRIV_CMD tar zxf ${MAPR_INST}/conf/conf_default.tgz -C ${MAPR_INST}/conf && $PRIV_CMD rm ${MAPR_INST}/conf/conf_default.tgz"
 
-    ssh $NODE_HOST "sudo mv /home/${IUSER}/roles_default.tgz ${MAPR_INST}/roles/ && sudo tar zxf ${MAPR_INST}/roles/roles_default.tgz -C ${MAPR_INST}/roles && sudo rm ${MAPR_INST}/roles/roles_default.tgz"
+    ssh $NODE_HOST "$PRIV_CMD mv /home/${IUSER}/roles_default.tgz ${MAPR_INST}/roles/ && $PRIV_CMD tar zxf ${MAPR_INST}/roles/roles_default.tgz -C ${MAPR_INST}/roles && $PRIV_CMD rm ${MAPR_INST}/roles/roles_default.tgz"
 
     echo ""
     echo "Updating MAPR_SUBNETS"
     NSUB="export MAPR_SUBNETS=$SUBNETS"
-    ssh $NODE_HOST "sudo sed -i -r \"s@#export MAPR_SUBNETS=.*@${NSUB}@g\" ${MAPR_INST}/conf/env.sh"
+    ssh $NODE_HOST "$PRIV_CMD sed -i -r \"s@#export MAPR_SUBNETS=.*@${NSUB}@g\" ${MAPR_INST}/conf/env.sh"
 
     echo ""
     echo "Updating Warden settings to 35% Max Mem"
-    ssh $NODE_HOST "sudo sed -i 's/service.command.mfs.heapsize.percent=.*/service.command.mfs.heapsize.percent=25/' ${MAPR_INST}/conf/warden.conf"
-    ssh $NODE_HOST "sudo sed -i 's/service.command.mfs.heapsize.maxpercent=.*/service.command.mfs.heapsize.maxpercent=35/' ${MAPR_INST}/conf/warden.conf"
+    ssh $NODE_HOST "$PRIV_CMD sed -i 's/service.command.mfs.heapsize.percent=.*/service.command.mfs.heapsize.percent=25/' ${MAPR_INST}/conf/warden.conf"
+    ssh $NODE_HOST "$PRIV_CMD sed -i 's/service.command.mfs.heapsize.maxpercent=.*/service.command.mfs.heapsize.maxpercent=35/' ${MAPR_INST}/conf/warden.conf"
 
 
     echo ""
@@ -209,7 +209,7 @@ function _installmaprnode(){
     IFS=$OLDIFS
 
     scp $TFILE $NODE_HOST:/home/${IUSER}/
-    ssh $NODE_HOST "sudo mv /home/${IUSER}/$TFILENAME ${MAPR_INST}/conf/initial_disks.txt"
+    ssh $NODE_HOST "$PRIV_CMD mv /home/${IUSER}/$TFILENAME ${MAPR_INST}/conf/initial_disks.txt"
     rm  $TFILE
 
     echo ""
@@ -220,8 +220,8 @@ function _installmaprnode(){
     mkdir -p "$MARDIR/cldb_marathon"
 
     if [ "$CONTROL_CHK" == "" ]; then
-        ssh $NODE_HOST "sudo rm ${MAPR_INST}/roles/cldb"
-        ssh $NODE_HOST "sudo rm ${MAPR_INST}/roles/webserver"
+        ssh $NODE_HOST "$PRIV_CMD rm ${MAPR_INST}/roles/cldb"
+        ssh $NODE_HOST "$PRIV_CMD rm ${MAPR_INST}/roles/webserver"
         MARFILE="${MARDIR}/stdnode_marathon/mapr_std_${NODE_HOST}.marathon"
         MARID="shared/mapr/stdnodes/std${NODE_HOST}"
         MARATHON_CPUS=1
@@ -234,12 +234,12 @@ function _installmaprnode(){
     NFS_CHK=$(echo -n ${NFS_NODES}|grep ${NODE_HOST})
 
     if [ "$NFS_CHK" == "" ]; then
-        ssh $NODE_HOST "sudo rm ${MAPR_INST}/roles/nfs"
+        ssh $NODE_HOST "$PRIV_CMD rm ${MAPR_INST}/roles/nfs"
     fi
 
     echo ""
     echo "Updating permissions of directories"
-    ssh $NODE_HOST "sudo chown -R $FSUSER:$FSUSER ${MAPR_INST}/conf && sudo chown -R $FSUSER:$FSUSER ${MAPR_INST}/logs && sudo chmod -R 755 ${MAPR_INST}/conf && sudo chmod -R 777 ${MAPR_INST}/logs"
+    ssh $NODE_HOST "$PRIV_CMD chown -R $FSUSER:$FSUSER ${MAPR_INST}/conf && $PRIV_CMD chown -R $FSUSER:$FSUSER ${MAPR_INST}/logs && $PRIV_CMD chmod -R 755 ${MAPR_INST}/conf && $PRIV_CMD chmod -R 777 ${MAPR_INST}/logs"
     echo ""
     echo "Getting Memory on Node"
 
@@ -362,11 +362,11 @@ MAREOF
             scp ./conf/secmapr/maprserverticket ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
             scp ./conf/secmapr/ssl_keystore ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
             scp ./conf/secmapr/ssl_truststore ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
-            ssh ${IUSER}@${NODE_HOST} "sudo mv /home/${IUSER}/maprsec/* ${MAPR_INST}/conf/ && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_keystore && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_truststore && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/maprserverticket"
-            ssh ${IUSER}@${NODE_HOST} "sudo chmod 600 ${MAPR_INST}/conf/maprserverticket && sudo chmod 600 ${MAPR_INST}/conf/ssl_keystore && sudo chmod 664 ${MAPR_INST}/conf/ssl_truststore"
+            ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD mv /home/${IUSER}/maprsec/* ${MAPR_INST}/conf/ && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_keystore && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_truststore && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/maprserverticket"
+            ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD chmod 600 ${MAPR_INST}/conf/maprserverticket && $PRIV_CMD chmod 600 ${MAPR_INST}/conf/ssl_keystore && $PRIV_CMD chmod 664 ${MAPR_INST}/conf/ssl_truststore"
             if [ "$ZCHK" != "" ] || [ "$CCHK" != "" ]; then
                 scp ./conf/secmapr/cldb.key ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
-                ssh ${IUSER}@${NODE_HOST} "sudo mv /home/${IUSER}/maprsec/cldb.key ${MAPR_INST}/conf/ && sudo chown $FSUSER:$FSUSER ${MAPR_INST}/conf/cldb.key && sudo chmod 600 ${MAPR_INST}/conf/cldb.key"
+                ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD mv /home/${IUSER}/maprsec/cldb.key ${MAPR_INST}/conf/ && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/cldb.key && $PRIV_CMD chmod 600 ${MAPR_INST}/conf/cldb.key"
             fi
              ssh ${IUSER}@${NODE_HOST} "rm -rf /home/${IUSER}/maprsec"
         else
