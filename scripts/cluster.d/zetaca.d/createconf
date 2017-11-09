@@ -14,9 +14,9 @@ ZETACA_HOME="/home/${IUSER}/zetaca"
 
 mkdir -p $ZETACA_HOME
 mkdir -p $ZETACA_HOME/CA
-sudo chown -R ${IUSER}:${IUSER} $ZETACA_HOME
-sudo chmod 775 $ZETACA_HOME
-sudo chmod 700 $ZETACA_HOME/CA
+$PRIV_CMD chown -R ${IUSER}:${IUSER} $ZETACA_HOME
+$PRIV_CMD chmod 775 $ZETACA_HOME
+$PRIV_CMD chmod 700 $ZETACA_HOME/CA
 @go.log INFO "Zeta CA Home set to $ZETACA_HOME and this directory is created and secured"
 
 

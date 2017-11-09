@@ -72,11 +72,11 @@ function _addzetarole() {
         ROLE_OWNER="${IUSER}:zeta${ROLE}${DIR}"
         if [ -d "$CLUSTERMOUNT/$DIR/$ROLE" ]; then
             @go.log WARN "${DIR}/${ROLE} directory already exists - Updating permissions to be $ROLE_OWNER"
-            sudo chown ${ROLE_OWNER} $CLUSTERMOUNT/$DIR/$ROLE
+            $PRIV_CMD chown ${ROLE_OWNER} $CLUSTERMOUNT/$DIR/$ROLE
         else
             @go.log INFO "Creating $CLUSTERMOUNT/$DIR/${ROLE}"
             fs_mkvol "RETCODE" "/${DIR}/${ROLE}" "${DIR}.${ROLE}" "770"
-            sudo chown ${ROLE_OWNER} ${CLUSTERMOUNT}/$DIR/$ROLE
+            $PRIV_CMD chown ${ROLE_OWNER} ${CLUSTERMOUNT}/$DIR/$ROLE
         fi
     done
 
@@ -84,9 +84,9 @@ function _addzetarole() {
 
 
     DIR="${CLUSTERMOUNT}/zeta/kstore/env/env_${ROLE}"
-    sudo mkdir -p $DIR
-    sudo chown ${IUSER}:${IUSER} $DIR
-    sudo chmod 775 $DIR
+    $PRIV_CMD mkdir -p $DIR
+    $PRIV_CMD chown ${IUSER}:${IUSER} $DIR
+    $PRIV_CMD chmod 775 $DIR
     ENV_FILE="${CLUSTERMOUNT}/zeta/kstore/env/zeta_${ROLE}.sh"
 
 cat > $ENV_FILE << EOL3

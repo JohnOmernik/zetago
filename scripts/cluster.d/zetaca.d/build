@@ -19,7 +19,7 @@ function _zetaca_build () {
     . ./vers/zetaca/$ZETACA_VERS
 
     BUILD_TMP="./tmp_build"
-    DCK=$(sudo docker images|grep zetaca)
+    DCK=$($PRIV_CMD docker images|grep zetaca)
 
     if [ "$DCK" == "" ]; then
         BUILD="Y"
@@ -70,7 +70,7 @@ RUN /bin/bash -l -c "rvm requirements"
 RUN /bin/bash -l -c "gem install sinatra rest-client"
 EXPOSE 80 443
 EOS
-        sudo docker build -t $APP_IMG .
+        $PRIV_CMD docker build -t $APP_IMG .
         @go.log INFO "Built Local zetaca image $APP_IMG"
         cd ..
         rm -rf $BUILD_TMP

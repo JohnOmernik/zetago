@@ -54,7 +54,7 @@ function _addsharedrole() {
     MYDIRS=$(echo "$ROOT_DIRS"|tr "," " ")
     for DIR in $MYDIRS; do
         @go.log INFO "Updating permissions on Shared $DIR Directory"
-        sudo chown -R $IUSER:zetashared${DIR} ${CLUSTERMOUNT}/${DIR}/shared
+        $PRIV_CMD chown -R $IUSER:zetashared${DIR} ${CLUSTERMOUNT}/${DIR}/shared
     done
 }
 _addsharedrole "$@"

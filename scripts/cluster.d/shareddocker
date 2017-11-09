@@ -31,16 +31,16 @@ function _shareddocker() {
     else
         mkdir -p $CLUSTERMOUNT/zeta/shared/dockerregv2
         fs_mkvol "RETCODE" "$DOCKER_IMAGE_LOC" "zeta.shared.dockerregv2" "775"
-        sudo chown ${IUSER}:${IUSER} $DOCKER_IMAGE_LOC
+        $PRIV_CMD chown ${IUSER}:${IUSER} $DOCKER_IMAGE_LOC
     fi
 
-    sudo docker pull registry:2
-    sudo docker tag registry:2 zeta/registry:2
+    $PRIV_CMD docker pull registry:2
+    $PRIV_CMD docker tag registry:2 zeta/registry:2
 
     echo "We use the FS Bootstrap Docker Registry to host the Shared Docker Registry"
 
-    sudo docker tag registry:2 ${FS_DOCKER_REG_URL}/dockerregv2
-    sudo docker push ${FS_DOCKER_REG_URL}/dockerregv2
+    $PRIV_CMD docker tag registry:2 ${FS_DOCKER_REG_URL}/dockerregv2
+    $PRIV_CMD docker push ${FS_DOCKER_REG_URL}/dockerregv2
 
 
 
@@ -66,13 +66,13 @@ export ZETA_DOCKER_REG_URL="\${ZETA_DOCKER_REG_HOST}:\${ZETA_DOCKER_REG_PORT}"
 EOL
 
 
-    sudo chmod +x $CLUSTERMOUNT/zeta/kstore/env/env_shared/dockerregv2.sh
+    $PRIV_CMD chmod +x $CLUSTERMOUNT/zeta/kstore/env/env_shared/dockerregv2.sh
 
     APP_NAME="docker"
     APP_CERT_LOC="$CLUSTERMOUNT/zeta/shared/dockerregv2/certs"
-    sudo mkdir -p ${APP_CERT_LOC}
-    sudo chown ${IUSER}:root ${APP_CERT_LOC}
-    sudo chmod 770 ${APP_CERT_LOC}
+    $PRIV_CMD mkdir -p ${APP_CERT_LOC}
+    $PRIV_CMD chown ${IUSER}:root ${APP_CERT_LOC}
+    $PRIV_CMD chmod 770 ${APP_CERT_LOC}
     CN_GUESS="dockerregv2-shared.marathon.slave.mesos"
 
     . /home/${IUSER}/zetaca/zetaca_env.sh

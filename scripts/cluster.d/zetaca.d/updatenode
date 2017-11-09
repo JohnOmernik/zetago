@@ -64,7 +64,7 @@ function _updatenodesca() {
     CHOSTS=$(echo "$HOSTS"|tr "," " ")
 
     for NODE in $RUN_NODES; do
-        OUT=$(ssh -t -t -n -o StrictHostKeyChecking=no $NODE "sudo whoami" 2> /dev/null)
+        OUT=$(ssh -t -t -n -o StrictHostKeyChecking=no $NODE "$PRIV_CMD whoami" 2> /dev/null)
         echo "$NODE     $OUT"
     done
 
@@ -91,7 +91,7 @@ function _updatenodesca() {
         if [ "$NODE" != "$ZETACA_IP" ]; then
             @go.log INFO "Updating root certificates on $NODE"
             echo "Updating and adding cert to $NODE"
-            ssh $NODE "sudo rm -f /usr/local/share/ca-certificates/zetaroot.crt && sudo update-ca-certificates -f && sudo curl -o /usr/local/share/ca-certificates/zetaroot.crt http://zetaca-shared.marathon.slave.mesos:10443/cacert && sudo update-ca-certificates && cat /etc/ssl/certs/zetaroot.pem|sudo tee -a /opt/mesosphere/active/python-requests/lib/python3.5/site-packages/requests/cacert.pem && sudo service docker restart"
+            ssh $NODE "$PRIV_CMD rm -f /usr/local/share/ca-certificates/zetaroot.crt && $PRIV_CMD update-ca-certificates -f && $PRIV_CMD curl -o /usr/local/share/ca-certificates/zetaroot.crt http://zetaca-shared.marathon.slave.mesos:10443/cacert && $PRIV_CMD update-ca-certificates && cat /etc/ssl/certs/zetaroot.pem|$PRIV_CMD tee -a /opt/mesosphere/active/python-requests/lib/python3.5/site-packages/requests/cacert.pem && $PRIV_CMD service docker restart"
         else
             @go.log INFO "Skipping Node with Zeta CA - Will run at end"
             RUN_INIT="Y"
@@ -99,11 +99,11 @@ function _updatenodesca() {
     done
     if [ "$RUN_INIT" == "Y" ]; then
         @go.log INFO "Running on Zeta CA Node: We update the certs, then we stop Zeta CA prior to docker restart"
-        ssh $ZETACA_IP "sudo rm -f /usr/local/share/ca-certificates/zetaroot.crt && sudo update-ca-certificates -f && sudo curl -o /usr/local/share/ca-certificates/zetaroot.crt http://zetaca-shared.marathon.slave.mesos:10443/cacert && sudo update-ca-certificates && cat /etc/ssl/certs/zetaroot.pem|sudo tee -a /opt/mesosphere/active/python-requests/lib/python3.5/site-packages/requests/cacert.pem"
+        ssh $ZETACA_IP "$PRIV_CMD rm -f /usr/local/share/ca-certificates/zetaroot.crt && $PRIV_CMD update-ca-certificates -f && $PRIV_CMD curl -o /usr/local/share/ca-certificates/zetaroot.crt http://zetaca-shared.marathon.slave.mesos:10443/cacert && $PRIV_CMD update-ca-certificates && cat /etc/ssl/certs/zetaroot.pem|$PRIV_CMD tee -a /opt/mesosphere/active/python-requests/lib/python3.5/site-packages/requests/cacert.pem"
         @go.log INFO "Stopping Zeta CA"
         ./zeta cluster marathon scale "shared/zetaca" 0 "$MARATHON_SUBMIT" 1
         @go.log INFO "Restarting docker on $ZETACA_IP"
-        ssh $ZETACA_IP "sudo service docker restart"
+        ssh $ZETACA_IP "$PRIV_CMD service docker restart"
         @go.log INFO "Starting Zeta CA Again"
         ./zeta cluster marathon scale "shared/zetaca" 1 "$MARATHON_SUBMIT" 1
         checkapi "${ZETA_CA_CERT}"

@@ -33,8 +33,8 @@ function _zetabase() {
 
     @go.log INFO "Creating Base Home Directory"
     if [ ! -d "$CLUSTERMOUNT/user" ]; then
-        sudo mkdir -p $CLUSTERMOUNT/user # Just a need a directory here
-        sudo chown -R ${IUSER}:2501 $CLUSTERMOUNT/user
+        $PRIV_CMD mkdir -p $CLUSTERMOUNT/user # Just a need a directory here
+        $PRIV_CMD chown -R ${IUSER}:2501 $CLUSTERMOUNT/user
         chmod -R 750 $CLUSTERMOUNT/user
     fi
 
@@ -44,7 +44,7 @@ function _zetabase() {
         if [ ! -d "$CLUSTERMOUNT/user/$U" ]; then
             @go.log INFO "User Directory for $U not found: Creating"
             fs_mkvol "RETCODE" "/user/$U" "user.$U" "770"
-            sudo chown -R $U:${IUSER} $CLUSTERMOUNT/user/$U
+            $PRIV_CMD chown -R $U:${IUSER} $CLUSTERMOUNT/user/$U
         else
             @go.log INFO "User directory for $U found"
         fi
@@ -57,10 +57,10 @@ function _zetabase() {
             @go.log WARN "Directory $CLUSTERMOUNT/$DIR already exists: Updating Permissions"
         else
             @go.log INFO "Creating directory $CLUSRERMOUNT/$DIR and updating permissions"
-            sudo mkdir -p $CLUSTERMOUNT/$DIR
+            $PRIV_CMD mkdir -p $CLUSTERMOUNT/$DIR
         fi
-        sudo chown -R ${IUSER}:2501 $CLUSTERMOUNT/$DIR
-        sudo chmod -R 750 $CLUSTERMOUNT/$DIR
+        $PRIV_CMD chown -R ${IUSER}:2501 $CLUSTERMOUNT/$DIR
+        $PRIV_CMD chmod -R 750 $CLUSTERMOUNT/$DIR
     done
 
     #####################################################
@@ -69,15 +69,15 @@ function _zetabase() {
     # Descriptions of the locations are below
     @go.log INFO "Setting up zeta kstore directory"
     DIR="$CLUSTERMOUNT/zeta/kstore"
-    sudo mkdir -p $DIR
-    sudo chown ${IUSER}:2501 $DIR
-    sudo chmod 755 $DIR
+    $PRIV_CMD mkdir -p $DIR
+    $PRIV_CMD chown ${IUSER}:2501 $DIR
+    $PRIV_CMD chmod 755 $DIR
 
     # Group Sync
     DIR="./conf/zetasync"
-    sudo mkdir -p $DIR
-    sudo chown ${IUSER}:${IUSER} $DIR
-    sudo chmod 775 $DIR
+    $PRIV_CMD mkdir -p $DIR
+    $PRIV_CMD chown ${IUSER}:${IUSER} $DIR
+    $PRIV_CMD chmod 775 $DIR
 
     if [ ! -f "$DIR/zetagroups.list" ]; then
 cat > ${DIR}/zetagroups.list << GRPEOF
@@ -101,9 +101,9 @@ USROF
 
     # ENV Main
     DIR="$CLUSTERMOUNT/zeta/kstore/env"
-    sudo mkdir -p $DIR
-    sudo chown ${IUSER}:${IUSER} $DIR
-    sudo chmod 775 $DIR
+    $PRIV_CMD mkdir -p $DIR
+    $PRIV_CMD chown ${IUSER}:${IUSER} $DIR
+    $PRIV_CMD chmod 775 $DIR
 
     if [ ! -f "$DIR/master_env.sh" ]; then
     @go.log INFO "Building Zeta Master ENV File"
@@ -137,14 +137,14 @@ EOL3
         else
             @go.log INFO "Creating $CLUSTERMOUNT/$DIR/shared"
             fs_mkvol "RETCODE" "/$DIR/shared" "$DIR.shared" "770"
-            sudo chown -R ${IUSER}:${IUSER} $CLUSTERMOUNT/$DIR/shared
+            $PRIV_CMD chown -R ${IUSER}:${IUSER} $CLUSTERMOUNT/$DIR/shared
         fi
     done
 
     DIR="$CLUSTERMOUNT/zeta/kstore/env/env_shared"
-    sudo mkdir -p $DIR
-    sudo chown ${IUSER}:${IUSER} $DIR
-    sudo chmod 775 $DIR
+    $PRIV_CMD mkdir -p $DIR
+    $PRIV_CMD chown ${IUSER}:${IUSER} $DIR
+    $PRIV_CMD chmod 775 $DIR
     ENV_FILE="$CLUSTERMOUNT/zeta/kstore/env/zeta_shared.sh"
 
 cat > $ENV_FILE << EOL9

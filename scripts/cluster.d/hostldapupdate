@@ -82,7 +82,7 @@ function _hostldapupdate() {
 
 
     for HOST in $HOSTS; do
-        OUT=$(ssh -t -t -n -o StrictHostKeyChecking=no $HOST "sudo whoami" 2> /dev/null)
+        OUT=$(ssh -t -t -n -o StrictHostKeyChecking=no $HOST "$PRIV_CMD whoami" 2> /dev/null)
         echo "$HOST     $OUT"
     done
 
@@ -132,9 +132,9 @@ fi
 echo "\$INST_TYPE"
 
 if [ "\$INST_TYPE" == "ubuntu" ]; then
-   sudo DEBIAN_FRONTEND=noninteractive apt-get install -qq -y libpam-ldapd libnss-ldapd nscd
+   $PRIV_CMD DEBIAN_FRONTEND=noninteractive apt-get install -qq -y libpam-ldapd libnss-ldapd nscd
 
-   sudo tee /usr/share/pam-configs/my_mkhomedir << EOL
+   $PRIV_CMD tee /usr/share/pam-configs/my_mkhomedir << EOL
 Name: activate mkhomedir
 Default: yes
 Priority: 900
@@ -144,7 +144,7 @@ Session:
 
 EOL
 
-sudo  tee /etc/ldap.conf << EOR
+$PRIV_CMD tee /etc/ldap.conf << EOR
 # The distinguished name of the search base.
 base dc=marathon,dc=mesos
 # Another way to specify your LDAP server is to provide an
@@ -157,8 +157,7 @@ binddn cn=readonly,dc=marathon,dc=mesos
 bindpw readonly
 EOR
 
-
-sudo tee /etc/nslcd.conf << EON
+$PRIV_CMD tee /etc/nslcd.conf << EON
 # /etc/nslcd.conf
 # nslcd configuration file. See nslcd.conf(5)
 # for details.
@@ -193,15 +192,15 @@ tls_cacertfile /etc/ssl/certs/ca-certificates.crt
 
 EON
 
-sudo DEBIAN_FRONTEND=noninteractive pam-auth-update
+$PRIV_CMD DEBIAN_FRONTEND=noninteractive pam-auth-update
 
-sudo sed -i "s/compat/compat ldap/g" /etc/nsswitch.conf
+$PRIV_CMD sed -i "s/compat/compat ldap/g" /etc/nsswitch.conf
 
-sudo /etc/init.d/nscd restart
-sudo service nslcd restart
-sudo $FS_PROVIDER_FUSE_SVC restart
-sudo service dcos-mesos-slave restart
-sudo service dcos-mesos-slave-public restart
+$PRIV_CMD /etc/init.d/nscd restart
+$PRIV_CMD service nslcd restart
+$PRIV_CMD $FS_PROVIDER_FUSE_SVC restart
+$PRIV_CMD service dcos-mesos-slave restart
+$PRIV_CMD service dcos-mesos-slave-public restart
 elif [ "\$INST_TYPE" == "rh_centos" ]; then
    echo "Needs work"
 else

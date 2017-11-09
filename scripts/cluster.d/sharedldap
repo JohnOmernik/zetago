@@ -38,7 +38,7 @@ function _installldap() {
 
     SOURCE_GIT="https://github.com/osixia/docker-openldap.git"
 
-    DCK=$(sudo docker images|grep openldap)
+    DCK=$($PRIV_CMD docker images|grep openldap)
 
     if [ "$DCK" == "" ]; then
         BUILD="Y"
@@ -153,8 +153,8 @@ EOS
 
 
 
-        sudo docker build -t $APP_IMG .
-        sudo docker push $APP_IMG
+        $PRIV_CMD docker build -t $APP_IMG .
+        $PRIV_CMD docker push $APP_IMG
         cd ..
         cd ..
         rm -rf docker-openldap
@@ -177,8 +177,8 @@ EOS
     mkdir -p ${APP_ROOT}/initconf
     mkdir -p ${APP_ROOT}/certs
 
-    sudo chown -R ${IUSER}:${IUSER} ${APP_ROOT}
-    sudo chmod -R 750 ${APP_ROOT}
+    $PRIV_CMD chown -R ${IUSER}:${IUSER} ${APP_ROOT}
+    $PRIV_CMD chmod -R 750 ${APP_ROOT}
     APP_NAME="openldap"
     APP_CERT_LOC="${APP_ROOT}/certs"
     CN_GUESS="openldap-shared.marathon.slave.mesos"
@@ -238,7 +238,7 @@ LDAP_READONLY_USER_USERNAME: readonly
 LDAP_READONLY_USER_PASSWORD: readonly
 EOL2
 
-    sudo chmod +x $CLUSTERMOUNT/zeta/kstore/env/env_shared/openldap.sh
+    $PRIV_CMD chmod +x $CLUSTERMOUNT/zeta/kstore/env/env_shared/openldap.sh
 
     MARFILE="${APP_ROOT}/marathon.json"
 

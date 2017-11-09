@@ -69,8 +69,8 @@ function _finalzetaca() {
 
     mkdir -p $NEW_APP_LOC
     mkdir -p ${NEW_APP_LOC}/CA
-    sudo chown -R ${IUSER}:${IUSER} ${NEW_APP_LOC}
-    sudo chmod -R 770 ${NEW_APP_LOC}/CA
+    $PRIV_CMD chown -R ${IUSER}:${IUSER} ${NEW_APP_LOC}
+    $PRIV_CMD chmod -R 770 ${NEW_APP_LOC}/CA
     cp -R ${OLD_APP_LOC}/CA/* ${NEW_APP_LOC}/CA/
     cp ${OLD_APP_LOC}/gen_java_keystore.sh ${NEW_APP_LOC}/
     cp ${OLD_APP_LOC}/gen_server_cert.sh ${NEW_APP_LOC}/
@@ -82,9 +82,9 @@ function _finalzetaca() {
     . ${OLD_APP_LOC}/zetaca_env.sh
 
 
-    DOCKER_TAG=$(sudo docker images|grep zetaca|grep -o -P "[a-f0-9]{12}")
-    sudo docker tag $DOCKER_TAG $APP_IMG
-    sudo docker push $APP_IMG
+    DOCKER_TAG=$($PRIV_CMD docker images|grep zetaca|grep -o -P "[a-f0-9]{12}")
+    $PRIV_CMD docker tag $DOCKER_TAG $APP_IMG
+    $PRIV_CMD docker push $APP_IMG
 
 cat > ${MAR_FILE} << EOL4
 {

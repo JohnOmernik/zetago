@@ -27,10 +27,10 @@ function _installldapadmin() {
 
     SOURCE_IMG="osixia/phpldapadmin"
     @go.log INFO "Pulling $SOURCE_IMG to local cluster"
-    sudo docker pull $SOURCE_IMG
+    $PRIV_CMD docker pull $SOURCE_IMG
     APP_IMG="${ZETA_DOCKER_REG_URL}/ldapadmin"
-    sudo docker tag $SOURCE_IMG $APP_IMG
-    sudo docker push $APP_IMG
+    $PRIV_CMD docker tag $SOURCE_IMG $APP_IMG
+    $PRIV_CMD docker push $APP_IMG
 
     APP_ROOT="$CLUSTERMOUNT/zeta/shared/ldapadmin"
 
@@ -43,8 +43,8 @@ function _installldapadmin() {
     mkdir -p ${APP_ROOT}/conf
     mkdir -p ${APP_ROOT}/certs
 
-    sudo chown -R ${IUSER}:${IUSER} ${APP_ROOT}
-    sudo chmod -R 750 ${APP_ROOT}
+    $PRIV_CMD chown -R ${IUSER}:${IUSER} ${APP_ROOT}
+    $PRIV_CMD chmod -R 750 ${APP_ROOT}
 
 
 
@@ -65,7 +65,7 @@ export ZETA_LDAPADMIN_HOST="ldapadmin-shared.marathon.slave.mesos"
 export ZETA_LDAPADMIN_PORT="$APP_PORT"
 EOL
 
-    sudo chmod +x $CLUSTERMOUNT/zeta/kstore/env/env_shared/ldapadmin.sh
+    $PRIV_CMD chmod +x $CLUSTERMOUNT/zeta/kstore/env/env_shared/ldapadmin.sh
 
     MARFILE="${APP_ROOT}/marathon.json"
 

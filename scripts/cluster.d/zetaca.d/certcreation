@@ -10,7 +10,7 @@ sourceconf "$FS_PROVIDER_CONF"
 sourceconf "$CLUSTER_CONF"
 sourceconf "$CLUSTER_ZETACA_CONF"
 
-sudo docker run -it -e CACERT_C="$ZETA_CACERT_C" -e CACERT_ST="$ZETA_CACERT_ST" -e CACERT_L="$ZETA_CACERT_L" -e CACERT_O="$ZETA_CACERT_O" -e CACERT_OU="$ZETA_CACERT_OU" -e CACERT_CN="$ZETA_CACERT_CN" -v=/${ZETACA_HOME}/CA:/root/ca_rest/CA:rw $ZETACA_IMG /root/ca_rest/CA/init_all.sh
+$PRIV_CMD docker run -it -e CACERT_C="$ZETA_CACERT_C" -e CACERT_ST="$ZETA_CACERT_ST" -e CACERT_L="$ZETA_CACERT_L" -e CACERT_O="$ZETA_CACERT_O" -e CACERT_OU="$ZETA_CACERT_OU" -e CACERT_CN="$ZETA_CACERT_CN" -v=/${ZETACA_HOME}/CA:/root/ca_rest/CA:rw $ZETACA_IMG /root/ca_rest/CA/init_all.sh
 
 
 @go.log INFO "Initial Certificate for Zeta CA Created and saved to ${ZETACA_HOME}/CA"
