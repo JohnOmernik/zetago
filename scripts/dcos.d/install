@@ -106,7 +106,7 @@ function _dcos_install() {
             EXT_IP=$(ssh -o StrictHostKeyChecking=no $NODE "curl -s icanhazip.com")
             EXT_MASTERS="${EXT_MASTERS} $EXT_IP"
             ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -s -O http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh"
-            ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'cd /tmp/dcos && nohup bash dcos_install.sh master > /dev/null 2>&1 &'" &
+            ssh -o StrictHostKeyChecking=no $NODE "$PRIV_CMD sh -c 'cd /tmp/dcos && nohup bash dcos_install.sh master > /dev/null 2>&1 &'" &
         fi
     done
     @go.log INFO "Master Server Install(s) initiated on all master nodes"
@@ -150,7 +150,7 @@ function _dcos_install() {
             fi
             @go.log INFO "Installing $INSTSTR agent on $NODE"
             ssh -o StrictHostKeyChecking=no $NODE "mkdir -p /tmp/dcos && cd /tmp/dcos && curl -O -s http://${BOOTSTRAP_NODE}:${BOOTSTRAP_PORT}/dcos_install.sh && sed -i \"s/systemctl restart docker/# systemctl restart docker/\" dcos_install.sh"
-            ssh -o StrictHostKeyChecking=no $NODE "sudo sh -c 'cd /tmp/dcos && nohup bash dcos_install.sh $INSTSTR > /dev/null 2>&1 &'" &
+            ssh -o StrictHostKeyChecking=no $NODE "$PRIV_CMD sh -c 'cd /tmp/dcos && nohup bash dcos_install.sh $INSTSTR > /dev/null 2>&1 &'" &
         fi
     done
     echo ""
