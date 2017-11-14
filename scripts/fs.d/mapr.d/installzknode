@@ -21,6 +21,7 @@ fi
 
 
 function _installzknode(){
+
     UNATTEND="0"
     NODE_HOST=""
     SUBMIT_ZK="Y"
@@ -53,7 +54,7 @@ function _installzknode(){
         @go.log FATAL "Cannont connect to host"
     fi
 
-    ZK_CHK=$(echo "$ZK_STRING"|grep "$NODE_HOST)
+    ZK_CHK=$(echo "$ZK_STRING"|grep "$NODE_HOST")
     if [ "$ZK_CHK" == "" ]; then
         echo "ZK Node provided not found in ZK_STRING in fs_mapr.conf. Please update the conf!"
         exit 1
@@ -248,5 +249,7 @@ EOFZK
     fi
     echo ""
     @go.log INFO "Zookeeper installed per config"
+
 }
+
 _installzknode "$@"
