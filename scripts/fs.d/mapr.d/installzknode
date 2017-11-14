@@ -82,48 +82,49 @@ function _installzknode(){
         cd $MYDIR
     fi
 
-OLDIFS=$IFS
-IFS=","
+    OLDIFS=$IFS
+    IFS=","
 
-for ZK in $ZK_STRING; do
-    ZK_ID=$(echo $ZK|cut -d":" -f1)
-    ZK_HOST=$(echo $ZK|cut -d":" -f2)
+    for ZK in $ZK_STRING; do
+        ZK_ID=$(echo $ZK|cut -d":" -f1)
+        ZK_HOST=$(echo $ZK|cut -d":" -f2)
 
-    if [ "$ZK_HOST" == "$NODE_HOST" ]; then
-        echo ""
-        ZKTEST=$(ssh -o StrictHostKeyChecking=no $ZK_HOST "$PRIV_CMD cat ${MAPR_INST}/zkdata/myid 2> /dev/null")
-        if [ "$ZKTEST" == "" ]; then
-            echo "No myid Safe to proceed"
-        else
-            echo "There appears to already be a zookeeper myid for $ZK_HOST"
-            echo "The myid file has $ZKTEST in it"
-            echo "You may overwrite and blow it away, but likely that will be bad (especially if it's running)"
-            echo "Do you wish to overwrite? Answering N will cancel this process"
-            read -p "Overwrite? " -e -i "N" OW
-            if [ "$OW" == "Y" ]; then
-                echo "Blowing things away"
-                ssh $ZK_HOST "$PRIV_CMD rm -rf ${MAPR_INST}/zkdata"
+        if [ "$ZK_HOST" == "$NODE_HOST" ]; then
+            echo ""
+            ZKTEST=$(ssh -o StrictHostKeyChecking=no $ZK_HOST "$PRIV_CMD cat ${MAPR_INST}/zkdata/myid 2> /dev/null")
+            if [ "$ZKTEST" == "" ]; then
+                echo "No myid Safe to proceed"
             else
-                echo "Smart"
-                exit 0
+                echo "There appears to already be a zookeeper myid for $ZK_HOST"
+                echo "The myid file has $ZKTEST in it"
+                echo "You may overwrite and blow it away, but likely that will be bad (especially if it's running)"
+                echo "Do you wish to overwrite? Answering N will cancel this process"
+                read -p "Overwrite? " -e -i "N" OW
+                if [ "$OW" == "Y" ]; then
+                    echo "Blowing things away"
+                    ssh $ZK_HOST "$PRIV_CMD rm -rf ${MAPR_INST}/zkdata"
+                else
+                    echo "Smart"
+                    exit 0
+                fi
             fi
+            INST_HOST="$ZK_HOST"
+            INST_ID= "$ZK_ID"
         fi
-        INST_HOST="$ZK_HOST"
-        INST_ID= "$ZK_ID"
+    done
+    IFS=$OLDIFS
+
+
+    if [ "$INST_HOST" == "" ]; then
+        echo "Inst host not found, exiting"
+        exit 1
     fi
-done
-IFS=$OLDIFS
-
-
-if [ "$INST_HOST" == "" ]; then
-    echo "Inst host not found, exiting"
-    exit 1
-fi
 
 
 
-echo "Creating zoo.cfg"
-ZKOUT=$(echo -n $ZOOCFG|tr " " "\n")
+    echo "Creating zoo.cfg"
+    ZKOUT=$(echo -n $ZOOCFG|tr " " "\n")
+
 tee ./conf/marathon_files/zk_marathon/zoo.cfg << EOL1
 # The number of milliseconds of each tick
 tickTime=2000
@@ -158,46 +159,50 @@ EOL1
 
 
 
-echo "Ok, setting up the data locations on node $NODE_HOST"
-ZK_ID="$INST_ID"
-ZK_HOST="$INST_HOST"
+    echo "Ok, setting up the data locations on node $NODE_HOST"
+    ZK_ID="$INST_ID"
+    ZK_HOST="$INST_HOST"
 
-echo "ID: $ZK_ID"
-echo "Host: $ZK_HOST"
-echo ""
-echo "Creating MapR Conf Dir if it doesn't exist"
-ssh $ZK_HOST "$PRIV_CMD mkdir -p ${MAPR_INST}/conf && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf && $PRIV_CMD chmod 755 ${MAPR_INST}/conf"
+    echo "ID: $ZK_ID"
+    echo "Host: $ZK_HOST"
+    echo ""
+    echo "Creating MapR Conf Dir if it doesn't exist"
+    ssh $ZK_HOST "$PRIV_CMD mkdir -p ${MAPR_INST}/conf && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf && $PRIV_CMD chmod 755 ${MAPR_INST}/conf"
+
 cat > /tmp/daemon.conf << EOY
 mapr.daemon.user=mapr
 mapr.daemon.group=mapr
 mapr.daemon.runuser.warden=1
 EOY
-scp /tmp/daemon.conf $IUSER@$ZK_HOST:/home/$IUSER/
-rm /tmp/daemon.conf
-ssh $ZK_HOST "$PRIV_CMD cp /home/${IUSER}/daemon.conf /opt/maprdocker/conf/ && $PRIV_CMD rm /home/$IUSER/daemon.conf"
-echo "Creating zkdata location and setting myid"
-ssh $ZK_HOST "$PRIV_CMD mkdir -p ${MAPR_INST}/zkdata && echo $ZK_ID|$PRIV_CMD tee ${MAPR_INST}/zkdata/myid && $PRIV_CMD chown -R ${FSUSER}:${FSUSER} ${MAPR_INST}/zkdata && $PRIV_CMD chmod 750 ${MAPR_INST}/zkdata"
-echo "Creating ZK conf and log location on the host"
-ssh $ZK_HOST "$PRIV_CMD mkdir -p ${MAPR_INST}/zookeeper/logs && $PRIV_CMD mkdir -p ${MAPR_INST}/zookeeper/conf"
 
-echo "Copying zk defaults and cfg to $ZK_HOST"
-scp $MAPR_DEFAULTS/zk_default.tgz $ZK_HOST:/home/${IUSER}/
-scp ./conf/marathon_files/zk_marathon/zoo.cfg $ZK_HOST:/home/${IUSER}/
+    scp /tmp/daemon.conf $IUSER@$ZK_HOST:/home/$IUSER/
+    rm /tmp/daemon.conf
+    ssh $ZK_HOST "$PRIV_CMD cp /home/${IUSER}/daemon.conf /opt/maprdocker/conf/ && $PRIV_CMD rm /home/$IUSER/daemon.conf"
+    echo "Creating zkdata location and setting myid"
+    ssh $ZK_HOST "$PRIV_CMD mkdir -p ${MAPR_INST}/zkdata && echo $ZK_ID|$PRIV_CMD tee ${MAPR_INST}/zkdata/myid && $PRIV_CMD chown -R ${FSUSER}:${FSUSER} ${MAPR_INST}/zkdata && $PRIV_CMD chmod 750 ${MAPR_INST}/zkdata"
+    echo "Creating ZK conf and log location on the host"
+    ssh $ZK_HOST "$PRIV_CMD mkdir -p ${MAPR_INST}/zookeeper/logs && $PRIV_CMD mkdir -p ${MAPR_INST}/zookeeper/conf"
 
-echo ""
-echo "Unpacking and copying conf"
-ssh $ZK_HOST "$PRIV_CMD mv /home/${IUSER}/zk_default.tgz ${MAPR_INST}/zookeeper/conf/ && $PRIV_CMD tar zxf ${MAPR_INST}/zookeeper/conf/zk_default.tgz -C ${MAPR_INST}/zookeeper/conf && $PRIV_CMD rm ${MAPR_INST}/zookeeper/conf/zk_default.tgz"
-ssh $ZK_HOST "$PRIV_CMD mv /home/${IUSER}/zoo.cfg ${MAPR_INST}/zookeeper/conf/"
-ssh $ZK_HOST "$PRIV_CMD chown -R $FSUSER:$FSUSER ${MAPR_INST}/zookeeper && $PRIV_CMD chmod 777 ${MAPR_INST}/zookeeper/logs"
-ssh $ZK_HOST "$PRIV_CMD mkdir -p ${MAPR_INST}/zookeeper/roles && $PRIV_CMD touch ${MAPR_INST}/zookeeper/roles/zookeeper && $PRIV_CMD chown -R $FSUSER:$FSUSER ${MAPR_INST}/zookeeper/roles"
+    echo "Copying zk defaults and cfg to $ZK_HOST"
+    scp $MAPR_DEFAULTS/zk_default.tgz $ZK_HOST:/home/${IUSER}/
+    scp ./conf/marathon_files/zk_marathon/zoo.cfg $ZK_HOST:/home/${IUSER}/
+
+    echo ""
+    echo "Unpacking and copying conf"
+    ssh $ZK_HOST "$PRIV_CMD mv /home/${IUSER}/zk_default.tgz ${MAPR_INST}/zookeeper/conf/ && $PRIV_CMD tar zxf ${MAPR_INST}/zookeeper/conf/zk_default.tgz -C ${MAPR_INST}/zookeeper/conf && $PRIV_CMD rm ${MAPR_INST}/zookeeper/conf/zk_default.tgz"
+    ssh $ZK_HOST "$PRIV_CMD mv /home/${IUSER}/zoo.cfg ${MAPR_INST}/zookeeper/conf/"
+    ssh $ZK_HOST "$PRIV_CMD chown -R $FSUSER:$FSUSER ${MAPR_INST}/zookeeper && $PRIV_CMD chmod 777 ${MAPR_INST}/zookeeper/logs"
+    ssh $ZK_HOST "$PRIV_CMD mkdir -p ${MAPR_INST}/zookeeper/roles && $PRIV_CMD touch ${MAPR_INST}/zookeeper/roles/zookeeper && $PRIV_CMD chown -R $FSUSER:$FSUSER ${MAPR_INST}/zookeeper/roles"
 
 
-echo "Creating marathon scripts"
-MFILE="./conf/marathon_files/zk_marathon/mapr_zk_${ZK_HOST}.marathon"
+    echo "Creating marathon scripts"
 
-scp $IP_DETECT ${ZK_HOST}:/home/${IUSER}/
-ZK_IP=$(ssh ${ZK_HOST} /home/${IUSER}/ip-detect)
-echo "$ZK_HOST -> $ZK_IP"
+    MFILE="./conf/marathon_files/zk_marathon/mapr_zk_${ZK_HOST}.marathon"
+
+    scp $IP_DETECT ${ZK_HOST}:/home/${IUSER}/
+
+    ZK_IP=$(ssh ${ZK_HOST} /home/${IUSER}/ip-detect)
+    echo "$ZK_HOST -> $ZK_IP"
 
 cat > $MFILE << EOFZK
 {
@@ -233,12 +238,15 @@ cat > $MFILE << EOFZK
   }
 }
 EOFZK
-if [ "$SUBMIT_ZK" == "Y" ]; then
+
+    if [ "$SUBMIT_ZK" == "Y" ]; then
+        echo ""
+        @go.log INFO "Submitting ZK Node to Marathon and waiting for it to start"
+        echo ""
+        ./zeta cluster marathon submit "$MFILE" "$MARATHON_SUBMIT" 1
+        echo ""
+    fi
     echo ""
-    @go.log INFO "Submitting ZK Node to Marathon and waiting for it to start"
-    echo ""
-    ./zeta cluster marathon submit "$MFILE" "$MARATHON_SUBMIT" 1
-    echo ""
-fi
-echo ""
-@go.log INFO "Zookeeper installed per config"
+    @go.log INFO "Zookeeper installed per config"
+}
+_installzknode "$@"
