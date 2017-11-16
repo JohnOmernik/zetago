@@ -88,7 +88,7 @@ function _listzk() {
             @go.log INFO "Using zookeeper string provided with -c"
         fi
     fi
-    sudo docker run --rm -it $APP_IMG --servers $ZK_SRV $FORM -c $CMD $ZK_PATH
+    $PRIV_CMD docker run --rm -it $APP_IMG --servers $ZK_SRV $FORM -c $CMD $ZK_PATH
 
 }
 

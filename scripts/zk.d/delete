@@ -97,7 +97,7 @@ function _deletezk() {
     fi
 
     if [ "$CONFIRM" == "Y" ]; then
-        sudo docker run --rm -it $APP_IMG --servers $ZK_SRV $FORM -c $CMD $ZK_NODE
+        $PRIV_CMD docker run --rm -it $APP_IMG --servers $ZK_SRV $FORM -c $CMD $ZK_NODE
     else
         @go.log FATAL "ZK RMR Action canceled by user"
     fi

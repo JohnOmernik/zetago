@@ -110,7 +110,7 @@ function _installzknode(){
                 fi
             fi
             INST_HOST="$ZK_HOST"
-            INST_ID= "$ZK_ID"
+            INST_ID="$ZK_ID"
         fi
     done
     IFS=$OLDIFS
@@ -120,8 +120,6 @@ function _installzknode(){
         echo "Inst host not found, exiting"
         exit 1
     fi
-
-
 
     echo "Creating zoo.cfg"
     ZKOUT=$(echo -n $ZOOCFG|tr " " "\n")

@@ -75,7 +75,7 @@ function _getzk() {
             @go.log INFO "Using zookeeper string provided with -c"
         fi
     fi
-    sudo docker run --rm -it $APP_IMG --servers $ZK_SRV $FORM -c get $ZK_NODE
+    $PRIV_CMD docker run --rm -it $APP_IMG --servers $ZK_SRV $FORM -c get $ZK_NODE
 
 }
 

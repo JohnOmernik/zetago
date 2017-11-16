@@ -23,7 +23,7 @@ function _buildzk() {
     APP_IMG="$ZETA_DOCKER_REG_URL/zookeepercli:latest"
 
     @go.log INFO "Attempting to pull $APP_IMG"
-    sudo docker pull $APP_IMG
+    $PRIV_CMD docker pull $APP_IMG
     if [ "$?" == 0 ];then
         @go.log WARN "Zookeepercli pulled, do you want to rebuild and push hack to $ZETA_DOCKER_REG_URL?"
         read -e -p "Rebuild zookeepercli? (Y/N): " -i "N" REBUILD
@@ -58,10 +58,10 @@ function _buildzk() {
         sed -i "/MAINTAINER /a $DOCKER_LINE1" Dockerfile
     fi
 
-    sudo docker build -t $APP_IMG .
+    $PRIV_CMD docker build -t $APP_IMG .
     if [ "$?" == 0 ]; then
         @go.log INFO "Build of zookeeper client successful - pushing to registery and updating conf"
-        sudo docker push $APP_IMG
+        $PRIV_CMD docker push $APP_IMG
         cd $CURDIR
         sed -i "s/export ZK_BUILT=\"N\"/export ZK_BUILT=\"Y\"/g" ${ZK_CONF}
     else
