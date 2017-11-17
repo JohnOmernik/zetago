@@ -226,8 +226,8 @@ function _user() {
             @go.log INFO "$USER_NAME Home Directory not found: Creating"
 
             fs_mkvol "RETCODE" "/user/${USER_NAME}" "user.${USER_NAME}" "770"
-            sudo chown -R ${USER_NAME}:${IUSER} $CLUSTERMOUNT/user/${USER_NAME}
-            sudo chmod 770 ${CLUSTERMOUNT}/user/$USER_NAME
+            $PRIV_CMD chown -R ${USER_NAME}:${IUSER} $CLUSTERMOUNT/user/${USER_NAME}
+            $PRIV_CMD chmod 770 ${CLUSTERMOUNT}/user/$USER_NAME
         else
             @go.log WARN "User Directory for $USER_NAME Already Exists: Ensure to check permissions for reuse"
         fi
