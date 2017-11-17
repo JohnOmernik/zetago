@@ -39,7 +39,7 @@ function _createfw(){
     if [ ! -d "$FW_SCRIPT_DIR" ]; then
         @go.log INFO "Creating FW Directory"
         mkdir -p $FW_SCRIPT_DIR
-        sudo chmod 700 $FW_SCRIPT_DIR
+        $PRIV_CMD chmod 700 $FW_SCRIPT_DIR
     fi
     if [ ! -d "$FW_SCRIPT_DIR/archive" ]; then
         @go.log INFO "Creating Archive Directory at $FW_SCRIPT_DIR/archive"

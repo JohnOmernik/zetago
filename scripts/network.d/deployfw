@@ -51,7 +51,7 @@ function _deployfw() {
         @go.log INFO "Deploying FW Scripts to $NODE"
         ssh $NODE "mkdir -p $FW_SCRIPT_TMP_DIR && chmod 700 $FW_SCRIPT_TMP_DIR"
         scp -q $FW_SCRIPT_SRC $NODE:$FW_SCRIPT_TMP
-        ssh $NODE "chmod 700 $FW_SCRIPT_TMP && sudo mv $FW_SCRIPT_TMP $FW_SCRIPT_DST && sudo chown root:root $FW_SCRIPT_DST && sudo chmod 700 $FW_SCRIPT_DST && echo \"$(date +%Y%m%d%H%M%S) ------------------------------\" && sudo $FW_SCRIPT_DST" &>> ${FW_SCRIPT_DIR}/logs/${NODE}_fwdeploy.log
+        ssh $NODE "chmod 700 $FW_SCRIPT_TMP && $PRIV_CMD mv $FW_SCRIPT_TMP $FW_SCRIPT_DST && $PRIV_CMD chown root:root $FW_SCRIPT_DST && $PRIV_CMD chmod 700 $FW_SCRIPT_DST && echo \"$(date +%Y%m%d%H%M%S) ------------------------------\" && $PRIV_CMD $FW_SCRIPT_DST" &>> ${FW_SCRIPT_DIR}/logs/${NODE}_fwdeploy.log
     done
     if [ "$UPDATE_FIRST_RUN" == "1" ]; then
         if [ "$FW_FIRST_RUN" == "0" ]; then
