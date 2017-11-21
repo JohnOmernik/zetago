@@ -125,7 +125,8 @@ function _build_mapr() {
 cat > $BUILD_TMP/update_jpam.sh << EOJ2
 #!/bin/bash
 
-rm -rf /opt/mapr/adminuiapp/webapp/WEB-INF/jpamlogin.conf
+if [ -f "/opt/mpar/adminusapp/webbapp/WEB-INF/jpamlogin.conf" ]; then
+    rm -rf /opt/mapr/adminuiapp/webapp/WEB-INF/jpamlogin.conf
 
 cat > /opt/mapr/adminuiapp/webapp/WEB-INF/jpamlogin.conf << EOY
 jpamLogin {
@@ -140,6 +141,9 @@ jpamLogin {
       debug=true;
 };
 EOY
+else
+    echo "/opt/mpar/adminusapp/webbapp/WEB-INF/jpamlogin.conf  not found - not updating"
+fi
 
 EOJ2
 chmod +x $BUILD_TMP/update_jpam.sh
