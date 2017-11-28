@@ -85,7 +85,7 @@ function _enablesec() {
 
     @go.log WARN "Stopping MapR Services Now"
     if [ "$NOSTOP" != "1" ]; then
-        ./zeta fs mapr stopmapr -z -c -s -f -d
+        ./zeta fs mapr stopmapr -z -c -s -f
     fi
     VOL1="-v=/opt/maprdocker/conf:/opt/mapr/conf:rw"
     VOL2="-v=/opt/maprdocker/logs:/opt/mapr/logs:rw"
@@ -130,21 +130,29 @@ function _enablesec() {
 
 
     for NODE_HOST in $FSNODES; do
+        echo "Running Secure MapR on Node $NODE_HOST"
         CCHK=$(echo "$CLDBS"|grep "$NODE_HOST")
         if [ -d "./conf/secmapr" ]; then
-            ssh ${IUSER}@${NODE_HOST} "mkdir -p /home/$IUSER/maprsec && chmod 770 /home/$IUSER/maprsec"
-            scp ./conf/secmapr/maprserverticket ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
-            scp ./conf/secmapr/ssl_keystore ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
-            scp ./conf/secmapr/ssl_truststore ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
-            ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD mv /home/${IUSER}/maprsec/* ${MAPR_INST}/conf/ && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_keystore && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_truststore && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/maprserverticket"
-            ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD chmod 600 ${MAPR_INST}/conf/maprserverticket && $PRIV_CMD chmod 600 ${MAPR_INST}/conf/ssl_keystore && $PRIV_CMD chmod 664 ${MAPR_INST}/conf/ssl_truststore"
-            if [ "$CCHK" != "" ]; then
-                scp ./conf/secmapr/cldb.key ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
-                ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD mv /home/${IUSER}/maprsec/cldb.key ${MAPR_INST}/conf/ && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/cldb.key && $PRIV_CMD chmod 600 ${MAPR_INST}/conf/cldb.key"
-            fi
-            ssh ${IUSER}@${NODE_HOST} "rm -rf /home/${IUSER}/maprsec"
+            DCHK=$(ssh ${IUSER}@${NODE_HOST} "ls /opt|grep maprdocker")
+            if [ "$DCHK" != "" ]; then
+                echo "/opt/maprdocker found, proceeding to secure node"
+                ssh ${IUSER}@${NODE_HOST} "mkdir -p /home/$IUSER/maprsec && chmod 770 /home/$IUSER/maprsec"
+                scp ./conf/secmapr/maprserverticket ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
+                scp ./conf/secmapr/ssl_keystore ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
+                scp ./conf/secmapr/ssl_truststore ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
+                ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD mv /home/${IUSER}/maprsec/* ${MAPR_INST}/conf/ && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_keystore && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/ssl_truststore && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/maprserverticket"
+                ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD chmod 600 ${MAPR_INST}/conf/maprserverticket && $PRIV_CMD chmod 600 ${MAPR_INST}/conf/ssl_keystore && $PRIV_CMD chmod 664 ${MAPR_INST}/conf/ssl_truststore"
+                if [ "$CCHK" != "" ]; then
+                    scp ./conf/secmapr/cldb.key ${IUSER}@${NODE_HOST}:/home/${IUSER}/maprsec/
+                    ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD mv /home/${IUSER}/maprsec/cldb.key ${MAPR_INST}/conf/ && $PRIV_CMD chown $FSUSER:$FSUSER ${MAPR_INST}/conf/cldb.key && $PRIV_CMD chmod 600 ${MAPR_INST}/conf/cldb.key"
+                fi
+                ssh ${IUSER}@${NODE_HOST} "rm -rf /home/${IUSER}/maprsec"
 
-            ./zeta node run -n="$NODE_HOST" "$RECONF_CMD"
+                ./zeta node run -n="$NODE_HOST" "$RECONF_CMD"
+            else
+                echo "/opt/maprdocker not found - may be a fuse only host"
+                echo "To update fuse on both nodes and fuse only hosts, uninstall and then reinstall fuse after running enablesec"
+            fi
         else
             @go.log WARN "MAPR_SECURE is set to 1 however no ./conf/secmapr directory found!!! Your nodes may not start without this information"
         fi
@@ -153,6 +161,7 @@ function _enablesec() {
 
     ZKNODES=$(echo "$ZK_STRING"|tr "," " ")
     for Z in $ZKNODES; do
+        echo "Running ZK Copy Files on $Z"
         ZK=$(echo "$Z"|cut -d":" -f2)
         ssh ${IUSER}@$ZK "$PRIV_CMD sed -i -e 's/authMech=.*$/authMech=MAPR-SECURITY/g' $MAPR_INST/zookeeper/conf/zoo.cfg"
         ssh ${IUSER}@${ZK} "mkdir -p /home/$IUSER/maprsec && chmod 770 /home/$IUSER/maprsec"
@@ -162,7 +171,9 @@ function _enablesec() {
     done
 
 
-    
+    echo "Removing Secure MapR files in ./conf/secmapr.tgz (files still exist in locked down dir ./conf/secmapr)"
+    rm ./conf/secmapr.tgz
+
 
     # Next copy cldb.key to any node running CLDB or Zookeeper
     # Make all 4 files owned by $FSUSER:$FSUSER
