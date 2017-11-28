@@ -212,16 +212,26 @@ EOL1
 
         touch /home/$IUSER/tmp.txt
         chmod 600 /home/$IUSER/tmp.txt
+        touch /home/$IUSER/tmp1.txt
+        chmod 600 /home/$IUSER/tmp1.txt
 cat > /home/$IUSER/tmp.txt << EOF
 $FSUSER_PASS
 EOF
+cat > /home/$IUSER/tmp1.txt << EOF
+$IUSER_PASS
+EOF
         scp /home/$IUSER/tmp.txt ${IUSER}@${NODE_HOST}:/home/$IUSER/
+        scp /home/$IUSER/tmp1.txt ${IUSER}@${NODE_HOST}:/home/$IUSER/
         ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD chown ${IUSER}:${FSUSER} /home/$IUSER/tmp.txt && $PRIV_CMD chmod 660 /home/$IUSER/tmp.txt"
         ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD su $FSUSER -c \"cat /home/$IUSER/tmp.txt | maprlogin password\""
+        ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD chown ${IUSER}:${FSUSER} /home/$IUSER/tmp1.txt && $PRIV_CMD chmod 660 /home/$IUSER/tmp1.txt"
+        ssh ${IUSER}@${NODE_HOST} "cat /home/$IUSER/tmp1.txt | maprlogin password"
         ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD chown $FSUSER:root /opt/mapr/conf && $PRIV_CMD su $FSUSER -c \"maprlogin generateticket -type servicewithimpersonation -user $FSUSER -out /opt/mapr/conf/maprfuseticket\""
         ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD chown root:root /opt/mapr/conf && $PRIV_CMD chown $FSUSER:root /opt/mapr/conf/maprfuseticket && $PRIV_CMD chmod 660 /opt/mapr/conf/maprfuseticket"
         ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD rm /home/$IUSER/tmp.txt"
+        ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD rm /home/$IUSER/tmp1.txt"
         rm /home/$IUSER/tmp.txt
+        rm /home/$IUSER/tmp1.txt
     fi
 
     ssh $NODE_HOST "$PRIV_CMD mkdir -p /$CLUSTERBASE"
