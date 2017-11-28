@@ -50,6 +50,13 @@ for N in $AGENT_NODES; do
     H=$(ssh $N "hostname -f")
     AGENT_HOSTS="${AGENT_HOSTS}$N - $H"$'\n'
 done
+echo "Do you wish this to be a secure MapR Cluster (6.0 should choose yes"
+read -e -p "Make MapR Secure Cluster? (Y/N): " -i "Y" MAKE_SECURE
+if [ "$MAKE_SECURE" == "Y" ]; then
+    @go.log WARN "This will not make the cluster secure from the start, however, it will prompt you after installing the cluster to make it secure"
+fi
+
+
 MAPR_SECURE="0"
 FS_HADOOP_HOME="/opt/mapr/hadoop/hadoop-2.7.0"
 FS_HOME="/opt/mapr"
@@ -250,7 +257,7 @@ export ZK_STRING="$ZK_STRING"
 export ZK_CLIENT_PORT="$ZK_CLIENT_PORT"
 export ZK_MASTER_ELECTION_PORT="$ZK_MASTER_ELECTION_PORT"
 export ZK_QUORUM_PORT="$ZK_QUORUM_PORT"
-
+export MAKE_SECURE="$MAKE_SECURE"
 export MAPR_SECURE="$MAPR_SECURE"
 export NFS_NODES="$NFS_NODES"
 export MAPR_CONF_OPTS=""

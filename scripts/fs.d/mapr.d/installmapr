@@ -107,3 +107,8 @@ IFS=$OLDIFS
 echo "External CLDB Addresses:"
 echo "$CLDB_ADDRESSES"
 
+if [ "$MAKE_SECURE" == "Y" ] && [ "$MAPR_SECURE" == "0" ]; then
+    @go.log WARN "MAKE_SECURE was set to Y, thus the intention of this cluster is to be secure."
+    @go.log WARN "However, this has not been done yet, please make the cluster secure by running the next step"
+    @go.log WARN "./zeta fs mapr enablesec"
+fi
