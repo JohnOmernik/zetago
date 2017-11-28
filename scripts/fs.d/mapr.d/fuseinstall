@@ -209,10 +209,19 @@ EOL1
     fi
     ssh $NODE_HOST "$PRIV_CMD /opt/mapr/server/configure.sh -N $CLUSTERNAME -c -C $CLDBS $MAPR_CONF_OPTS"
     if [ "$MAPR_SECURE" == "1" ]; then
-        echo "You will need to type the MapR Password to login as mapr on this node"
-        ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD su $FSUSER -c \"maprlogin password\""
+
+        touch /home/$IUSER/tmp.txt
+        chmod 600 /home/$IUSER/tmp.txt
+cat > /home/$IUSER/tmp.txt << EOF
+$FSUSER_PASS
+EOF
+        scp /home/$IUSER/tmp.txt ${IUSER}@${NODE_HOST}:/home/$IUSER/
+        ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD chown ${IUSER}:${FSUSER} /home/$IUSER/tmp.txt && $PRIV_CMD chmod 660 /home/$IUSER/tmp.txt"
+        ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD su $FSUSER -c \"cat /home/$IUSER/tmp.txt | maprlogin password\""
         ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD chown $FSUSER:root /opt/mapr/conf && $PRIV_CMD su $FSUSER -c \"maprlogin generateticket -type servicewithimpersonation -user $FSUSER -out /opt/mapr/conf/maprfuseticket\""
         ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD chown root:root /opt/mapr/conf && $PRIV_CMD chown $FSUSER:root /opt/mapr/conf/maprfuseticket && $PRIV_CMD chmod 660 /opt/mapr/conf/maprfuseticket"
+        ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD rm /home/$IUSER/tmp.txt"
+        rm /home/$IUSER/tmp.txt
     fi
 
     ssh $NODE_HOST "$PRIV_CMD mkdir -p /$CLUSTERBASE"
