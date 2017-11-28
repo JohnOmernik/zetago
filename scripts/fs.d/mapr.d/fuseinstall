@@ -197,7 +197,7 @@ EOL1
     NSUB="export MAPR_SUBNETS=$SUBNETS"
     ssh $NODE_HOST "echo \"$NSUB\"|$PRIV_CMD tee -a /opt/mapr/conf/env_override.sh"
     #ssh $NODE_HOST "$PRIV_CMD sed -i -r \"s@#export MAPR_SUBNETS=.*@${NSUB}@g\" /opt/mapr/conf/env.sh"
-    #ssh $NODE_HOST "echo \"$NODE_HOST-fuse\"|$PRIV_CMD tee /opt/mapr/hostname"
+    ssh $NODE_HOST "echo \"$NODE_HOST-fuse\"|$PRIV_CMD tee /opt/mapr/hostname"
     if [ "$MAPR_SECURE" == "1" ]; then
         INST_MAPR="/opt/mapr"
         ssh ${IUSER}@${NODE_HOST} "mkdir -p /home/$IUSER/maprsec && chmod 770 /home/$IUSER/maprsec"
