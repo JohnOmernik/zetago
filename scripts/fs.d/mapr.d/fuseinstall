@@ -208,6 +208,12 @@ EOL1
         ssh ${IUSER}@${NODE_HOST} "rm -rf /home/${IUSER}/maprsec"
     fi
     ssh $NODE_HOST "$PRIV_CMD /opt/mapr/server/configure.sh -N $CLUSTERNAME -c -C $CLDBS $MAPR_CONF_OPTS"
+    if [ "$MAPR_SECURE" == "1" ]; then
+        echo "You will need to type the MapR Password to login as mapr on this node"
+        ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD su $FSUSER -c \"maprlogin password\""
+        ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD chown $FSUSER:root /opt/mapr/conf && $PRIV_CMD su $FSUSER -c \"maprlogin generateticket -type servicewithimpersonation -user $FSUSER -out /opt/mapr/conf/maprfuseticket\""
+        ssh ${IUSER}@${NODE_HOST} "$PRIV_CMD chown root:root /opt/mapr/conf && $PRIV_CMD chown $FSUSER:root /opt/mapr/conf/maprfuseticket && $PRIV_CMD chmod 660 /opt/mapr/conf/maprfuseticket"
+    fi
 
     ssh $NODE_HOST "$PRIV_CMD mkdir -p /$CLUSTERBASE"
     ssh $NODE_HOST "$PRIV_CMD $INST_CMD $INST_POSIX"
