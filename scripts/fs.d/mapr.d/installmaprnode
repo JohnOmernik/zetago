@@ -190,6 +190,7 @@ function _installmaprnode(){
     echo "Updating MAPR_SUBNETS"
     NSUB="export MAPR_SUBNETS=$SUBNETS"
     ssh $NODE_HOST "$PRIV_CMD sed -i -r \"s@#export MAPR_SUBNETS=.*@${NSUB}@g\" ${MAPR_INST}/conf/env.sh"
+    ssh $NODE_HOST "echo \"$NSUB\"|$PRIV_CMD tee -a ${MAPR_INST}/conf/env_override.sh"
 
     echo ""
     echo "Updating Warden settings to 35% Max Mem"

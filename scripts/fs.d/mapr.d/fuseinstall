@@ -252,7 +252,11 @@ EOF
 
     ssh $NODE_HOST "$PRIV_CMD sed -i '/# Look for installed JDK/ i . \${BASEMAPR}/conf/env.sh' /opt/mapr/initscripts/mapr-fuse"
     ssh $NODE_HOST "$PRIV_CMD sed -i 's@fuse\.mount\.point=/mapr@fuse.mount.point=/$CLUSTERBASE@g' /opt/mapr/conf/fuse.conf"
-    ssh $NODE_HOST "$PRIV_CMD /etc/init.d/mapr-posix-client-basic start"
+    if [ "$MAPR_SECURE" == "1" ]; then
+        ssh $NODE_HOST "$PRIV_CMD sed -i 's@#fuse.ticketfile.location=.*@fuse.ticketfile.location=/opt/mapr/conf/maprfuseticket@g' /opt/mapr/conf/fuse.conf"
+    fi
+
+ssh $NODE_HOST "$PRIV_CMD /etc/init.d/mapr-posix-client-basic start"
     echo "NFS Mount: "
     ssh $NODE_HOST "ls -ls $CLUSTERMOUNT"
 
