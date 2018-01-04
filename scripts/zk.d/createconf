@@ -51,7 +51,7 @@ fi
 
 
 cat > $ZK_CONF << EOF
-#/bin/bash
+#!/bin/bash
 
 # Master Nodes for Mesos
 export ZK_MESOS="$ZK_MESOS"

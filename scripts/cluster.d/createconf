@@ -61,7 +61,7 @@ echo ""
 
 
 cat > $CLUSTER_CONF << EOF
-#/bin/bash
+#!/bin/bash
 
 export MARATHON_HOST="$MARATHON"
 export MARATHON_SUBMIT="http://\$MARATHON_HOST/v2/apps"
