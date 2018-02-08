@@ -252,6 +252,11 @@ EOF
 
     ssh $NODE_HOST "$PRIV_CMD sed -i '/# Look for installed JDK/ i . \${BASEMAPR}/conf/env.sh' /opt/mapr/initscripts/mapr-fuse"
     ssh $NODE_HOST "$PRIV_CMD sed -i 's@fuse\.mount\.point=/mapr@fuse.mount.point=/$CLUSTERBASE@g' /opt/mapr/conf/fuse.conf"
+    # Issue with Writeback cache 
+    ssh $NODE_HOST "$PRIV_CMD sed -i 's@fuse\.disable\.writeback=0@fuse\.disable\.writeback=1@g' /opt/mapr/conf/fuse.conf"
+
+#fuse.disable.writeback=1
+
     if [ "$MAPR_SECURE" == "1" ]; then
         ssh $NODE_HOST "$PRIV_CMD sed -i 's@#fuse.ticketfile.location=.*@fuse.ticketfile.location=/opt/mapr/conf/maprfuseticket@g' /opt/mapr/conf/fuse.conf"
     fi
