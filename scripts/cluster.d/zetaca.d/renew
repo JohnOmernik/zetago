@@ -62,8 +62,9 @@ function _renew() {
     UNIQ_CERTS=$(cat ${ZETACA_LOC}/index.txt.attr|grep "yes")
     if [ "$UNIQ_CERTS" != "" ]; then
         @go.log WARN "The CA index.txt.attr does not allow duplicate certs. Do you wish to update this? (Renewing without this could cause the renew to fail)"
-        read -e -p "Change unique_subject to no?" -i "Y" CHANGE_UNIQ
+        read -e -p "Change unique_subject to no? (Y/N): " -i "Y" CHANGE_UNIQ
         if [ "$CHANGE_UNIQ" == "Y" ]; then
+            @go.log INFO "Changing unique_subject to no"
             $PRIV_CMD sed -i "s/yes/no/g" ${ZETACA_LOC}/index.txt.attr
         else
             @go.log WARN "We will try the renew, but it will likely fail! Good luck Padawan"
@@ -71,7 +72,6 @@ function _renew() {
     else
         @go.log INFO "unique_subject set to no already"
     fi
-    exit 0
 
     @go.log INFO "Backing up Old Certs"
     cd $APP_CERT_LOC
@@ -93,7 +93,6 @@ function _renew() {
     else
         @go.log WARN "RUH ROH"
     fi
-    
 
 
 }
