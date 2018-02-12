@@ -21,6 +21,7 @@ function _renew() {
     CURUSER=$(whoami)
     JAVA_CERTS=0
     APP_CERT_LOC=""
+    MYDIR=$(pwd)
     if [ "$CURUSER" != "${IUSER}" ]; then
         @go.log FATAL "Must use ${IUSER} user"
     fi
@@ -81,13 +82,13 @@ function _renew() {
     chmod 700 ./$CURBACK
     mv ./$CURBACK /tmp
     rm ./*
-
+    mv /tmp/$CURBACK ./
+    cd $MYDIR
     if [ "$JAVA_CERTS" != "1" ]; then
         . $CLUSTERMOUNT/zeta/shared/zetaca/gen_server_cert.sh
     else
         echo "Run me some java"
     fi
-
     if [ "$?" == 0 ]; then
         @go.log INFO "Looks like we made it"
     else
