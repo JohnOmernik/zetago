@@ -1,0 +1,101 @@
+#!/bin/bash
+#
+# cluster zetaca renew
+#
+# Renew an already created Zeta CA node
+#
+# Arguments:
+# -d                # Cert Location
+#
+#
+sourceconf "$PREP_CONF"
+sourceconf "$DCOS_CONF"
+sourceconf "$NETWORK_CONF"
+sourceconf "$FS_CONF"
+sourceconf "$FS_PROVIDER_CONF"
+sourceconf "$CLUSTER_CONF"
+sourceconf "$CLUSTER_ZETACA_CONF"
+
+
+function _renew() {
+    CURUSER=$(whoami)
+    JAVA_CERTS=0
+    APP_CERT_LOC=""
+    if [ "$CURUSER" != "${IUSER}" ]; then
+        @go.log FATAL "Must use ${IUSER} user"
+    fi
+
+    for i in "$@"
+    do
+        case $i in
+            "-d="*)
+            APP_CERT_LOC="${i#*=}"
+            ;;
+            *)
+            # unknown option
+            ;;
+        esac
+    done
+    if [ "$APP_CERT_LOC" == "" ]; then
+         read -e -p "Please provide a link to the cert directory you wish to renew: " -i "N" APP_CERT_LOC
+    fi
+    if [ ! -d "$APP_CERT_LOC" ]; then
+        @go.log FATAL "$APP_CERT_LOC not found"
+    fi
+    if [ ! -f "${APP_CERT_LOC}/cert.pem" ]; then
+        @go.log FATAL "No cert.pem found in $APP_CERT_LOC"
+    fi
+    if [ -f "${APP_CERT_LOC}/myKeyStore.jks" ]; then
+        @go.log INFO "Java Key Store found - Updateing as well"
+        JAVA_CERTS=1
+    fi
+    CN_GUESS=$(cat ${APP_CERT_LOC}/cert.pem |grep "CN="|grep "Subject:"|grep -o -P "CN=[^ ]+"|sed "s/CN=//g")
+ 
+    if [ "$JAVA_CERTS" != "1" ]; then
+        @go.log INFO "Running non-java certs with CN_GUESS: $CN_GUESS at cert location $APP_CERT_LOC"
+    else
+        @go.log INFO "Running java certs with CN_GUESS: $CN_GUESS at cert location $APP_CERT_LOC"
+    fi
+
+    @go.log INFO "Check unique_subject"
+    ZETACA_LOC="${CLUSTERROOT}/zeta/shared/zetaca/CA"
+    UNIQ_CERTS=$(cat ${ZETACA_LOC}/index.txt.attr|grep "yes")
+    if [ "$UNIQ_CERTS" != "" ]; then
+        @go.log WARN "The CA index.txt.attr does not allow duplicate certs. Do you wish to update this? (Renewing without this could cause the renew to fail)"
+        read -e -p "Change unique_subject to no?" -i "Y" CHANGE_UNIQ
+        if [ "$CHANGE_UNIQ" == "Y" ]; then
+            sed -i "s/yes/no/g" ${ZETACA_LOC}/index.txt.attr
+        else
+            @go.log WARN "We will try the renew, but it will likely fail! Good luck Padawan"
+        fi
+    else
+        @go.log INFO "unique_subject set to no already"
+    fi
+    exit 0
+
+    @go.log INFO "Backing up Old Certs"
+    cd $APP_CERT_LOC
+    CURDATE=%(date '+%Y%m%d%H%M%S')
+    CURBACK=${CURDATE}_cert_backup.tgz
+    tar zcf ./${CURBACK} ./*
+    chmod 700 ./$CURBACK
+    mv ./$CURBACK /tmp
+    rm ./*
+
+    if [ "$JAVA_CERTS" != "1" ]; then
+        . $CLUSTERMOUNT/zeta/shared/zetaca/gen_server_cert.sh
+    else
+        echo "Run me some java"
+    fi
+
+    if [ "$?" == 0 ]; then
+        @go.log INFO "Looks like we made it"
+    else
+        @go.log WARN "RUH ROH"
+    fi
+    
+
+
+}
+
+_renew "$@"
