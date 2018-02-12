@@ -75,8 +75,8 @@ function _renew() {
 
     @go.log INFO "Backing up Old Certs"
     cd $APP_CERT_LOC
-    CURDATE=%(date '+%Y%m%d%H%M%S')
-    CURBACK=${CURDATE}_cert_backup.tgz
+    CURDATE=$(date '+%Y%m%d%H%M%S')
+    CURBACK="${CURDATE}_cert_backup.tgz"
     tar zcf ./${CURBACK} ./*
     chmod 700 ./$CURBACK
     mv ./$CURBACK /tmp
