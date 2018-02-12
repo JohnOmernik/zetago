@@ -37,7 +37,7 @@ function _renew() {
         esac
     done
     if [ "$APP_CERT_LOC" == "" ]; then
-         read -e -p "Please provide a path to the cert directory you wish to renew: " -i "${CLUSTERROOT}/" APP_CERT_LOC
+         read -e -p "Please provide a path to the cert directory you wish to renew: " -i "${CLUSTERMOUNT}/" APP_CERT_LOC
     fi
     if [ ! -d "$APP_CERT_LOC" ]; then
         @go.log FATAL "$APP_CERT_LOC not found"
@@ -58,7 +58,7 @@ function _renew() {
     fi
 
     @go.log INFO "Check unique_subject"
-    ZETACA_LOC="${CLUSTERROOT}/zeta/shared/zetaca/CA"
+    ZETACA_LOC="${CLUSTERMOUNT}/zeta/shared/zetaca/CA"
     UNIQ_CERTS=$(cat ${ZETACA_LOC}/index.txt.attr|grep "yes")
     if [ "$UNIQ_CERTS" != "" ]; then
         @go.log WARN "The CA index.txt.attr does not allow duplicate certs. Do you wish to update this? (Renewing without this could cause the renew to fail)"
