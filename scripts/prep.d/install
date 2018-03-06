@@ -89,7 +89,11 @@ function _prepinstall() {
     if [ "$INITSKIP" == "Y" ]; then
         @go.log INFO "Running on Skipped Init Node ($INIT_NODE)"
         @go.log WARN "When this node is complete, it will likely lose the SSH Connection - This is normal - it's the node rebooting"
-        ./zeta prep userprep -n="$INIT_NODE"
+        if [ "$CREATE_IUSER" != "Y" || "$CREATE_FSUSER" != "Y" ]; then
+            @go.log WARN "not running user script"
+        else
+            ./zeta prep userprep -n="$INIT_NODE"
+        fi
         if [ "$UNATTEND" == "1" ]; then
             ./zeta prep systemprep -n="$INIT_NODE" -u
         else

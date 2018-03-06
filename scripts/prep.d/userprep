@@ -41,6 +41,11 @@ function _userprep() {
         exit 0
     fi
 
+    if [ "$CREATE_IUSER" != "Y" || "$CREATE_FSUSER" != "Y" ]; ; then
+        @go.log WARN "User Creation declined in conf - exiting gracefully"
+        exit 0
+    fi
+
     SCRIPTSRC="./conf/userupdate.sh"
     if [ ! -f "$SCRIPTSRC" ]; then
         @go.log INFO "User prep scripts not found, creating in .conf for security"
