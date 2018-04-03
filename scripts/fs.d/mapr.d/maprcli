@@ -79,8 +79,8 @@ function _maprcli() {
     if [ "$CID" == "" ]; then
         @go.log FATAL "maprdocker image not found running on $NODE - Can not run command"
     fi
-
-    OUTTEST=$(ssh $NODE "$PRIV_CMD docker exec -i $CID $TESTCMD")
+    @go.log INFO "Checking API Commands"
+    OUTTEST=$(ssh $NODE "$PRIV_CMD docker exec -it $CID $TESTCMD")
 
     TICKETTEST=$(echo "$OUTTEST"|grep "You do not have a ticket to communicate with $CLIUSER")
 
