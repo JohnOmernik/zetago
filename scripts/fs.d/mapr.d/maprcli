@@ -68,7 +68,7 @@ function _maprcli() {
     fi
 
     if [ "$CLIUSER" == "" ]; then
-        @go.log WARN "No user specified with -U defaulting to $FS_USER"
+        @go.log WARN "No user specified with -U defaulting to $FSUSER"
         CLIUSER="$FSUSER"
     fi
     CLICMD=$(echo "$CLICMD"|sed -r "s/-U=[^ ]+ ?//g")
