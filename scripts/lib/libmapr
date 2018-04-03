@@ -169,6 +169,38 @@ function mapr_volnamebymount(){
     fi
     eval $RESULT="'$VOLNAME'"
 }
+
+function maprapicli(){
+    #Base is https://HOST/rest"
+    # CMD should be like "/volume/remove?name=mapr.hbase"
+    local LRETCODE=$1
+    local LRESULT=$2
+    local CMD=$3
+
+    CURIFS=$IFS
+    IFS="?"
+    C=""
+    A=""
+    for X in $CMD;do
+        if [ "$C" == "" ]; then
+            C="$X"
+        else
+            A="$X"
+        fi
+    done
+    IFS="$CURIFS"
+    APICMD=$(echo "$C"|sed "s@/@ @g")
+    IFS="&"
+    for Y in $C;do
+        K=$(echo "$Y"|cut -d="=" -f1)
+        V=$(echo "$Y"|cut -d="=" -f2)
+        APICMD="$APICMD -${K} ${V}"
+    done
+    IFS=$CURIFS
+}
+
+
+
 #
 #
 # maprapi - Sets up the MapR API calls based on creds
