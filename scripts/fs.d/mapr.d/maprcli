@@ -69,15 +69,31 @@ function _maprcli() {
 
     if [ "$CLIUSER" == "" ]; then
         MYCMD="maprcli $CLICMD"
+        TESTCMD="maprcli dashboard info"
     else
         CLICMD=$(echo "$CLICMD"|sed -r "s/-U=[^ ]+ ?//g")
         MYCMD="su -c \"maprcli $CLICMD\" $CLIUSER"
+        TESTCMD="su -c \"maprcli dashboard info\" $CLIUSER"
     fi
 
     CID=$(ssh $NODE "$PRIV_CMD docker ps |grep maprdocker|cut -d\" \" -f1")
     if [ "$CID" == "" ]; then
         @go.log FATAL "maprdocker image not found running on $NODE - Can not run command"
     fi
+    TEST_CMD="sudo docker exec -i 3835 su -c "maprcli dashboard info" mapr
+
+    OUTTEST=$(ssh $NODE "$PRIV_CMD docker exec -i $CID $TESTCMD")
+    TICKETTEST=$(echo "$OUTTEST"|grep "You do not have a ticket to communicate with")
+    if [ "$TICKETTEST" != "" ]; then
+        @go.log WARN "No MapR Ticket is detected for the command you wish to run"
+        read -e -p "Do you wish to enter a ticket (The command will fail if not entered)(Y/N): " -i "Y" GET_TICKET
+        if [ "$GET_TICKET" == "Y" ]; then
+            ssh $NODE "$PRIV_CMD docker exec -it $CID su -c "maprlogin password" $CLIUSER
+        else
+            @go.log FATAL "Command can not be run without a ticket"
+        end if
+    fi
+
     ssh $NODE "$PRIV_CMD docker exec -i $CID $MYCMD"
 
 
