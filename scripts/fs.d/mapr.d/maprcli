@@ -68,13 +68,12 @@ function _maprcli() {
     fi
 
     if [ "$CLIUSER" == "" ]; then
-        MYCMD="maprcli $CLICMD"
-        TESTCMD="maprcli dashboard info"
-    else
-        CLICMD=$(echo "$CLICMD"|sed -r "s/-U=[^ ]+ ?//g")
-        MYCMD="su -c \"maprcli $CLICMD\" $CLIUSER"
-        TESTCMD="su -c \"maprcli dashboard info\" $CLIUSER"
+        @go.log WARN "No user specified with -U defaulting to $FS_USER"
+        CLIUSER="$FSUSER"
     fi
+    CLICMD=$(echo "$CLICMD"|sed -r "s/-U=[^ ]+ ?//g")
+    MYCMD="su -c \"maprcli $CLICMD\" $CLIUSER"
+    TESTCMD="su -c \"maprcli dashboard info\" $CLIUSER"
 
     CID=$(ssh $NODE "$PRIV_CMD docker ps |grep maprdocker|cut -d\" \" -f1")
     if [ "$CID" == "" ]; then
@@ -83,7 +82,7 @@ function _maprcli() {
     TEST_CMD="sudo docker exec -i 3835 su -c "maprcli dashboard info" mapr
 
     OUTTEST=$(ssh $NODE "$PRIV_CMD docker exec -i $CID $TESTCMD")
-    TICKETTEST=$(echo "$OUTTEST"|grep "You do not have a ticket to communicate with")
+    TICKETTEST=$(echo "$OUTTEST"|grep "You do not have a ticket to communicate with $CLIUSER")
     if [ "$TICKETTEST" != "" ]; then
         @go.log WARN "No MapR Ticket is detected for the command you wish to run"
         read -e -p "Do you wish to enter a ticket (The command will fail if not entered)(Y/N): " -i "Y" GET_TICKET
@@ -91,7 +90,7 @@ function _maprcli() {
             ssh $NODE "$PRIV_CMD docker exec -it $CID su -c "maprlogin password" $CLIUSER
         else
             @go.log FATAL "Command can not be run without a ticket"
-        end if
+        fi
     fi
 
     ssh $NODE "$PRIV_CMD docker exec -i $CID $MYCMD"
