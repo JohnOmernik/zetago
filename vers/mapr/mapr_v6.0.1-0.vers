@@ -1,0 +1,49 @@
+#!/bin/bash
+
+export MAPR_VER="v6.0.1"
+export MAPR_PATCH="0"
+export MAPR_MEP="MEP-5.0.0"
+
+export MAPR_DOCKER_TAG="${MAPR_VER}-${MAPR_PATCH}"
+
+export MAPR_MAIN_URL="http://package.mapr.com/releases/${MAPR_VER}/ubuntu/ binary trusty"
+export MAPR_ECOSYSTEM_URL="http://package.mapr.com/releases/MEP/${MAPR_MEP}/ubuntu/ binary trusty"
+
+export MAPR_PATCH_ROOT=""
+
+export MAPR_PATCH_FILE=""
+export MAPR_CLIENT_PATCH_FILE=""
+export MAPR_POSIX_PATCH_FILE=""
+export MAPR_LOOP_PATCH_FILE=""
+
+#Used for Fuse install
+
+export UBUNTU_MAPR_CLIENT_BASE="http://package.mapr.com/releases/${MAPR_VER}/ubuntu/"
+export UBUNTU_MAPR_POSIX_BASE="http://package.mapr.com/releases/${MAPR_VER}/ubuntu/"
+export UBUNTU_MAPR_MEP_BASE="http://package.mapr.com/releases/MEP/${MAPR_MEP}/ubuntu/"
+
+export UBUNTU_MAPR_CLIENT_FILE="mapr-client-6.0.1.20180404222005.GA-1.amd64.deb"
+export UBUNTU_MAPR_POSIX_FILE="mapr-posix-client-basic_6.0.1.20180404222005.GA-1_amd64.deb"
+export UBUNTU_MAPR_LOOP_FILE="mapr-loopbacknfs_6.0.1.20180404222005.GA-1_amd64.deb"
+export UBUNTU_MAPR_LIBRDKAFKA_FILE="mapr-librdkafka_0.11.3.201803231414_all.deb"
+export UBUNTU_MAPR_KAFKA_FILE="mapr-kafka_1.0.1.201803222306_all.deb"
+
+export UBUNTU_MAPR_PATCH_BASE=""
+export UBUNTU_MAPR_PATCH_CLIENT_FILE=""
+export UBUNTU_MAPR_PATCH_POSIX_FILE=""
+
+
+# Used for examples when patches do come for 5.2.1
+
+#export UBUNTU_MAPR_PATCH_BASE="http://archive.mapr.com/patches/archives/v5.2.0/ubuntu/dists/binary/"
+#export UBUNTU_MAPR_PATCH_CLIENT_FILE="mapr-patch-client-5.2.0.39122.GA-39745.x86_64.deb"
+#export UBUNTU_MAPR_PATCH_POSIX_FILE="mapr-patch-posix-client-basic-5.2.0.39122.GA-39745.x86_64.deb"
+
+#export MAPR_PATCH_ROOT="http://archive.mapr.com/patches/archives/v5.2.0/ubuntu/dists/binary/"
+#export MAPR_PATCH_FILE="mapr-patch-5.2.0.39122.GA-39745.x86_64.deb"
+#export MAPR_CLIENT_PATCH_FILE="mapr-patch-client-5.2.0.39122.GA-39745.x86_64.deb"
+#export MAPR_POSIX_PATCH_FILE="mapr-patch-posix-client-basic-5.2.0.39122.GA-39745.x86_64.deb"
+#export MAPR_LOOP_PATCH_FILE="mapr-patch-loopbacknfs-5.2.0.39122.GA-39745.x86_64.deb"
+
+
+
