@@ -87,7 +87,7 @@ function _renew() {
     if [ "$JAVA_CERTS" != "1" ]; then
         . $CLUSTERMOUNT/zeta/shared/zetaca/gen_server_cert.sh
     else
-        echo "Run me some java"
+        . $CLUSTERMOUNT/zeta/shared/zetaca/gen_java_keystore.sh 
     fi
     if [ "$?" == 0 ]; then
         @go.log INFO "Looks like we made it"
